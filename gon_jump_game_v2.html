@@ -228,6 +228,22 @@
       box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0, 0, 0, .25);
     }
 
+    /* Hover states for game-over buttons */
+    #play-again-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,.18), inset 0 8px 0 rgba(255,255,255,.35), 0 9px 0 #802A00, 0 16px 28px rgba(0,30,80,.35);
+      filter: brightness(1.08);
+    }
+    #gameover-share-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #0F1F44, 0 14px 24px rgba(0,0,0,.3);
+      filter: brightness(1.12);
+    }
+    #play-again-btn:active, #gameover-share-btn:active {
+      transform: translateY(3px);
+      filter: brightness(0.95);
+    }
+
     /* Force equal width on both menu buttons via ID selectors (high specificity) */
     #start-btn,
     #share-btn {
@@ -654,26 +670,43 @@
       background: rgba(0, 30, 60, 0.08);
       border: none;
       color: #555;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
-      line-height: 1;
+      line-height: 34px;    /* match height for single-line vertical center */
+      padding: 0 0 2px 0;   /* optical nudge for × glyph */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .15s, color .15s, transform .25s;
+      transition: background .15s, color .15s, transform .15s;
       z-index: 5;
       font-family: 'Fredoka', system-ui, sans-serif;
     }
 
     .close-btn:hover {
-      background: rgba(0, 0, 0, .18);
-      color: #000;
-      transform: rotate(90deg);
+      background: rgba(200, 30, 30, .15);
+      color: #c00;
+      transform: scale(1.1);
     }
 
     .close-btn:active {
-      transform: rotate(90deg) scale(.9);
+      transform: scale(.88);
+    }
+
+    /* Hover/active states for Pause screen buttons */
+    #resume-btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.1);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #1F4209, 0 14px 22px rgba(0,0,0,.28);
+    }
+    #quit-btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.1);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #082C66, 0 14px 22px rgba(0,0,0,.28);
+    }
+    #resume-btn:active, #quit-btn:active {
+      transform: translateY(3px);
+      filter: brightness(0.94);
     }
 
     /* === LEAD FORM — bubbly yellow/orange theme === */
@@ -1015,6 +1048,22 @@
       <div id="multiplier-badge" class="multiplier-badge">x2 SCORE</div>
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
+
+      <!-- Tilt indicator — visible only when gyroscope is active -->
+      <div id="tilt-indicator" style="display:none; position:absolute; bottom:100px; left:50%; transform:translateX(-50%); flex-direction:column; align-items:center; gap:4px; background:rgba(0,0,0,0.45); border-radius:24px; padding:8px 16px 6px; pointer-events:none; backdrop-filter:blur(4px); border:1.5px solid rgba(255,255,255,0.18);">
+        <span style="font-size:12px; color:#fff; opacity:0.80; letter-spacing:0.5px; font-weight:700;">📱 TILT TO MOVE</span>
+        <!-- Track -->
+        <div style="position:relative; width:80px; height:14px; background:rgba(255,255,255,0.12); border-radius:7px; overflow:visible; border:1.5px solid rgba(255,255,255,0.25);">
+          <!-- Center marker -->
+          <div style="position:absolute; left:calc(50% - 0.75px); top:2px; width:1.5px; height:10px; background:rgba(255,255,255,0.35); border-radius:1px;"></div>
+          <!-- Needle -->
+          <div id="tilt-needle" style="position:absolute; left:calc(50% - 5px); top:2px; width:10px; height:10px; border-radius:5px; background:#4CAF50; transition:transform 0.04s linear, background 0.08s; box-shadow:0 0 6px rgba(76,175,80,0.7);"></div>
+        </div>
+      </div>
+
+      <!-- iOS 13+ permission prompt -->
+      <button id="tilt-perm-btn" style="display:none; position:absolute; bottom:105px; left:50%; transform:translateX(-50%); background:linear-gradient(180deg,#FFB300,#E65100); color:#fff; border:3px solid #8B3000; border-radius:24px; padding:10px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; z-index:20; box-shadow:0 4px 0 #5D2000,0 8px 16px rgba(0,0,0,0.3); font-family:'Fredoka','Baloo 2',system-ui,sans-serif; letter-spacing:0.5px;">📱 Enable Tilt Control</button>
+
       <div id="touch-controls" class="touch-controls">
         <div id="touch-left" class="touch-btn">◀</div>
         <div id="touch-right" class="touch-btn">▶</div>
@@ -1075,7 +1124,7 @@
 
         <!-- Action buttons — pinned at the bottom, ALWAYS visible -->
         <div class="gameover-buttons">
-          <button id="play-again-btn" class="btn btn-success">▶ Play Again</button>
+          <button id="play-again-btn" class="btn btn-primary">▶ Play Again</button>
           <button id="gameover-share-btn" class="btn btn-fb">📣 Share</button>
         </div>
       </div>
@@ -1172,36 +1221,142 @@
       const Input = {
         left: false,
         right: false,
+        tiltMode: false,          // true once gyroscope data arrives
+        _gamma: 0,                // current device tilt angle (degrees, left-/right+)
+        _tiltVx: 0,               // analog tilt velocity (-1..+1), used directly by Player
+        TILT_DEAD: 3,             // ±3° dead zone (smaller = more sensitive)
+        TILT_MAX: 22,             // full-speed tilt angle (degrees)
+        _handler: null,           // keep reference for cleanup
+        _permissionGranted: false,
+
         init() {
           // Keyboard
           addEventListener('keydown', e => {
-            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = true;
+            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') this.left  = true;
             if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = true;
-            if (e.code === 'Space' && Game.state === 'menu') Game.start();
+            if (e.code === 'Space'  && Game.state === 'menu')    Game.start();
             if (e.code === 'Escape' && Game.state === 'playing') Game.pause();
           });
           addEventListener('keyup', e => {
-            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = false;
+            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') this.left  = false;
             if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = false;
           });
 
           // Block all click/touch on the canvas so events never bubble to overlay buttons.
-          // (Previously canvas drag-to-steer was here — removed as it caused unintended
-          //  speed boost when clicking the mascot. preventDefault also stops synthesised
-          //  'click' events on mobile that could re-trigger Game.start() mid-game.)
           const cv = document.getElementById('game-canvas');
           cv.addEventListener('click',      e => e.stopPropagation());
           cv.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 
-          // Virtual D-pad (touch buttons)
+          // Virtual D-pad (touch buttons) — still available as fallback
           const tl = document.getElementById('touch-left');
           const tr = document.getElementById('touch-right');
           const setTouch = (el, key) => {
-            el.addEventListener('touchstart', e => { e.preventDefault(); this[key] = true; }, { passive: false });
-            el.addEventListener('touchend', e => { e.preventDefault(); this[key] = false; }, { passive: false });
+            el.addEventListener('touchstart', e => { e.preventDefault(); this[key] = true;  }, { passive: false });
+            el.addEventListener('touchend',   e => { e.preventDefault(); this[key] = false; }, { passive: false });
+            el.addEventListener('touchcancel',e => { e.preventDefault(); this[key] = false; }, { passive: false });
           };
           setTouch(tl, 'left');
           setTouch(tr, 'right');
+
+          // === GYROSCOPE / TILT CONTROL ===
+          this._setupTiltHandler();
+          this._initTilt();
+        },
+
+        // Build the deviceorientation handler once (analog / proportional like MegaJump)
+        _setupTiltHandler() {
+          this._handler = (e) => {
+            const gamma = e.gamma;          // left(−) / right(+), degrees
+            if (gamma === null) return;
+
+            // Clamp reading to ±90° so flat-on-table doesn't flip sign
+            const g = Utils.clamp(gamma, -90, 90);
+            this._gamma = g;
+
+            if (!this.tiltMode) {
+              // First real reading → switch to tilt mode
+              this.tiltMode = true;
+              const tc = document.getElementById('touch-controls');
+              if (tc) tc.style.opacity = '0.18';     // dim D-pad
+              const ind = document.getElementById('tilt-indicator');
+              if (ind) ind.style.display = 'flex';
+            }
+
+            // ── Analog tilt strength (−1 … +1) ──────────────────────────────
+            const dead = this.TILT_DEAD;
+            const max  = this.TILT_MAX;
+            if (Math.abs(g) < dead) {
+              this._tiltVx = 0;
+            } else {
+              // Map [dead..max] → [0..1], keep sign
+              const strength = Utils.clamp((Math.abs(g) - dead) / (max - dead), 0, 1);
+              this._tiltVx = Math.sign(g) * strength;
+            }
+
+            // Set binary left/right flags so D-pad logic still works as fallback
+            this.left  = this._tiltVx < -0.05;
+            this.right = this._tiltVx >  0.05;
+
+            // ── Update tilt indicator needle ─────────────────────────────────
+            const needle = document.getElementById('tilt-needle');
+            if (needle) {
+              const pct = Utils.clamp(g / max, -1, 1);
+              needle.style.transform = `translateX(${pct * 20}px)`;
+              needle.style.background = Math.abs(g) < dead ? '#4CAF50' : '#FF9800';
+            }
+          };
+        },
+
+        // Register deviceorientation — handles iOS 13+ permission transparently
+        _initTilt() {
+          if (typeof DeviceOrientationEvent === 'undefined') return;
+
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // iOS 13+ — must call from a user-gesture context.
+            // We hook into the Start button click (see Game.start → Input.requestTiltPermission).
+            // Also show the fallback permission button as a safety net.
+            const permBtn = document.getElementById('tilt-perm-btn');
+            if (permBtn) {
+              permBtn.style.display = 'flex';
+              permBtn.addEventListener('click', () => this.requestTiltPermission(), { once: true });
+            }
+          } else {
+            // Android / older iOS — register immediately, no permission needed
+            addEventListener('deviceorientation', this._handler);
+            this._permissionGranted = true;
+          }
+        },
+
+        // Call this from a user-gesture (e.g. Start button) to request iOS permission
+        requestTiltPermission() {
+          if (this._permissionGranted) return Promise.resolve('granted');
+          if (typeof DeviceOrientationEvent === 'undefined') return Promise.resolve('denied');
+          if (typeof DeviceOrientationEvent.requestPermission !== 'function') {
+            // Not iOS — just register
+            addEventListener('deviceorientation', this._handler);
+            this._permissionGranted = true;
+            return Promise.resolve('granted');
+          }
+          return DeviceOrientationEvent.requestPermission().then(state => {
+            if (state === 'granted') {
+              addEventListener('deviceorientation', this._handler);
+              this._permissionGranted = true;
+              const permBtn = document.getElementById('tilt-perm-btn');
+              if (permBtn) permBtn.style.display = 'none';
+            }
+            return state;
+          }).catch(err => { console.warn('Tilt permission error:', err); return 'denied'; });
+        },
+
+        // Returns analog tilt value −1..+1 (0 in dead zone or non-tilt mode)
+        getTiltVx() {
+          return this.tiltMode ? this._tiltVx : 0;
+        },
+
+        // Legacy helper — returns 0..1 strength (kept for compatibility)
+        getTiltStrength() {
+          if (!this.tiltMode) return 1;
+          return Math.abs(this._tiltVx);
         }
       };
 
@@ -1222,19 +1377,33 @@
         }
 
         update(dt) {
-          // Horizontal movement — with inertia (acceleration + friction)
-          let tx = 0;
-          if (Input.left) tx -= 1;
-          if (Input.right) tx += 1;
-          const ACCEL = 0.4;    // px/frame² — เร่งช้า ให้รู้สึกหน่วง
-          const FRICTION = 0.80;  // 0–1 ยิ่งน้อยยิ่งหยุดเร็ว
-          if (tx !== 0) {
-            this.vx += tx * ACCEL;
-            this.vx = Utils.clamp(this.vx, -CONFIG.PLAYER_SPEED, CONFIG.PLAYER_SPEED);
-            this.facing = tx;
+          // ── Horizontal movement ──────────────────────────────────────────
+          // Tilt mode: drive vx DIRECTLY from analog gamma (MegaJump style).
+          // D-pad / keyboard: classic acceleration + friction.
+          const ACCEL   = 0.55;
+          const FRICTION = 0.80;
+
+          if (Input.tiltMode) {
+            // Analog: tiltVx is −1..+1 → scale to max speed directly
+            const tiltVx = Input.getTiltVx();
+            const targetVx = tiltVx * CONFIG.PLAYER_SPEED;
+            // Lerp current vx toward target for buttery-smooth response
+            this.vx += (targetVx - this.vx) * 0.28;
+            if (Math.abs(this.vx) < 0.05) this.vx = 0;
+            if (Math.abs(tiltVx) > 0.05) this.facing = Math.sign(tiltVx);
           } else {
-            this.vx *= FRICTION;                          // ค่อยๆ หยุด
-            if (Math.abs(this.vx) < 0.05) this.vx = 0;   // snap to zero
+            // D-pad / keyboard — acceleration + friction
+            let tx = 0;
+            if (Input.left)  tx -= 1;
+            if (Input.right) tx += 1;
+            if (tx !== 0) {
+              this.vx += tx * ACCEL;
+              this.vx = Utils.clamp(this.vx, -CONFIG.PLAYER_SPEED, CONFIG.PLAYER_SPEED);
+              this.facing = tx;
+            } else {
+              this.vx *= FRICTION;
+              if (Math.abs(this.vx) < 0.05) this.vx = 0;
+            }
           }
 
           // Apply velocity
@@ -2998,6 +3167,8 @@
         start() {
           // Guard: ignore if already playing (prevents double game-loop from stray clicks)
           if (this.state === 'playing') return;
+          // Request iOS tilt permission on the first user gesture (the Start tap)
+          Input.requestTiltPermission();
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
           this.coins = []; this.boxes = []; this.springs = []; this.particles = [];
@@ -3049,11 +3220,23 @@
             this.player.y + this.player.h + 4,
             'normal'
           ));
-          // Fill upward
+          // Fill upward with MORE spacing at the start (no breakable, all normal)
           let y = this.player.y;
+          let lastX = this.player.x;   // track last X to avoid horizontal clustering
           while (y > -CONFIG.HEIGHT) {
-            y -= Utils.rand(CONFIG.PLATFORM_GAP_MIN, CONFIG.PLATFORM_GAP_MAX);
-            this.spawnPlatformRow(y);
+            // Use larger gap for initial generation: at least 110px to avoid crowding
+            y -= Utils.rand(110, CONFIG.PLATFORM_GAP_MAX + 20);
+            // Pick X that is reasonably far from previous platform
+            let x, attempts = 0;
+            const platW = CONFIG.LEVELS[0].platWidth;
+            do {
+              x = Utils.rand(CONFIG.SAFE_X_MIN, CONFIG.SAFE_X_MAX - platW);
+              attempts++;
+            } while (attempts < 8 && Math.abs(x - lastX) < platW + 20);
+            lastX = x;
+            const p = new Platform(x, y, 'normal');
+            p.w = platW;
+            this.platforms.push(p);
           }
         },
 
@@ -3241,28 +3424,80 @@
           UI.showGameOver(this.score);
         },
 
-        // Draw danger scroll bar at bottom of screen
+        // Draw lava rising effect at bottom of screen
         _drawScrollWarning(ctx) {
           if (this.autoScrollSpeed <= 0.01) return;
-          const alpha = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED) * 0.85;
-          const barH = 6 + this.autoScrollSpeed * 6;
-          // Pulsing red glow
-          const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+          const t = Date.now() * 0.001;
+          const lavaH = Math.max(18, 12 + this.autoScrollSpeed * 18);
+          const alpha = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED);
+          const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+          const y0 = CONFIG.HEIGHT - lavaH;
+
           ctx.save();
-          ctx.globalAlpha = alpha * (0.7 + 0.3 * pulse);
-          const grad = ctx.createLinearGradient(0, CONFIG.HEIGHT - barH, 0, CONFIG.HEIGHT);
-          grad.addColorStop(0, 'rgba(255,60,60,0)');
-          grad.addColorStop(1, 'rgba(255,30,30,0.95)');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, CONFIG.HEIGHT - barH, CONFIG.WIDTH, barH);
-          // Danger label
+
+          // --- LAVA GLOW (wide orange halo above lava) ---
+          const glowH = lavaH * 3.5;
+          const glow = ctx.createLinearGradient(0, y0 - glowH, 0, y0);
+          glow.addColorStop(0, 'rgba(255,80,0,0)');
+          glow.addColorStop(1, `rgba(255,100,0,${0.25 * alpha})`);
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, y0 - glowH, CONFIG.WIDTH, glowH);
+
+          // --- LAVA BODY (wavy top edge) ---
+          ctx.beginPath();
+          ctx.moveTo(0, CONFIG.HEIGHT);
+          ctx.lineTo(0, y0);
+          // Wavy lava surface
+          const segs = 12;
+          for (let i = 0; i <= segs; i++) {
+            const wx = (i / segs) * CONFIG.WIDTH;
+            const wy = y0 + Math.sin(t * 2.5 + i * 0.9) * 4 + Math.sin(t * 1.3 + i * 1.7) * 2.5;
+            ctx.lineTo(wx, wy);
+          }
+          ctx.lineTo(CONFIG.WIDTH, CONFIG.HEIGHT);
+          ctx.closePath();
+
+          const lavaGrad = ctx.createLinearGradient(0, y0, 0, CONFIG.HEIGHT);
+          lavaGrad.addColorStop(0, `rgba(255,120,0,${alpha})`);
+          lavaGrad.addColorStop(0.4, `rgba(255,60,0,${alpha})`);
+          lavaGrad.addColorStop(1, `rgba(180,10,0,${alpha})`);
+          ctx.fillStyle = lavaGrad;
+          ctx.globalAlpha = alpha;
+          ctx.fill();
+
+          // --- LAVA BUBBLES ---
+          ctx.globalAlpha = alpha * 0.85;
+          const bubbles = [
+            { bx: 0.15, phase: 0.0, r: 5 },
+            { bx: 0.35, phase: 1.1, r: 7 },
+            { bx: 0.55, phase: 2.3, r: 4 },
+            { bx: 0.72, phase: 0.7, r: 6 },
+            { bx: 0.90, phase: 1.8, r: 5 },
+          ];
+          for (const b of bubbles) {
+            const bx = b.bx * CONFIG.WIDTH;
+            const by = y0 + 3 + Math.sin(t * 2 + b.phase) * 3;
+            const bg = ctx.createRadialGradient(bx - b.r * 0.3, by - b.r * 0.3, 1, bx, by, b.r);
+            bg.addColorStop(0, 'rgba(255,200,80,0.9)');
+            bg.addColorStop(1, 'rgba(255,80,0,0)');
+            ctx.fillStyle = bg;
+            ctx.beginPath();
+            ctx.arc(bx, by, b.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // --- WARNING TEXT ---
           if (this.autoScrollSpeed > CONFIG.SCROLL_MIN_SPEED * 1.5) {
-            ctx.globalAlpha = alpha * (0.6 + 0.4 * pulse);
+            ctx.globalAlpha = alpha * (0.7 + 0.3 * pulse);
             ctx.font = 'bold 11px Inter, sans-serif';
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
-            ctx.fillText('⚠ RISING FLOOR ⚠', CONFIG.WIDTH / 2, CONFIG.HEIGHT - barH - 4);
+            ctx.shadowColor = 'rgba(255,60,0,0.8)';
+            ctx.shadowBlur = 6;
+            ctx.fillText('🔥 LAVA RISING 🔥', CONFIG.WIDTH / 2, y0 - 8);
+            ctx.shadowBlur = 0;
           }
+
           ctx.restore();
         },
 
