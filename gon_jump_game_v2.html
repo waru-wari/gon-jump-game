@@ -1,0 +1,3306 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#5BC0EB">
+  <title>empeo Land Adventure</title>
+
+  <!-- Open Graph / Facebook share preview -->
+  <meta property="og:title" content="empeo Land Adventure">
+  <meta property="og:description" content="Ready to jump? Beat my high score in empeo Land Adventure!">
+  <meta property="og:type" content="website">
+
+  <!-- Bubbly fonts to match the empeo Land logo style -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Baloo+2:wght@700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1E88E5;
+      font-family: 'Fredoka', 'Baloo 2', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      touch-action: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
+    }
+
+    canvas#game-canvas {
+      display: block;
+      position: relative;
+      /* explicit position so z-index applies */
+      z-index: 1;
+      /* canvas at the bottom of the stack */
+      background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 35%, #81D4FA 75%, #B3E5FC 100%);
+      box-shadow: 0 0 60px rgba(0, 40, 100, .45);
+      image-rendering: optimizeSpeed;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    /* Overlays — all UI sits inside SAFE ZONE (12.5% horizontal padding) */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      /* above canvas */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .overlay.active {
+      pointer-events: auto;
+    }
+
+    .overlay>* {
+      pointer-events: auto;
+    }
+
+    /* Defensive: ensure ALL interactive elements receive pointer events */
+    .overlay .btn,
+    .overlay button,
+    .overlay input,
+    .overlay .star,
+    .overlay .leaderboard-toggle {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .overlay input {
+      cursor: text;
+    }
+
+    /* === MAIN MENU — flex column with consistent gap, safe-zone padding === */
+    #main-menu {
+      background: transparent;
+      transition: opacity .35s ease;
+      /* SAFE ZONE: 12.5% padding on each side (matches gameplay safe zone) */
+      padding: 5vh 12.5% 4vh;
+      gap: 28px;
+      /* consistent vertical gap between all menu elements */
+      justify-content: flex-start;
+      z-index: 30;
+      /* above HUD (z=10) and canvas (z=1) */
+    }
+
+    #main-menu.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #game-over {
+      z-index: 40;
+    }
+
+    /* modal: above main menu */
+    #pause-screen {
+      z-index: 50;
+    }
+
+    /* modal: top of stack */
+
+    /* === LOGO IMAGE — replaces the old CSS text logo === */
+    .logo-wrap {
+      text-align: center;
+      margin: 0;
+      /* parent gap controls spacing */
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      /* Drop-shadow filter retained — gives the PNG a soft pop against the sky */
+      filter: drop-shadow(0 12px 24px rgba(0, 40, 100, .45));
+    }
+
+    .logo-img {
+      display: block;
+      max-width: 85%;
+      /* responsive on small phones */
+      width: auto;
+      height: auto;
+      max-height: 36vh;
+      /* never dominate viewport */
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      /* let clicks pass to buttons */
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .25);
+      border-radius: 999px;
+      padding: 16px 40px;
+      font-size: 20px;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 0 rgba(0, 0, 0, .2), 0 10px 24px rgba(0, 0, 0, .2);
+      transform: translateZ(0);
+      transition: transform .1s, box-shadow .1s;
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, .2), 0 4px 10px rgba(0, 0, 0, .2);
+    }
+
+    /* === START — clean 3D fantasy primary button === */
+    .btn-primary {
+      position: relative;
+      background: linear-gradient(180deg, #FFB74D 0%, #FF8A1A 50%, #E65100 100%);
+      border: 4px solid #B14000;
+      color: #FFFFFF;
+      font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+      font-size: clamp(24px, 6vw, 32px);
+      font-weight: 800;
+      letter-spacing: 3px;
+      padding: 18px 64px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 0 #8B3000, 0 4px 8px rgba(0, 0, 0, .30);
+      box-shadow:
+        inset 0 -8px 0 rgba(0, 0, 0, .18),
+        inset 0 8px 0 rgba(255, 255, 255, .35),
+        0 6px 0 #802A00,
+        0 12px 22px rgba(0, 30, 80, .30);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .18), inset 0 8px 0 rgba(255, 255, 255, .35), 0 8px 0 #802A00, 0 16px 26px rgba(0, 30, 80, .35);
+    }
+
+    .btn-primary:active {
+      transform: translateY(4px);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), inset 0 4px 0 rgba(255, 255, 255, .35), 0 2px 0 #802A00, 0 4px 10px rgba(0, 30, 80, .30);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, #64B5F6 0%, #1E88E5 100%);
+      border: 4px solid #0D47A1;
+      text-shadow: -2px -2px 0 #0D47A1, 2px -2px 0 #0D47A1, -2px 2px 0 #0D47A1, 2px 2px 0 #0D47A1, 0 4px 0 #082C66, 0 6px 10px rgba(0, 0, 0, .3);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #082C66, 0 10px 18px rgba(0, 0, 0, .25);
+    }
+
+    .btn-success {
+      background: linear-gradient(180deg, #AED581 0%, #8BC34A 50%, #558B2F 100%);
+      border: 4px solid #2E5E14;
+      text-shadow: -2px -2px 0 #2E5E14, 2px -2px 0 #2E5E14, -2px 2px 0 #2E5E14, 2px 2px 0 #2E5E14, 0 4px 0 #1F4209, 0 6px 10px rgba(0, 0, 0, .3);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #1F4209, 0 10px 18px rgba(0, 0, 0, .25);
+    }
+
+    .btn-fb {
+      background: linear-gradient(180deg, #5C7CD8 0%, #4267B2 100%);
+      border: 4px solid #1B3266;
+      text-shadow: -2px -2px 0 #1B3266, 2px -2px 0 #1B3266, -2px 2px 0 #1B3266, 2px 2px 0 #1B3266, 0 4px 0 #0F1F44, 0 6px 10px rgba(0, 0, 0, .3);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0, 0, 0, .25);
+    }
+
+    #start-btn {
+      margin: 0;
+    }
+
+    /* parent gap handles spacing to leaderboard */
+
+    /* Leaderboard — full width within safe zone, capped at 320px */
+    .leaderboard-card {
+      width: 100%;
+      max-width: 320px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .95) 0%, rgba(245, 250, 255, .95) 100%);
+      border: 3px solid #FFC93C;
+      border-radius: 24px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 24px rgba(0, 40, 80, .25);
+      margin: 0;
+      /* parent gap manages spacing */
+    }
+
+    .leaderboard-title {
+      font-weight: 900;
+      color: #2E6FC0;
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 8px;
+      letter-spacing: .5px;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .leaderboard-list.expanded {
+      max-height: 360px;
+    }
+
+    .leaderboard-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1F5099;
+      font-weight: 700;
+      gap: 8px;
+    }
+
+    .leaderboard-row:nth-child(odd) {
+      background: rgba(91, 192, 235, .10);
+    }
+
+    .leaderboard-row .rank {
+      min-width: 56px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 800;
+    }
+
+    .leaderboard-row .name {
+      flex: 1;
+      padding-left: 4px;
+      color: #333;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leaderboard-row .score {
+      color: #FF6A1A;
+      font-weight: 800;
+    }
+
+    /* === Crown rank tint (top 3) === */
+    .crown {
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      transform: translateY(-1px);
+    }
+
+    .crown-gold {
+      filter: drop-shadow(0 0 3px rgba(255, 193, 7, .55));
+    }
+
+    .crown-silver {
+      filter: grayscale(1) brightness(1.10) drop-shadow(0 0 3px rgba(180, 180, 180, .45));
+    }
+
+    .crown-bronze {
+      filter: hue-rotate(-18deg) saturate(0.78) brightness(0.78) drop-shadow(0 0 3px rgba(184, 108, 48, .45));
+    }
+
+    .leaderboard-row.gold {
+      background: linear-gradient(90deg, rgba(255, 193, 7, .22), rgba(255, 193, 7, .05)) !important;
+    }
+
+    .leaderboard-row.gold .rank {
+      color: #B8860B;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+    }
+
+    .leaderboard-row.gold .score {
+      color: #FF8F00;
+    }
+
+    .leaderboard-row.silver {
+      background: linear-gradient(90deg, rgba(160, 160, 160, .18), rgba(160, 160, 160, .04)) !important;
+    }
+
+    .leaderboard-row.silver .rank {
+      color: #6B6B6B;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+    }
+
+    .leaderboard-row.bronze {
+      background: linear-gradient(90deg, rgba(184, 108, 48, .18), rgba(184, 108, 48, .04)) !important;
+    }
+
+    .leaderboard-row.bronze .rank {
+      color: #A05A1F;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+    }
+
+    .leaderboard-row.you {
+      background: rgba(255, 201, 60, .35) !important;
+      outline: 2px solid #FFC93C;
+    }
+
+    .leaderboard-toggle {
+      background: none;
+      border: none;
+      color: #2E6FC0;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px;
+      margin-top: 4px;
+      width: 100%;
+      border-top: 1px dashed #cfd8e8;
+    }
+
+    .leaderboard-empty {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    #share-btn {
+      padding: 12px 32px;
+      font-size: 16px;
+    }
+
+    /* === IN-GAME HUD — Score + Pause sit inside TOP SAFE ZONE === */
+    #game-hud {
+      display: none;
+    }
+
+    #game-hud.active {
+      display: flex;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 18px;
+      /* clear breathing room from canvas top */
+      left: 12.5%;
+      right: 12.5%;
+      /* horizontal safe zone */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .score-display {
+      background: transparent;
+      color: #FFD75A;
+      font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 8vw, 42px);
+      padding: 0;
+      border: none;
+      letter-spacing: 2px;
+      line-height: 1;
+      /* heavy white stroke (faked with multiple text-shadows) + drop shadow */
+      text-shadow:
+        -3px -3px 0 #fff,
+        3px -3px 0 #fff,
+        -3px 3px 0 #fff,
+        3px 3px 0 #fff,
+        -4px 0 0 #fff,
+        4px 0 0 #fff,
+        0 -4px 0 #fff,
+        0 4px 0 #fff,
+        0 6px 0 #B07700,
+        0 9px 16px rgba(0, 30, 80, .55);
+    }
+
+    .multiplier-badge {
+      position: absolute;
+      top: 80px;
+      /* below score, still in top safe area */
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #FF66CC 0%, #BB44CC 100%);
+      color: #fff;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 999px;
+      border: 2px solid #fff;
+      font-size: 16px;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+      display: none;
+      animation: pulse .6s infinite alternate;
+    }
+
+    .multiplier-badge.active {
+      display: block;
+    }
+
+    @keyframes pulse {
+      from {
+        transform: translateX(-50%) scale(1);
+      }
+
+      to {
+        transform: translateX(-50%) scale(1.08);
+      }
+    }
+
+    /* === LEVEL BADGE (top-left, inside safe zone) === */
+    .level-badge {
+      position: absolute;
+      top: 18px;
+      left: calc(12.5% - 8px);
+      background: linear-gradient(180deg, #42A5F5 0%, #1565C0 100%);
+      color: #fff;
+      font-weight: 800;
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      transition: background 0.5s ease, transform 0.2s ease;
+      line-height: 1.4;
+    }
+
+    .level-badge.bump {
+      animation: lvl-bump 0.4s ease;
+    }
+
+    @keyframes lvl-bump {
+      0% {
+        transform: scale(1)
+      }
+
+      40% {
+        transform: scale(1.25)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .pause-btn {
+      position: absolute;
+      top: 18px;
+      right: calc(12.5% - 8px);
+      /* sit just inside the safe zone right edge */
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(0, 30, 60, .55);
+      border: 3px solid rgba(255, 255, 255, .5);
+      cursor: pointer;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .pause-btn::before,
+    .pause-btn::after {
+      content: '';
+      width: 5px;
+      height: 18px;
+      background: #FFC93C;
+      border-radius: 2px;
+    }
+
+    .pause-btn::before {
+      margin-right: 4px;
+    }
+
+    /* === PAUSE SCREEN — safe-zone padding + flex gap === */
+    #pause-screen {
+      background: rgba(0, 30, 60, .6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      padding: 0 12.5%;
+      gap: 16px;
+    }
+
+    #pause-screen.active {
+      display: flex;
+    }
+
+    #pause-screen h2 {
+      color: #fff;
+      font-size: 42px;
+      margin: 0;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, .5);
+    }
+
+    /* === GAME OVER === */
+    #game-over {
+      display: none;
+      background: rgba(0, 30, 60, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 0 12.5%;
+      /* respect safe zone */
+    }
+
+    #game-over.active {
+      display: flex;
+    }
+
+    .gameover-card {
+      position: relative;
+      /* anchor for absolute close button */
+      width: 100%;
+      max-width: 360px;
+      max-height: 85vh;
+      /* mobile-safe: never overflow viewport */
+      background: linear-gradient(180deg, #fff 0%, #f0f7ff 100%);
+      border: 4px solid #FFC93C;
+      border-radius: 28px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .4);
+      text-align: center;
+      transform: scale(0.85);
+      animation: pop-in .35s ease forwards;
+      /* === Flex column: header + scrollable body + sticky buttons === */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      /* clip card; only .gameover-body scrolls */
+    }
+
+    /* Header (title + score) — always visible at top */
+    .gameover-header {
+      flex: 0 0 auto;
+    }
+
+    /* Body (form + stars + mini leaderboard) — scrolls if content overflows */
+    .gameover-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      /* critical: allows flex child to shrink */
+      overflow-y: auto;
+      margin-top: 6px;
+      padding: 4px 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .gameover-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .gameover-body::-webkit-scrollbar-thumb {
+      background: #FFC93C;
+      border-radius: 3px;
+    }
+
+    /* Buttons — always visible, pinned at bottom of card */
+    .gameover-card .gameover-buttons {
+      flex: 0 0 auto;
+    }
+
+    /* === CLOSE button (×) — top right of card === */
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(0, 30, 60, 0.08);
+      border: none;
+      color: #555;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s, transform .25s;
+      z-index: 5;
+      font-family: 'Fredoka', system-ui, sans-serif;
+    }
+
+    .close-btn:hover {
+      background: rgba(0, 0, 0, .18);
+      color: #000;
+      transform: rotate(90deg);
+    }
+
+    .close-btn:active {
+      transform: rotate(90deg) scale(.9);
+    }
+
+    /* === LEAD FORM — bubbly yellow/orange theme === */
+    .lead-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 14px 0 4px;
+    }
+
+    .lead-input {
+      width: 100%;
+      padding: 11px 16px;
+      border: 2px solid #FFC93C;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+      background: linear-gradient(180deg, #FFFEF7 0%, #FFFCEB 100%);
+      color: #5D4037;
+      outline: none;
+      text-align: center;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .lead-input::placeholder {
+      color: #C8A85B;
+      font-weight: 500;
+    }
+
+    .lead-input:focus {
+      border-color: #FF8A1A;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(255, 201, 60, .30);
+    }
+
+    /* === STAR RATING === */
+    .rating-section {
+      text-align: center;
+      margin: 12px 0 8px;
+    }
+
+    .rating-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #666;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .star-rating {
+      display: inline-flex;
+      gap: 6px;
+      user-select: none;
+    }
+
+    .star {
+      font-size: 32px;
+      color: #DDD;
+      cursor: pointer;
+      transition: color .15s, transform .15s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+      line-height: 1;
+    }
+
+    .star:hover {
+      transform: scale(1.18);
+    }
+
+    .star.filled,
+    .star.hover {
+      color: #FFC93C;
+      text-shadow: 0 0 10px rgba(255, 193, 7, .55), 0 2px 4px rgba(255, 140, 0, .40);
+    }
+
+    /* === MINI LEADERBOARD inside Game Over (Top 10, scrollable) === */
+    .mini-leaderboard {
+      margin: 12px 0 4px;
+      text-align: left;
+    }
+
+    .mini-lb-title {
+      font-weight: 800;
+      color: #2E6FC0;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .mini-lb-list {
+      list-style: none;
+      max-height: 200px;
+      /* fixed cap → never breaks card height */
+      overflow-y: auto;
+      border-radius: 10px;
+      background: rgba(91, 192, 235, .06);
+      padding: 4px 6px;
+      border: 1px solid rgba(91, 192, 235, .18);
+    }
+
+    .mini-lb-list .leaderboard-row {
+      font-size: 13px;
+      padding: 5px 8px;
+    }
+
+    .mini-lb-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .mini-lb-list::-webkit-scrollbar-thumb {
+      background: #FFC93C;
+      border-radius: 3px;
+    }
+
+    .mini-lb-list .leaderboard-empty {
+      padding: 12px;
+      text-align: center;
+    }
+
+    @keyframes pop-in {
+      to {
+        transform: scale(1);
+      }
+    }
+
+    .gameover-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #FF6A1A;
+      text-shadow: 0 3px 0 #C24500, 0 5px 10px rgba(0, 0, 0, .2);
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .gameover-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    .score-tally {
+      font-size: 56px;
+      font-weight: 900;
+      color: #2E6FC0;
+      text-shadow: 0 3px 0 #1F5099;
+      letter-spacing: 2px;
+      margin: 10px 0 4px;
+    }
+
+    .new-high {
+      color: #FF6A1A;
+      font-weight: 800;
+      margin-bottom: 8px;
+      animation: shimmer 1.2s infinite alternate;
+    }
+
+    @keyframes shimmer {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.05);
+      }
+    }
+
+    .gameover-rank {
+      color: #2E6FC0;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .name-input {
+      width: 80%;
+      padding: 10px 14px;
+      border: 2px solid #FFC93C;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 14px;
+      outline: none;
+      color: #2E6FC0;
+    }
+
+    .name-input:focus {
+      border-color: #FF6A1A;
+    }
+
+    .gameover-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .gameover-buttons .btn {
+      padding: 13px 18px;
+      font-size: 15px;
+      flex: 1;
+      letter-spacing: 0.5px;
+    }
+
+    /* Touch controls (mobile virtual D-pad) — within safe zone */
+    .touch-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 12.5%;
+      right: 12.5%;
+      /* respect safe zone */
+      display: none;
+      justify-content: space-between;
+      padding: 0;
+      pointer-events: none;
+    }
+
+    .touch-controls.active {
+      display: flex;
+    }
+
+    .touch-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .15);
+      border: 3px solid rgba(255, 255, 255, .4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 32px;
+      font-weight: 900;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .5);
+      user-select: none;
+    }
+
+    .touch-btn:active {
+      background: rgba(255, 255, 255, .3);
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 30, 60, .85);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity .25s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="overlay active">
+      <div class="logo-wrap">
+        <img src="logo.png" alt="empeo Land Adventure" class="logo-img">
+      </div>
+
+      <button id="start-btn" class="btn btn-primary">Start</button>
+
+      <div class="leaderboard-card">
+        <div class="leaderboard-title">🏆 LEADERBOARD</div>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+        <button id="leaderboard-toggle" class="leaderboard-toggle">Show Top 20 ▾</button>
+      </div>
+
+      <button id="share-btn" class="btn btn-secondary">📣 Share &amp; Invite Friends</button>
+    </div>
+
+    <!-- IN-GAME HUD -->
+    <div id="game-hud" class="overlay">
+      <div class="hud-top">
+        <div id="score-display" class="score-display">0</div>
+      </div>
+      <div id="multiplier-badge" class="multiplier-badge">x2 SCORE</div>
+      <div id="level-badge" class="level-badge">🌿 Lv.1</div>
+      <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
+      <div id="touch-controls" class="touch-controls">
+        <div id="touch-left" class="touch-btn">◀</div>
+        <div id="touch-right" class="touch-btn">▶</div>
+      </div>
+    </div>
+
+    <!-- PAUSE SCREEN -->
+    <div id="pause-screen" class="overlay">
+      <h2>Paused</h2>
+      <button id="resume-btn" class="btn btn-success">Resume</button>
+      <button id="quit-btn" class="btn btn-secondary">Quit to Menu</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over" class="overlay">
+      <div class="gameover-card">
+        <!-- Close (×) returns to main menu -->
+        <button id="gameover-close" class="close-btn" aria-label="Close">×</button>
+
+        <!-- Static header — always visible at top -->
+        <div class="gameover-header">
+          <div class="gameover-title">GAME OVER</div>
+          <div class="gameover-subtitle">Nong Gon fell from the sky!</div>
+          <div id="score-tally" class="score-tally">0</div>
+          <div id="new-high-text" class="new-high" style="display:none">🌟 NEW HIGH SCORE! 🌟</div>
+          <div id="rank-text" class="gameover-rank"></div>
+        </div>
+
+        <!-- Scrollable body — only this part scrolls if content is tall -->
+        <div class="gameover-body">
+          <!-- Lead capture (always visible) -->
+          <div class="lead-form">
+            <input id="lead-name" class="lead-input" type="text" placeholder="Your Name" maxlength="14"
+              autocomplete="off">
+            <input id="lead-email" class="lead-input" type="email" placeholder="Email (optional)" autocomplete="off">
+          </div>
+
+          <!-- 5-star rating -->
+          <div class="rating-section">
+            <div class="rating-label">How was your adventure?</div>
+            <div id="star-rating" class="star-rating" role="radiogroup" aria-label="Rate your experience">
+              <span class="star" data-value="1" role="radio" aria-label="1 star">★</span>
+              <span class="star" data-value="2" role="radio" aria-label="2 stars">★</span>
+              <span class="star" data-value="3" role="radio" aria-label="3 stars">★</span>
+              <span class="star" data-value="4" role="radio" aria-label="4 stars">★</span>
+              <span class="star" data-value="5" role="radio" aria-label="5 stars">★</span>
+            </div>
+          </div>
+
+          <!-- Compact Top 10 leaderboard with crown logic -->
+          <div class="mini-leaderboard">
+            <div class="mini-lb-title">🏆 TOP 10 PLAYERS</div>
+            <ol id="mini-lb-list" class="mini-lb-list"></ol>
+          </div>
+        </div>
+
+        <!-- Action buttons — pinned at the bottom, ALWAYS visible -->
+        <div class="gameover-buttons">
+          <button id="play-again-btn" class="btn btn-success">▶ Play Again</button>
+          <button id="gameover-share-btn" class="btn btn-fb">📣 Share</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+    /* ============================================================
+       empeo Land Adventure — Vertical Endless Platformer
+       Built with vanilla HTML5 Canvas + JavaScript (single-file)
+       ============================================================ */
+
+    (() => {
+      'use strict';
+
+      // =========================================================
+      // 1. CONSTANTS
+      // =========================================================
+      const CONFIG = {
+        WIDTH: 400,
+        HEIGHT: 700,
+
+        // === SAFE ZONE (25% horizontal margin: 12.5% on each side) ===
+        // Gameplay (platforms, items, screen wrap) is constrained to central 75%.
+        // The outer 12.5% on each side is "dead space" used for background scenery only.
+        SAFE_MARGIN_PCT: 0.125,
+
+        // === PHYSICS — Mega Jump-ish floaty feel ===
+        GRAVITY: 0.20,             // แรงโน้มถ่วงต่ำ → ลอยนาน
+        JUMP_VELOCITY: -9.5,       // กระโดดไม่สูงเกิน
+        SPRING_VELOCITY: -15.5,    // สปริงบูสตามสัดส่วน
+        MAX_FALL_SPEED: 5.5,       // จำกัดความเร็วตก → ไม่พุ่งลงไม่หยุด
+        PLAYER_SPEED: 5.0,         // px/frame — restored for left/right control
+
+        // === PROPORTIONS (rebalanced — items scale with player) ===
+        PLAYER_WIDTH: 52,
+        PLAYER_HEIGHT: 60,
+        PLATFORM_WIDTH: 70,
+        PLATFORM_HEIGHT: 16,
+        PLATFORM_GAP_MIN: 90,
+        PLATFORM_GAP_MAX: 135,
+
+        CAMERA_TRIGGER: 0.40,           // camera follows when player above 40% from top
+
+        // === AUTO-SCROLL (death scroll) — activates at score 2000 ===
+        SCROLL_START_SCORE: 2000,       // score ที่เริ่มดึงฉาก
+        SCROLL_MIN_SPEED: 0.15,         // px/frame เริ่มต้น (ช้ามาก)
+        SCROLL_MAX_SPEED: 0.90,         // px/frame สูงสุด (score 8000+)
+        SCROLL_RAMP_SCORE: 6000,        // ช่วง score ที่ ramp จาก min → max
+        MULTIPLIER_DURATION: 8000,      // ms
+        COIN_VALUE: 50,
+        HEIGHT_SCORE_RATIO: 0.25,       // calibrated for ~10k target score
+
+        // === LEVEL SYSTEM — score-gated difficulty tiers ===
+        // Each level: wider gaps + narrower platforms + more hard types
+        LEVELS: [
+          { minScore: 0, gapMin: 90, gapMax: 118, platWidth: 80, movingChance: 0.04, breakableChance: 0.04, label: '🌿 Lv.1 Meadow', color: '#1565C0' },
+          { minScore: 2000, gapMin: 108, gapMax: 145, platWidth: 70, movingChance: 0.15, breakableChance: 0.12, label: '⛅ Lv.2 Hills', color: '#2E7D32' },
+          { minScore: 4000, gapMin: 125, gapMax: 165, platWidth: 60, movingChance: 0.26, breakableChance: 0.20, label: '🌤️ Lv.3 Cliffs', color: '#F57F17' },
+          { minScore: 6500, gapMin: 145, gapMax: 185, platWidth: 52, movingChance: 0.36, breakableChance: 0.28, label: '⚡ Lv.4 Peaks', color: '#6A1B9A' },
+          { minScore: 8500, gapMin: 162, gapMax: 205, platWidth: 44, movingChance: 0.45, breakableChance: 0.34, label: '✨ Lv.5 Heaven', color: '#B71C1C' },
+        ],
+
+        LEADERBOARD_KEY: 'empeoLand_leaderboard_v1',
+        PLAYER_NAME_KEY: 'empeoLand_lastName_v1',
+        PLAYER_EMAIL_KEY: 'empeoLand_lastEmail_v1',
+        MAX_LEADERBOARD: 20,
+        // Share URL — leave empty to auto-detect from window.location (recommended).
+        // Only override with an absolute URL (https://...) when you want every share
+        // to point to a fixed canonical URL (e.g. landing page).
+        GAME_URL: '',
+      };
+      // === Derived Safe Zone constants ===
+      CONFIG.SAFE_X_MIN = CONFIG.WIDTH * CONFIG.SAFE_MARGIN_PCT;             // 50
+      CONFIG.SAFE_X_MAX = CONFIG.WIDTH * (1 - CONFIG.SAFE_MARGIN_PCT);       // 350
+      CONFIG.SAFE_WIDTH = CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN;             // 300
+
+      // =========================================================
+      // 2. UTILS
+      // =========================================================
+      const Utils = {
+        rand: (min, max) => Math.random() * (max - min) + min,
+        randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+        clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+        rectsOverlap: (a, b) =>
+          a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y,
+      };
+
+      // =========================================================
+      // 3. INPUT MANAGER
+      // =========================================================
+      const Input = {
+        left: false,
+        right: false,
+        init() {
+          // Keyboard
+          addEventListener('keydown', e => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = true;
+            if (e.code === 'Space' && Game.state === 'menu') Game.start();
+            if (e.code === 'Escape' && Game.state === 'playing') Game.pause();
+          });
+          addEventListener('keyup', e => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = false;
+          });
+
+          // Mouse / touch — drag/tap to move horizontally
+          const canvas = document.getElementById('game-canvas');
+          let pointerActive = false;
+
+          const updateFromPointer = (clientX) => {
+            const rect = canvas.getBoundingClientRect();
+            const px = ((clientX - rect.left) / rect.width) * CONFIG.WIDTH;
+            const player = Game.player;
+            if (!player) return;
+            const dx = px - (player.x + player.w / 2);
+            this.left = dx < -8;
+            this.right = dx > 8;
+          };
+
+          const onDown = (e) => {
+            if (Game.state !== 'playing') return;
+            pointerActive = true;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            updateFromPointer(cx);
+          };
+          const onMove = (e) => {
+            if (!pointerActive) return;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            updateFromPointer(cx);
+          };
+          const onUp = () => { pointerActive = false; this.left = this.right = false; };
+
+          canvas.addEventListener('mousedown', onDown);
+          canvas.addEventListener('mousemove', onMove);
+          canvas.addEventListener('mouseup', onUp);
+          canvas.addEventListener('mouseleave', onUp);
+          // Only preventDefault during gameplay — never on menu/gameover (so button taps register normally)
+          canvas.addEventListener('touchstart', e => { if (Game.state === 'playing') { e.preventDefault(); onDown(e); } }, { passive: false });
+          canvas.addEventListener('touchmove', e => { if (Game.state === 'playing') { e.preventDefault(); onMove(e); } }, { passive: false });
+          canvas.addEventListener('touchend', e => { if (Game.state === 'playing') { e.preventDefault(); onUp(); } }, { passive: false });
+
+          // Virtual D-pad (optional, visible on touch)
+          const tl = document.getElementById('touch-left');
+          const tr = document.getElementById('touch-right');
+          const setTouch = (el, key) => {
+            el.addEventListener('touchstart', e => { e.preventDefault(); this[key] = true; }, { passive: false });
+            el.addEventListener('touchend', e => { e.preventDefault(); this[key] = false; }, { passive: false });
+          };
+          setTouch(tl, 'left');
+          setTouch(tr, 'right');
+        }
+      };
+
+      // =========================================================
+      // 4. PLAYER — "Nong Gon" mascot (procedurally drawn)
+      // =========================================================
+      class Player {
+        constructor(x, y) {
+          this.x = x; this.y = y;
+          this.w = CONFIG.PLAYER_WIDTH;
+          this.h = CONFIG.PLAYER_HEIGHT;
+          this.vx = 0; this.vy = 0;
+          this.facing = 1;        // 1 right, -1 left
+          this.state = 'idle';    // idle | jumping | falling | spring
+          this.animTimer = 0;
+          this.squash = 1;        // 1 = neutral; >1 = stretch up; <1 = squash down
+          this.springAnim = 0;
+        }
+
+        update(dt) {
+          // Horizontal movement — with inertia (acceleration + friction)
+          let tx = 0;
+          if (Input.left) tx -= 1;
+          if (Input.right) tx += 1;
+          const ACCEL = 0.4;    // px/frame² — เร่งช้า ให้รู้สึกหน่วง
+          const FRICTION = 0.80;  // 0–1 ยิ่งน้อยยิ่งหยุดเร็ว
+          if (tx !== 0) {
+            this.vx += tx * ACCEL;
+            this.vx = Utils.clamp(this.vx, -CONFIG.PLAYER_SPEED, CONFIG.PLAYER_SPEED);
+            this.facing = tx;
+          } else {
+            this.vx *= FRICTION;                          // ค่อยๆ หยุด
+            if (Math.abs(this.vx) < 0.05) this.vx = 0;   // snap to zero
+          }
+
+          // Apply velocity
+          this.x += this.vx;
+          this.y += this.vy;
+
+          // Gravity
+          this.vy += CONFIG.GRAVITY;
+          // Clamp fall speed so player doesn't rocket downward
+          if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+
+          // === Screen wrap at SAFE ZONE edges (center-based, instant teleport) ===
+          // When player center crosses a safe edge → shift by safe width.
+          // Visually we draw a "wrap copy" on the opposite side while body straddles the edge
+          // (handled in draw()), so the wrap looks seamless.
+          const cx = this.x + this.w / 2;
+          if (cx > CONFIG.SAFE_X_MAX) this.x -= CONFIG.SAFE_WIDTH;
+          else if (cx < CONFIG.SAFE_X_MIN) this.x += CONFIG.SAFE_WIDTH;
+
+          // State
+          if (this.vy < -0.1) this.state = 'jumping';
+          else if (this.vy > 0.5) this.state = 'falling';
+          else this.state = 'idle';
+
+          // Squash/stretch easing
+          const targetSquash = this.state === 'jumping' ? 1.1 : (this.state === 'falling' ? 0.95 : 1);
+          this.squash += (targetSquash - this.squash) * 0.15;
+
+          if (this.springAnim > 0) this.springAnim -= dt;
+
+          this.animTimer += dt;
+        }
+
+        jump(velocity = CONFIG.JUMP_VELOCITY) {
+          this.vy = velocity;
+          this.squash = 0.7;          // squash hard on bounce
+          if (velocity <= CONFIG.SPRING_VELOCITY * 0.95) {
+            this.springAnim = 600;
+            Game.spawnParticles(this.x + this.w / 2, this.y + this.h, '#FFC93C', 14);
+          }
+        }
+
+        // Public draw — handles seamless safe-zone wrap by drawing a "ghost" copy
+        // on the opposite side when body straddles the safe zone edge.
+        draw(ctx, camY) {
+          this._drawSelf(ctx, camY);
+          // If body crosses right safe edge → also draw copy on the left
+          if (this.x + this.w > CONFIG.SAFE_X_MAX) {
+            const oldX = this.x; this.x -= CONFIG.SAFE_WIDTH;
+            this._drawSelf(ctx, camY);
+            this.x = oldX;
+          }
+          // If body crosses left safe edge → also draw copy on the right
+          else if (this.x < CONFIG.SAFE_X_MIN) {
+            const oldX = this.x; this.x += CONFIG.SAFE_WIDTH;
+            this._drawSelf(ctx, camY);
+            this.x = oldX;
+          }
+        }
+
+        _drawSelf(ctx, camY) {
+          const cx = this.x + this.w / 2;
+          const cy = this.y - camY + this.h / 2;
+          const sq = this.squash;
+          const w = this.w;
+          const h = this.h;
+
+          // === DROP SHADOW (under feet) — scales by airborne distance ===
+          // Find approximate ground (use platform-based shadow heuristic — fades when high)
+          const heightAboveGround = Math.max(0, Math.min(1, Math.abs(this.vy) * 0.04));
+          const shadowAlpha = 0.35 - heightAboveGround * 0.20;
+          const shadowScale = 1 - heightAboveGround * 0.35;
+          if (shadowAlpha > 0.05) {
+            ctx.save();
+            ctx.translate(cx, cy + h * 0.50);
+            ctx.scale(shadowScale, shadowScale);
+            const sg = ctx.createRadialGradient(0, 0, 2, 0, 0, w * 0.42);
+            sg.addColorStop(0, `rgba(0,30,60,${shadowAlpha})`);
+            sg.addColorStop(1, 'rgba(0,30,60,0)');
+            ctx.fillStyle = sg;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, w * 0.42, w * 0.14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(this.facing * 1, 1);
+          ctx.scale(1 / sq, sq);
+
+          // === DRAW CHARACTER SPRITE (gon.png) ===
+          // Replaces ALL procedural body / face / hat / backpack / scarf drawing.
+          // The image already includes the white sphere body, eyes, smile, arms, and feet.
+          // (transform context already applies facing flip + squash/stretch from above)
+          const sprite = Game.assets && Game.assets.gon;
+          if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+            // Sprite is square (512×512). Draw slightly larger than hitbox so the
+            // arms/feet (which extend beyond the body silhouette in the artwork) show.
+            const drawSize = Math.max(w, h) * 1.30;
+            ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+          } else {
+            // Loading fallback — simple white circle so gameplay isn't blocked
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#9DAEC2';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(0, h * 0.05, w * 0.42, h * 0.40, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          // === SPRING BURST EFFECT ===
+          if (this.springAnim > 0) {
+            const a = this.springAnim / 600;
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.strokeStyle = '#FFC93C';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < 8; i++) {
+              const ang = (i / 8) * Math.PI * 2;
+              const r1 = w * 0.5;
+              const r2 = w * (0.75 + (1 - a) * 0.4);
+              ctx.beginPath();
+              ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * r1);
+              ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * r2);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+
+          ctx.restore();
+        }
+
+        bottomRect() {
+          // Lower foot collision box (only register collision when falling)
+          return { x: this.x + 8, y: this.y + this.h - 14, w: this.w - 16, h: 14 };
+        }
+        fullRect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+      }
+
+      // =========================================================
+      // 5. PLATFORMS
+      // =========================================================
+      class Platform {
+        constructor(x, y, type = 'normal') {
+          this.x = x; this.y = y;
+          this.w = CONFIG.PLATFORM_WIDTH;
+          this.h = CONFIG.PLATFORM_HEIGHT;
+          this.type = type;            // normal | moving | breakable
+          this.broken = false;
+          this.cracked = false;
+          this.dir = Math.random() < 0.5 ? -1 : 1;
+          this.speed = Utils.rand(0.8, 1.6);
+          this.bobPhase = Math.random() * Math.PI * 2;
+        }
+        rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+
+        update(dt) {
+          if (this.broken) return;
+          if (this.type === 'moving') {
+            this.x += this.dir * this.speed;
+            // Clamp moving platform to SAFE ZONE only
+            if (this.x < CONFIG.SAFE_X_MIN) { this.x = CONFIG.SAFE_X_MIN; this.dir = 1; }
+            if (this.x + this.w > CONFIG.SAFE_X_MAX) { this.x = CONFIG.SAFE_X_MAX - this.w; this.dir = -1; }
+          }
+          this.bobPhase += dt * 0.003;
+        }
+
+        onBounce() {
+          if (this.type === 'breakable') {
+            if (this.cracked) {
+              this.broken = true;
+              Game.spawnParticles(this.x + this.w / 2, this.y + this.h / 2, '#9CC2A1', 10);
+              return false;       // can't bounce on broken
+            } else {
+              this.cracked = true;
+              return true;
+            }
+          }
+          return true;
+        }
+
+        draw(ctx, camY) {
+          if (this.broken) return;
+          const sx = this.x;
+          const sy = this.y - camY + Math.sin(this.bobPhase) * 1.5;
+          const w = this.w;
+          const h = this.h;
+
+          ctx.save();
+
+          // Determine palette by platform type
+          let grassTop, grassMid, grassBottom, dirtTop, dirtBot, edgeColor, vineColor, vineDark;
+          if (this.type === 'moving') {
+            // Stone-blue floating chunk for moving platforms
+            grassTop = '#4FC3F7';
+            grassMid = '#29B6F6';
+            grassBottom = '#0277BD';
+            dirtTop = '#90A4AE';
+            dirtBot = '#37474F';
+            edgeColor = '#01579B';
+            vineColor = '#26C6DA';
+            vineDark = '#006064';
+          } else if (this.type === 'breakable') {
+            grassTop = this.cracked ? '#FFCC80' : '#D7B299';
+            grassMid = this.cracked ? '#FF9800' : '#8D6E63';
+            grassBottom = this.cracked ? '#E65100' : '#5D4037';
+            dirtTop = '#8D6E63';
+            dirtBot = '#3E2723';
+            edgeColor = '#3E2723';
+            vineColor = '#A1887F';
+            vineDark = '#5D4037';
+          } else {
+            // Normal — lush grass on top, dirt cone below
+            grassTop = '#C8F08A';
+            grassMid = '#7CB342';
+            grassBottom = '#558B2F';
+            dirtTop = '#A1714F';
+            dirtBot = '#3E2723';
+            edgeColor = '#2E5E14';
+            vineColor = '#7CB342';
+            vineDark = '#33691E';
+          }
+
+          // === DROP SHADOW (soft, behind) ===
+          ctx.save();
+          ctx.globalAlpha = 0.22;
+          ctx.fillStyle = '#001a33';
+          ctx.beginPath();
+          ctx.ellipse(sx + w / 2 + 4, sy + h * 1.3 + 8, w * 0.45, h * 0.30, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // === DIRT/ROCK BASE (jagged cone pointing downward) ===
+          ctx.save();
+          const dirtGrad = ctx.createLinearGradient(0, sy + h * 0.5, 0, sy + h * 1.9);
+          dirtGrad.addColorStop(0, dirtTop);
+          dirtGrad.addColorStop(0.6, shadeColor(dirtTop, -25));
+          dirtGrad.addColorStop(1, dirtBot);
+          ctx.fillStyle = dirtGrad;
+
+          // Build jagged base path
+          ctx.beginPath();
+          ctx.moveTo(sx + 2, sy + h * 0.55);                          // top-left edge of dirt
+          ctx.lineTo(sx + 8, sy + h * 0.95);                          // jag
+          ctx.lineTo(sx + 18, sy + h * 0.80);                          // jag in
+          ctx.lineTo(sx + 22, sy + h * 1.30);                          // pointing down
+          ctx.lineTo(sx + 32, sy + h * 1.10);
+          ctx.lineTo(sx + w * 0.45, sy + h * 1.85);                          // tip
+          ctx.lineTo(sx + w * 0.60, sy + h * 1.15);
+          ctx.lineTo(sx + w * 0.72, sy + h * 1.40);
+          ctx.lineTo(sx + w * 0.82, sy + h * 0.85);
+          ctx.lineTo(sx + w * 0.92, sy + h * 1.05);
+          ctx.lineTo(sx + w - 2, sy + h * 0.55);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = edgeColor; ctx.lineWidth = 1.8; ctx.stroke();
+
+          // Rock highlights on the left side (light catches)
+          ctx.fillStyle = 'rgba(255,255,255,0.18)';
+          ctx.beginPath();
+          ctx.moveTo(sx + 6, sy + h * 0.65);
+          ctx.lineTo(sx + 14, sy + h * 0.95);
+          ctx.lineTo(sx + 10, sy + h * 0.75);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(sx + w * 0.40, sy + h * 1.10);
+          ctx.lineTo(sx + w * 0.45, sy + h * 1.50);
+          ctx.lineTo(sx + w * 0.42, sy + h * 1.25);
+          ctx.closePath();
+          ctx.fill();
+          // Dark crevice (right side)
+          ctx.fillStyle = 'rgba(0,0,0,0.20)';
+          ctx.beginPath();
+          ctx.moveTo(sx + w * 0.65, sy + h * 1.00);
+          ctx.lineTo(sx + w * 0.72, sy + h * 1.40);
+          ctx.lineTo(sx + w * 0.68, sy + h * 1.15);
+          ctx.closePath();
+          ctx.fill();
+
+          // === PEBBLE TEXTURE (small bright dots scattered on dirt) ===
+          ctx.fillStyle = 'rgba(255,235,200,0.30)';
+          const lightPebbles = [
+            [0.18, 0.85, 1.0], [0.30, 1.15, 0.8], [0.55, 0.95, 1.2],
+            [0.45, 1.50, 0.7], [0.78, 1.05, 1.0], [0.10, 1.10, 0.6],
+            [0.62, 1.55, 0.8], [0.32, 0.78, 0.7]
+          ];
+          for (const [px, py, r] of lightPebbles) {
+            ctx.beginPath();
+            ctx.arc(sx + w * px, sy + h * py, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // Dark pebble shadow companions
+          ctx.fillStyle = 'rgba(20,10,5,0.30)';
+          const darkPebbles = [
+            [0.22, 1.00, 0.7], [0.42, 1.30, 0.8], [0.60, 1.20, 0.6],
+            [0.72, 1.42, 0.7], [0.16, 0.98, 0.5], [0.50, 0.85, 0.6]
+          ];
+          for (const [px, py, r] of darkPebbles) {
+            ctx.beginPath();
+            ctx.arc(sx + w * px, sy + h * py, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // === MOSS TUFTS (small dark green dots near dirt top — only normal type) ===
+          if (this.type === 'normal') {
+            ctx.fillStyle = '#33691E';
+            const mossSpots = [[0.10, 0.62], [0.55, 0.65], [0.85, 0.62]];
+            for (const [px, py] of mossSpots) {
+              ctx.beginPath();
+              ctx.ellipse(sx + w * px, sy + h * py, 2.5, 1.2, 0, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+
+          // === HANGING VINES (drape over edges of dirt) ===
+          ctx.save();
+          ctx.strokeStyle = vineDark; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+          // Left vine
+          ctx.beginPath();
+          ctx.moveTo(sx + 6, sy + h * 0.55);
+          ctx.bezierCurveTo(sx + 4, sy + h * 0.85, sx + 8, sy + h * 1.05, sx + 4, sy + h * 1.30);
+          ctx.stroke();
+          // Right vine
+          ctx.beginPath();
+          ctx.moveTo(sx + w - 6, sy + h * 0.55);
+          ctx.bezierCurveTo(sx + w - 8, sy + h * 0.80, sx + w - 4, sy + h * 1.00, sx + w - 6, sy + h * 1.20);
+          ctx.stroke();
+          // Vine leaves (small)
+          ctx.fillStyle = vineColor;
+          const drawLeaf = (lx, ly, ang) => {
+            ctx.save();
+            ctx.translate(lx, ly);
+            ctx.rotate(ang);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 4, 2.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = vineDark; ctx.lineWidth = 0.8; ctx.stroke();
+            ctx.restore();
+          };
+          drawLeaf(sx + 3, sy + h * 0.85, 0.4);
+          drawLeaf(sx + 6, sy + h * 1.10, -0.3);
+          drawLeaf(sx + 2, sy + h * 1.28, 0.5);
+          drawLeaf(sx + w - 4, sy + h * 0.78, -0.4);
+          drawLeaf(sx + w - 7, sy + h * 1.02, 0.3);
+          drawLeaf(sx + w - 5, sy + h * 1.20, -0.4);
+          ctx.restore();
+
+          // === GRASS TOP (lush rounded chunk) ===
+          ctx.save();
+          const grassGrad = ctx.createLinearGradient(0, sy - 2, 0, sy + h * 0.55);
+          grassGrad.addColorStop(0, grassTop);
+          grassGrad.addColorStop(0.5, grassMid);
+          grassGrad.addColorStop(1, grassBottom);
+          ctx.fillStyle = grassGrad;
+
+          // Bumpy top surface (slight wave)
+          ctx.beginPath();
+          ctx.moveTo(sx + 2, sy + h * 0.55);
+          ctx.lineTo(sx + 2, sy + 6);
+          ctx.bezierCurveTo(sx + 2, sy - 2, sx + 8, sy - 4, sx + 14, sy - 2);
+          ctx.bezierCurveTo(sx + 22, sy - 5, sx + 32, sy - 3, sx + 40, sy - 4);
+          ctx.bezierCurveTo(sx + 50, sy - 6, sx + 58, sy - 2, sx + w - 14, sy - 3);
+          ctx.bezierCurveTo(sx + w - 6, sy - 4, sx + w - 2, sy - 1, sx + w - 2, sy + 6);
+          ctx.lineTo(sx + w - 2, sy + h * 0.55);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = edgeColor; ctx.lineWidth = 2; ctx.stroke();
+
+          // Lighter top highlight
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          ctx.beginPath();
+          ctx.ellipse(sx + w * 0.35, sy + 2, w * 0.30, 2.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // === DENSE BEZIER GRASS BLADES (curved, along top edge) ===
+          if (this.type !== 'breakable') {
+            ctx.lineCap = 'round';
+            // Build dense blade array — deterministic from x position to avoid flicker
+            const blades = [];
+            const seedG = Math.floor(this.x * 7);
+            for (let i = 0; i < 18; i++) {
+              const x = 3 + i * (w - 6) / 17;
+              const heightVar = ((seedG + i * 13) % 7) * 0.6 + 4;       // 4..8
+              const lean = (((seedG + i * 11) % 5) - 2) * 0.6;     // -1.2..+1.2
+              blades.push({ x, h: heightVar, lean });
+            }
+            for (const b of blades) {
+              const bx = sx + b.x;
+              const tipX = bx + b.lean;
+              const tipY = sy - b.h;
+              // Back blade (darker, slightly back)
+              ctx.strokeStyle = grassBottom; ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(bx, sy + 0.5);
+              ctx.quadraticCurveTo(bx + b.lean * 0.4, sy - b.h * 0.55, tipX, tipY);
+              ctx.stroke();
+              // Front blade (bright)
+              ctx.strokeStyle = grassTop; ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.moveTo(bx + 0.5, sy);
+              ctx.quadraticCurveTo(bx + b.lean * 0.4 + 0.5, sy - b.h * 0.55, tipX + 0.5, tipY);
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+
+          // === DECORATIVE ITEMS ON GRASS ===
+          if (this.type === 'normal') {
+            // 1-2 yellow star flowers (deterministic from x position)
+            const seed = Math.floor((this.x * 13 + this.y * 7) % 100);
+            if (seed % 3 === 0) drawStarFlower(ctx, sx + w * 0.25, sy + 2, 5);
+            if (seed % 5 === 1) drawStarFlower(ctx, sx + w * 0.70, sy + 2, 4);
+          } else if (this.type === 'moving') {
+            // Direction arrow (white, bigger)
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 4;
+            const ax = sx + w / 2, ay = sy + h * 0.30;
+            ctx.beginPath();
+            if (this.dir > 0) {
+              ctx.moveTo(ax - 7, ay - 5); ctx.lineTo(ax + 7, ay); ctx.lineTo(ax - 7, ay + 5);
+            } else {
+              ctx.moveTo(ax + 7, ay - 5); ctx.lineTo(ax - 7, ay); ctx.lineTo(ax + 7, ay + 5);
+            }
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
+          } else if (this.type === 'breakable' && this.cracked) {
+            // Crack lines
+            ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(sx + 14, sy + 2); ctx.lineTo(sx + 22, sy + 10); ctx.lineTo(sx + 18, sy + 14);
+            ctx.moveTo(sx + 36, sy + 4); ctx.lineTo(sx + 44, sy + 11);
+            ctx.moveTo(sx + 54, sy + 2); ctx.lineTo(sx + 62, sy + 10);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // ---- Star flower decoration on grass ----
+      function drawStarFlower(ctx, x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        // 5 yellow petals
+        ctx.fillStyle = '#FFD75A';
+        ctx.strokeStyle = '#B07700'; ctx.lineWidth = 0.8;
+        for (let i = 0; i < 5; i++) {
+          ctx.save();
+          ctx.rotate((i / 5) * Math.PI * 2);
+          ctx.beginPath();
+          ctx.ellipse(0, -size * 0.7, size * 0.45, size * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        // center
+        ctx.fillStyle = '#FF9800';
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#B07700'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
+      }
+
+      // =========================================================
+      // 6. COLLECTIBLES
+      // =========================================================
+      class Coin {
+        // Now a glossy 3D golden STAR (like the one on the platform in the reference)
+        // Sized proportional to player (~46% of player width)
+        constructor(x, y) { this.x = x; this.y = y; this.w = 24; this.h = 24; this.collected = false; this.t = 0; }
+        rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+        update(dt) { this.t += dt; }
+        draw(ctx, camY) {
+          if (this.collected) return;
+          const cx = this.x + this.w / 2;
+          const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.005) * 3;
+
+          ctx.save();
+          // Glow halo
+          const halo = ctx.createRadialGradient(cx, cy, 2, cx, cy, this.w);
+          halo.addColorStop(0, 'rgba(255, 240, 130, 0.45)');
+          halo.addColorStop(0.5, 'rgba(255, 215, 90, 0.15)');
+          halo.addColorStop(1, 'rgba(255, 215, 90, 0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(cx, cy, this.w, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Star body — drawn with rotation wobble
+          ctx.translate(cx, cy);
+          ctx.rotate(Math.sin(this.t * 0.004) * 0.15);
+          const r = this.w * 0.5;
+          drawStarShape(ctx, 0, 0, r, r * 0.45, 5);
+
+          // Gold gradient fill
+          const grad = ctx.createRadialGradient(-r * 0.25, -r * 0.30, 1, 0, 0, r);
+          grad.addColorStop(0, '#FFFDE7');
+          grad.addColorStop(0.3, '#FFE082');
+          grad.addColorStop(0.7, '#FFC107');
+          grad.addColorStop(1, '#F57C00');
+          ctx.fillStyle = grad;
+          ctx.fill();
+          ctx.strokeStyle = '#7A4500'; ctx.lineWidth = 1.8; ctx.stroke();
+
+          // Inner highlight (specular sheen)
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.ellipse(-r * 0.20, -r * 0.30, r * 0.30, r * 0.18, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          // tiny shine dot
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.beginPath();
+          ctx.arc(-r * 0.30, -r * 0.40, r * 0.10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Sparkles around the star (twinkling)
+          const tw = (Math.sin(this.t * 0.006) + 1) / 2;
+          ctx.globalAlpha = tw * 0.9;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(r * 1.0, -r * 0.7, 1.2, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(-r * 0.9, r * 0.7, 1.0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(r * 0.8, r * 1.0, 0.8, 0, Math.PI * 2); ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      // ---- Star shape helper (n-point star) ----
+      function drawStarShape(ctx, cx, cy, outerR, innerR, points) {
+        ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+          const r = (i % 2 === 0) ? outerR : innerR;
+          const ang = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+          const x = cx + Math.cos(ang) * r;
+          const y = cy + Math.sin(ang) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+      }
+
+      class MysteryBox {
+        // Glossy magical wooden chest with golden trim — proportional to player
+        constructor(x, y) { this.x = x; this.y = y; this.w = 32; this.h = 28; this.collected = false; this.t = 0; }
+        rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+        update(dt) { this.t += dt; }
+        draw(ctx, camY) {
+          if (this.collected) return;
+          const cx = this.x + this.w / 2;
+          const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.004) * 2;
+          const w = this.w, h = this.h;
+
+          ctx.save();
+
+          // Magical pulsing glow halo
+          const pulseHalo = 1 + Math.sin(this.t * 0.005) * 0.18;
+          const haloR = w * 1.05 * pulseHalo;
+          const halo = ctx.createRadialGradient(cx, cy, 2, cx, cy, haloR);
+          halo.addColorStop(0, 'rgba(255, 240, 160, 0.55)');
+          halo.addColorStop(0.35, 'rgba(255, 200, 100, 0.30)');
+          halo.addColorStop(0.7, 'rgba(255, 180, 80, 0.10)');
+          halo.addColorStop(1, 'rgba(255, 180, 80, 0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, Math.PI * 2); ctx.fill();
+
+          ctx.translate(cx, cy);
+          ctx.rotate(Math.sin(this.t * 0.003) * 0.10);
+
+          // === Chest base (wooden body) ===
+          const woodGrad = ctx.createLinearGradient(0, -h * 0.05, 0, h * 0.50);
+          woodGrad.addColorStop(0, '#A1714F');
+          woodGrad.addColorStop(0.5, '#7A4D2E');
+          woodGrad.addColorStop(1, '#3E2723');
+          ctx.fillStyle = woodGrad;
+          roundRect(ctx, -w / 2, -h * 0.05, w, h * 0.55, 4); ctx.fill();
+          ctx.strokeStyle = '#1B0E07'; ctx.lineWidth = 2; ctx.stroke();
+          // Wood plank lines
+          ctx.strokeStyle = 'rgba(0,0,0,0.30)'; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-w * 0.20, -h * 0.05); ctx.lineTo(-w * 0.20, h * 0.50);
+          ctx.moveTo(w * 0.10, -h * 0.05); ctx.lineTo(w * 0.10, h * 0.50);
+          ctx.stroke();
+
+          // === Chest lid (rounded top) ===
+          const lidGrad = ctx.createLinearGradient(0, -h * 0.50, 0, -h * 0.05);
+          lidGrad.addColorStop(0, '#C99E73');
+          lidGrad.addColorStop(0.5, '#8E5F38');
+          lidGrad.addColorStop(1, '#5D3A1F');
+          ctx.fillStyle = lidGrad;
+          ctx.beginPath();
+          ctx.moveTo(-w / 2, -h * 0.05);
+          ctx.lineTo(-w / 2, -h * 0.30);
+          ctx.bezierCurveTo(-w / 2, -h * 0.55, w / 2, -h * 0.55, w / 2, -h * 0.30);
+          ctx.lineTo(w / 2, -h * 0.05);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#1B0E07'; ctx.lineWidth = 2; ctx.stroke();
+          // Lid highlight
+          ctx.fillStyle = 'rgba(255,255,255,0.30)';
+          ctx.beginPath();
+          ctx.ellipse(-w * 0.10, -h * 0.40, w * 0.20, h * 0.06, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // === Golden trim bands (top/bottom + center vertical) ===
+          const goldGrad = ctx.createLinearGradient(0, 0, 0, h * 0.04);
+          goldGrad.addColorStop(0, '#FFE082');
+          goldGrad.addColorStop(0.5, '#FFC107');
+          goldGrad.addColorStop(1, '#B07700');
+          ctx.fillStyle = goldGrad;
+          // top trim (curved over lid)
+          ctx.fillRect(-w / 2, -h * 0.10, w, h * 0.06);
+          // bottom trim
+          ctx.fillRect(-w / 2, h * 0.42, w, h * 0.06);
+          // center vertical
+          ctx.fillRect(-w * 0.06, -h * 0.45, w * 0.12, h * 0.95);
+          ctx.strokeStyle = '#7A4500'; ctx.lineWidth = 0.8;
+          ctx.strokeRect(-w / 2, -h * 0.10, w, h * 0.06);
+          ctx.strokeRect(-w / 2, h * 0.42, w, h * 0.06);
+          ctx.strokeRect(-w * 0.06, -h * 0.45, w * 0.12, h * 0.95);
+
+          // === Lock plate (with specular shine) ===
+          const lockGrad = ctx.createRadialGradient(-w * 0.04, h * 0.02, 1, 0, h * 0.05, w * 0.18);
+          lockGrad.addColorStop(0, '#FFFDE7');
+          lockGrad.addColorStop(0.3, '#FFEB3B');
+          lockGrad.addColorStop(0.7, '#FFC107');
+          lockGrad.addColorStop(1, '#7A4500');
+          ctx.fillStyle = lockGrad;
+          roundRect(ctx, -w * 0.10, h * 0.00, w * 0.20, h * 0.18, 3); ctx.fill();
+          ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 1.5; ctx.stroke();
+          // shine highlight on top of lock
+          ctx.fillStyle = 'rgba(255,255,255,0.65)';
+          ctx.fillRect(-w * 0.08, h * 0.012, w * 0.07, h * 0.012);
+          // keyhole
+          ctx.fillStyle = '#1B0E07';
+          ctx.beginPath();
+          ctx.arc(0, h * 0.07, w * 0.04, 0, Math.PI * 2); ctx.fill();
+          ctx.fillRect(-w * 0.012, h * 0.07, w * 0.024, h * 0.06);
+
+          const pulse = (Math.sin(this.t * 0.008) + 1) / 2;
+
+          // === ✨ symbol on top to hint magical ===
+          ctx.save();
+          ctx.globalAlpha = 0.55 + pulse * 0.4;
+          ctx.fillStyle = '#FFEB3B';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('?', 0, h * 0.07);
+          ctx.restore();
+
+          // Sparkles
+          ctx.globalAlpha = 0.7 + pulse * 0.3;
+          ctx.fillStyle = '#fff';
+          drawSparkle(ctx, w * 0.55, -h * 0.45, 3);
+          drawSparkle(ctx, -w * 0.55, h * 0.10, 2.5);
+          drawSparkle(ctx, w * 0.55, h * 0.40, 2);
+
+          ctx.restore();
+        }
+      }
+
+      // 4-point sparkle helper
+      function drawSparkle(ctx, x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(size * 0.3, -size * 0.3);
+        ctx.lineTo(size, 0);
+        ctx.lineTo(size * 0.3, size * 0.3);
+        ctx.lineTo(0, size);
+        ctx.lineTo(-size * 0.3, size * 0.3);
+        ctx.lineTo(-size, 0);
+        ctx.lineTo(-size * 0.3, -size * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      class Spring {
+        constructor(platform) {
+          this.platform = platform;
+          this.compress = 0;     // 0 normal, 1 fully compressed
+          this.compressTimer = 0;
+        }
+        rect() {
+          const px = this.platform.x + this.platform.w / 2 - 14;
+          const py = this.platform.y - 16;
+          return { x: px, y: py, w: 28, h: 18 };
+        }
+        trigger() { this.compress = 1; this.compressTimer = 200; }
+        update(dt) {
+          if (this.compressTimer > 0) {
+            this.compressTimer -= dt;
+            this.compress = Math.max(0, this.compressTimer / 200);
+          }
+        }
+        draw(ctx, camY) {
+          const r = this.rect();
+          const sy = r.y - camY;
+          const compress = this.compress * 8; // pixels squashed
+          const cx = r.x + r.w / 2;
+
+          ctx.save();
+
+          // === GREEN/YELLOW BASE PAD (sits on platform) ===
+          const padGrad = ctx.createLinearGradient(0, sy + r.h - 6, 0, sy + r.h);
+          padGrad.addColorStop(0, '#FFE082');
+          padGrad.addColorStop(0.5, '#FFC107');
+          padGrad.addColorStop(1, '#B07700');
+          ctx.fillStyle = padGrad;
+          roundRect(ctx, r.x - 2, sy + r.h - 6, r.w + 4, 6, 2); ctx.fill();
+          ctx.strokeStyle = '#5A3010'; ctx.lineWidth = 1.5; ctx.stroke();
+
+          // === METALLIC SILVER COIL ===
+          // Each coil ring is drawn as a small ellipse with a horizontal gradient
+          const coilTop = sy + compress;
+          const coilHeight = r.h - 6 - compress;
+          const numCoils = 3;
+          for (let i = 0; i < numCoils; i++) {
+            const yy = coilTop + (coilHeight / numCoils) * i + 4;
+            // Gradient — bright on left, dark on right (metallic feel)
+            const cg = ctx.createLinearGradient(r.x, 0, r.x + r.w, 0);
+            cg.addColorStop(0, '#E0E0E0');
+            cg.addColorStop(0.4, '#FFFFFF');
+            cg.addColorStop(0.6, '#9E9E9E');
+            cg.addColorStop(1, '#424242');
+            ctx.fillStyle = cg;
+            ctx.strokeStyle = '#212121'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(cx, yy, r.w * 0.42, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          // === TOP CAP (shiny red disc that player bounces on) ===
+          const capGrad = ctx.createLinearGradient(0, coilTop - 4, 0, coilTop + 4);
+          capGrad.addColorStop(0, '#FFCDD2');
+          capGrad.addColorStop(0.5, '#E53935');
+          capGrad.addColorStop(1, '#8E1D1D');
+          ctx.fillStyle = capGrad;
+          roundRect(ctx, r.x - 1, coilTop - 2, r.w + 2, 7, 3); ctx.fill();
+          ctx.strokeStyle = '#5A0F0F'; ctx.lineWidth = 1.5; ctx.stroke();
+          // Top highlight
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.fillRect(r.x + 2, coilTop - 1, r.w * 0.50, 1.2);
+
+          ctx.restore();
+        }
+      }
+
+      // =========================================================
+      // 7. PARTICLES
+      // =========================================================
+      class Particle {
+        constructor(x, y, color) {
+          this.x = x; this.y = y;
+          this.vx = Utils.rand(-3, 3);
+          this.vy = Utils.rand(-5, -1);
+          this.life = 1;
+          this.color = color;
+          this.size = Utils.rand(2, 5);
+        }
+        update(dt) {
+          this.x += this.vx; this.y += this.vy; this.vy += 0.2;
+          this.life -= 0.02;
+        }
+        draw(ctx, camY) {
+          if (this.life <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = this.life;
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - camY, this.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // =========================================================
+      // 8. BACKGROUND (parallax sky + 3D clouds + castle + balloon + rainbow + waterfalls)
+      // =========================================================
+      class Background {
+        constructor() {
+          this.clouds = [];
+          this.farClouds = [];         // super-far hazy clouds for depth
+          this.farIslands = [];        // mid-distance: with waterfalls
+          this.castleIslands = [];     // far: with castle
+          this.balloons = [];
+          this.birds = [];
+
+          // Foreground fluffy 3D clouds — multiple layers, varied sizes
+          for (let i = 0; i < 14; i++) {
+            this.clouds.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Math.random() * CONFIG.HEIGHT * 5,
+              size: Utils.rand(60, 150),
+              speed: Utils.rand(0.04, 0.18),
+              depth: Utils.rand(0.30, 0.70),
+              seed: Math.random() * 100,
+            });
+          }
+          // SUPER-FAR clouds (tiny, hazy, very slow parallax — fake atmospheric depth)
+          for (let i = 0; i < 18; i++) {
+            this.farClouds.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Math.random() * CONFIG.HEIGHT * 5,
+              size: Utils.rand(20, 50),
+              speed: Utils.rand(0.01, 0.04),
+              depth: Utils.rand(0.06, 0.18),
+              seed: Math.random() * 100,
+            });
+          }
+          // Distant bird silhouettes (V-shape) for life
+          for (let i = 0; i < 5; i++) {
+            this.birds.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Utils.rand(60, CONFIG.HEIGHT * 5),
+              size: Utils.rand(4, 8),
+              depth: Utils.rand(0.10, 0.25),
+              speed: Utils.rand(0.15, 0.35),
+              flapPhase: Math.random() * Math.PI * 2,
+            });
+          }
+          // Mid-distance islands (with waterfalls)
+          for (let i = 0; i < 5; i++) {
+            this.farIslands.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Utils.rand(200, CONFIG.HEIGHT * 5),
+              size: Utils.rand(60, 100),
+              depth: Utils.rand(0.30, 0.50),
+              waterfall: Math.random() < 0.7,
+              wfPhase: Math.random() * Math.PI * 2,
+            });
+          }
+          // Castle islands — only 1-2, far away (slow parallax)
+          for (let i = 0; i < 2; i++) {
+            this.castleIslands.push({
+              x: Utils.rand(60, CONFIG.WIDTH - 60),
+              y: Utils.rand(CONFIG.HEIGHT * 0.2, CONFIG.HEIGHT * 5),
+              size: Utils.rand(110, 150),
+              depth: Utils.rand(0.15, 0.25),   // very slow parallax → looks far
+            });
+          }
+          // Hot air balloons
+          for (let i = 0; i < 3; i++) {
+            this.balloons.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Utils.rand(100, CONFIG.HEIGHT * 5),
+              size: Utils.rand(28, 44),
+              depth: Utils.rand(0.20, 0.35),
+              drift: Utils.rand(0.02, 0.05),
+              bobPhase: Math.random() * Math.PI * 2,
+              color: ['#FF8A65', '#FFB74D', '#F06292'][i % 3],
+            });
+          }
+        }
+
+        draw(ctx, camY) {
+          // === SKY GRADIENT (rich blue → light cyan) ===
+          const sky = ctx.createLinearGradient(0, 0, 0, CONFIG.HEIGHT);
+          sky.addColorStop(0, '#1976D2');
+          sky.addColorStop(0.35, '#42A5F5');
+          sky.addColorStop(0.7, '#81D4FA');
+          sky.addColorStop(1, '#B3E5FC');
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+
+          // === SUN GLOW (top-right, big & warm) ===
+          const sunX = CONFIG.WIDTH * 0.83;
+          const sunY = CONFIG.HEIGHT * 0.10;
+          // Outer glow — wide warm corona
+          const coronaGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 320);
+          coronaGrad.addColorStop(0, 'rgba(255, 250, 220, 0.65)');
+          coronaGrad.addColorStop(0.25, 'rgba(255, 235, 170, 0.35)');
+          coronaGrad.addColorStop(0.55, 'rgba(255, 220, 130, 0.15)');
+          coronaGrad.addColorStop(1, 'rgba(255, 220, 130, 0)');
+          ctx.fillStyle = coronaGrad;
+          ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+          // Inner sun core (bright disc)
+          const sunCore = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+          sunCore.addColorStop(0, 'rgba(255, 255, 240, 0.95)');
+          sunCore.addColorStop(0.5, 'rgba(255, 245, 200, 0.55)');
+          sunCore.addColorStop(1, 'rgba(255, 220, 130, 0)');
+          ctx.fillStyle = sunCore;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+          ctx.fill();
+
+          // === ATMOSPHERIC HAZE BAND (mid-altitude) — fakes deep distance ===
+          const haze = ctx.createLinearGradient(0, CONFIG.HEIGHT * 0.30, 0, CONFIG.HEIGHT * 0.70);
+          haze.addColorStop(0, 'rgba(255,255,255,0)');
+          haze.addColorStop(0.5, 'rgba(220,235,250,0.18)');
+          haze.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = haze;
+          ctx.fillRect(0, CONFIG.HEIGHT * 0.30, CONFIG.WIDTH, CONFIG.HEIGHT * 0.40);
+
+          // === RAINBOW (very slow parallax — gives sense of distance) ===
+          drawRainbow(ctx, CONFIG.WIDTH + 30, CONFIG.HEIGHT * 0.55 - camY * 0.10, 240);
+
+          // === SUPER-FAR HAZY CLOUDS (background atmospheric layer) ===
+          for (const c of this.farClouds) {
+            c.x += c.speed;
+            if (c.x > CONFIG.WIDTH + 60) c.x = -60;
+            const py = wrapY(c.y - camY * c.depth);
+            if (py > -50 && py < CONFIG.HEIGHT + 50) {
+              drawFluffyCloud(ctx, c.x, py, c.size, 0.30 + c.depth * 0.4, c.seed);
+            }
+          }
+
+          // === DISTANT BIRDS (V silhouettes) ===
+          for (const b of this.birds) {
+            b.x += b.speed;
+            if (b.x > CONFIG.WIDTH + 30) b.x = -30;
+            const py = wrapY(b.y - camY * b.depth);
+            if (py > -20 && py < CONFIG.HEIGHT + 20) {
+              drawBird(ctx, b.x, py, b.size, performance.now() * 0.008 + b.flapPhase);
+            }
+          }
+
+          // === CASTLE ISLANDS (far, slowest parallax) — with atmospheric tint ===
+          for (const it of this.castleIslands) {
+            const py = wrapY(it.y - camY * it.depth);
+            if (py > -200 && py < CONFIG.HEIGHT + 200) {
+              ctx.save();
+              ctx.globalAlpha = 0.78;
+              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, true /*hasCastle*/);
+              // Atmospheric haze tint over the whole castle island
+              ctx.globalCompositeOperation = 'source-atop';
+              ctx.fillStyle = 'rgba(180, 215, 245, 0.30)';
+              ctx.fillRect(it.x - it.size, py - it.size, it.size * 2.2, it.size * 2.5);
+              ctx.restore();
+            }
+          }
+
+          // === HOT AIR BALLOONS ===
+          for (const b of this.balloons) {
+            b.x += b.drift;
+            if (b.x > CONFIG.WIDTH + 50) b.x = -50;
+            b.bobPhase += 0.01;
+            const py = wrapY(b.y - camY * b.depth) + Math.sin(b.bobPhase) * 4;
+            if (py > -80 && py < CONFIG.HEIGHT + 80) {
+              drawHotAirBalloon(ctx, b.x, py, b.size, b.color);
+            }
+          }
+
+          // === MID-DISTANCE ISLANDS (with waterfalls) — slight haze ===
+          for (const it of this.farIslands) {
+            const py = wrapY(it.y - camY * it.depth);
+            if (py > -200 && py < CONFIG.HEIGHT + 200) {
+              ctx.save();
+              ctx.globalAlpha = 0.88;
+              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, false);
+              if (it.waterfall) {
+                drawBackgroundWaterfall(ctx, it.x, py + it.size * 0.45, it.size * 0.5, performance.now() * 0.005 + it.wfPhase);
+              }
+              // Subtle atmospheric tint
+              ctx.globalCompositeOperation = 'source-atop';
+              ctx.fillStyle = 'rgba(180, 215, 245, 0.18)';
+              ctx.fillRect(it.x - it.size, py - it.size * 0.3, it.size * 2.2, it.size * 2.5);
+              ctx.restore();
+            }
+          }
+
+          // === FOREGROUND FLUFFY 3D CLOUDS (parallax based on depth) ===
+          for (const c of this.clouds) {
+            c.x += c.speed;
+            if (c.x > CONFIG.WIDTH + 150) c.x = -150;
+            const py = wrapY(c.y - camY * c.depth);
+            if (py > -120 && py < CONFIG.HEIGHT + 120) {
+              const alpha = 0.65 + c.depth * 0.35;
+              drawFluffyCloud(ctx, c.x, py, c.size, alpha, c.seed);
+            }
+          }
+        }
+      }
+
+      // ---- Background drawing helpers ----
+      function wrapY(y) {
+        const period = CONFIG.HEIGHT * 5;
+        return ((y % period) + period) % period;
+      }
+
+      function drawFluffyCloud(ctx, x, y, size, alpha, seed) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // Deterministic puff offsets from seed (more puffs = denser cotton)
+        const s = seed || 0;
+        const puffs = [
+          { dx: 0, dy: 0, r: size * 0.50 },
+          { dx: size * 0.38, dy: -size * 0.08, r: size * 0.42 },
+          { dx: -size * 0.40, dy: -size * 0.05 + Math.sin(s) * size * 0.02, r: size * 0.38 },
+          { dx: size * 0.68, dy: size * 0.06, r: size * 0.30 },
+          { dx: -size * 0.62, dy: size * 0.08 + Math.cos(s) * size * 0.02, r: size * 0.28 },
+          { dx: size * 0.12, dy: -size * 0.22, r: size * 0.34 },
+          { dx: size * 0.50, dy: -size * 0.18, r: size * 0.26 },
+          { dx: -size * 0.20, dy: -size * 0.20 + Math.sin(s * 2) * size * 0.02, r: size * 0.30 },
+        ];
+
+        // 1) DEEP UNDERSIDE SHADOW (blue/gray ambient occlusion)
+        ctx.save();
+        ctx.translate(x, y);
+        const shadowGrad = ctx.createLinearGradient(0, -size * 0.15, 0, size * 0.55);
+        shadowGrad.addColorStop(0, 'rgba(160, 185, 215, 0)');
+        shadowGrad.addColorStop(0.5, 'rgba(120, 150, 190, 0.35)');
+        shadowGrad.addColorStop(1, 'rgba(80, 110, 160, 0.7)');
+        ctx.fillStyle = shadowGrad;
+        ctx.beginPath();
+        for (const p of puffs) ctx.arc(p.dx, p.dy + 6, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 2) MAIN CLOUD BODY — voluminous radial gradient (each puff = 3D sphere)
+        ctx.save();
+        ctx.translate(x, y);
+        for (const p of puffs) {
+          const g = ctx.createRadialGradient(
+            p.dx - p.r * 0.35, p.dy - p.r * 0.45, p.r * 0.05,
+            p.dx + p.r * 0.15, p.dy + p.r * 0.25, p.r * 1.05
+          );
+          g.addColorStop(0, '#FFFFFF');
+          g.addColorStop(0.45, '#FAFCFF');
+          g.addColorStop(0.75, '#DEE7F0');
+          g.addColorStop(1, '#A8BCD4');     // deeper bottom shadow
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(p.dx, p.dy, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 3) BRIGHT TOP HIGHLIGHTS — sun-lit upper edge
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.globalAlpha = 0.85 * alpha;
+        for (const p of puffs.slice(0, 4)) {
+          const hg = ctx.createRadialGradient(
+            p.dx - p.r * 0.30, p.dy - p.r * 0.45, 0,
+            p.dx - p.r * 0.20, p.dy - p.r * 0.35, p.r * 0.55
+          );
+          hg.addColorStop(0, 'rgba(255,255,250,1)');
+          hg.addColorStop(0.6, 'rgba(255,253,240,0.55)');
+          hg.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = hg;
+          ctx.beginPath();
+          ctx.ellipse(p.dx - p.r * 0.22, p.dy - p.r * 0.40, p.r * 0.50, p.r * 0.22, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 4) SOFT RIM LIGHT (golden tint — sun lighting from top-right)
+        ctx.globalAlpha = 0.30 * alpha;
+        ctx.fillStyle = 'rgba(255, 230, 170, 0.6)';
+        for (const p of puffs.slice(0, 3)) {
+          ctx.beginPath();
+          ctx.ellipse(p.dx + p.r * 0.25, p.dy - p.r * 0.35, p.r * 0.30, p.r * 0.10, 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+        ctx.restore();
+      }
+
+      // V-shape distant bird silhouette
+      function drawBird(ctx, x, y, size, flap) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.strokeStyle = 'rgba(40, 60, 90, 0.55)';
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        const wingY = Math.sin(flap) * size * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(-size, wingY);
+        ctx.quadraticCurveTo(-size * 0.5, -size * 0.3 + wingY * 0.5, 0, 0);
+        ctx.quadraticCurveTo(size * 0.5, -size * 0.3 + wingY * 0.5, size, wingY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle) {
+        // Grass top (lush green oval)
+        const grassGrad = ctx.createLinearGradient(x, y - size * 0.18, x, y + size * 0.10);
+        grassGrad.addColorStop(0, '#A8E063');
+        grassGrad.addColorStop(0.6, '#7CB342');
+        grassGrad.addColorStop(1, '#558B2F');
+        ctx.fillStyle = grassGrad;
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.55, size * 0.18, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dirt/rock cone underneath (jagged downward)
+        const dirtGrad = ctx.createLinearGradient(x, y, x, y + size * 0.55);
+        dirtGrad.addColorStop(0, '#8D6E63');
+        dirtGrad.addColorStop(0.5, '#6D4C41');
+        dirtGrad.addColorStop(1, '#3E2723');
+        ctx.fillStyle = dirtGrad;
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.50, y);
+        ctx.lineTo(x - size * 0.42, y + size * 0.18);
+        ctx.lineTo(x - size * 0.30, y + size * 0.34);
+        ctx.lineTo(x - size * 0.12, y + size * 0.50);
+        ctx.lineTo(x + size * 0.06, y + size * 0.55);
+        ctx.lineTo(x + size * 0.24, y + size * 0.42);
+        ctx.lineTo(x + size * 0.40, y + size * 0.22);
+        ctx.lineTo(x + size * 0.50, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Rock highlights
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.40, y + size * 0.05);
+        ctx.lineTo(x - size * 0.20, y + size * 0.30);
+        ctx.lineTo(x - size * 0.30, y + size * 0.10);
+        ctx.closePath();
+        ctx.fill();
+
+        if (hasCastle) {
+          drawCastle(ctx, x, y - size * 0.05, size * 0.55);
+        }
+      }
+
+      function drawCastle(ctx, x, baseY, size) {
+        // Castle body — light beige with shadow
+        const bodyGrad = ctx.createLinearGradient(x, baseY - size, x, baseY);
+        bodyGrad.addColorStop(0, '#FAFAFA');
+        bodyGrad.addColorStop(1, '#BDBDBD');
+        ctx.fillStyle = bodyGrad;
+
+        // Main wall
+        ctx.fillRect(x - size * 0.35, baseY - size * 0.7, size * 0.7, size * 0.7);
+        // Battlements (top crenellations)
+        for (let i = 0; i < 5; i++) {
+          ctx.fillRect(x - size * 0.35 + i * size * 0.16, baseY - size * 0.78, size * 0.10, size * 0.08);
+        }
+        // Side towers (taller)
+        ctx.fillRect(x - size * 0.50, baseY - size * 0.95, size * 0.20, size * 0.95);
+        ctx.fillRect(x + size * 0.30, baseY - size * 0.95, size * 0.20, size * 0.95);
+        // Center tower (tallest)
+        ctx.fillRect(x - size * 0.10, baseY - size * 1.10, size * 0.20, size * 1.10);
+
+        // Pointy blue roofs
+        const drawRoof = (cx, top, w, h) => {
+          const g = ctx.createLinearGradient(cx, top, cx, top + h);
+          g.addColorStop(0, '#42A5F5');
+          g.addColorStop(0.5, '#1976D2');
+          g.addColorStop(1, '#0D47A1');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.moveTo(cx, top - h * 0.4);
+          ctx.lineTo(cx + w / 2, top);
+          ctx.lineTo(cx - w / 2, top);
+          ctx.closePath();
+          ctx.fill();
+          // Flag pole
+          ctx.fillStyle = '#666';
+          ctx.fillRect(cx - 0.5, top - h * 0.6, 1, h * 0.25);
+          // Flag
+          ctx.fillStyle = '#FFC93C';
+          ctx.beginPath();
+          ctx.moveTo(cx + 0.5, top - h * 0.55);
+          ctx.lineTo(cx + 5, top - h * 0.50);
+          ctx.lineTo(cx + 0.5, top - h * 0.45);
+          ctx.closePath();
+          ctx.fill();
+        };
+        drawRoof(x - size * 0.40, baseY - size * 0.95, size * 0.24, size * 0.20);
+        drawRoof(x + size * 0.40, baseY - size * 0.95, size * 0.24, size * 0.20);
+        drawRoof(x, baseY - size * 1.10, size * 0.28, size * 0.24);
+
+        // Door
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(x - size * 0.08, baseY - size * 0.30, size * 0.16, size * 0.30);
+        // Windows
+        ctx.fillStyle = '#1976D2';
+        ctx.fillRect(x - size * 0.46, baseY - size * 0.55, size * 0.10, size * 0.14);
+        ctx.fillRect(x + size * 0.36, baseY - size * 0.55, size * 0.10, size * 0.14);
+        ctx.fillRect(x - size * 0.06, baseY - size * 0.75, size * 0.12, size * 0.16);
+      }
+
+      function drawHotAirBalloon(ctx, x, y, size, color) {
+        // Balloon
+        const grad = ctx.createRadialGradient(x - size * 0.2, y - size * 0.3, size * 0.05, x, y, size);
+        grad.addColorStop(0, '#fff');
+        grad.addColorStop(0.4, color);
+        grad.addColorStop(1, shadeColor(color, -30));
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.55, size * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Vertical stripes (subtle)
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x, y - size * 0.6); ctx.lineTo(x, y + size * 0.5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - size * 0.3, y - size * 0.55); ctx.lineTo(x - size * 0.3, y + size * 0.45); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + size * 0.3, y - size * 0.55); ctx.lineTo(x + size * 0.3, y + size * 0.45); ctx.stroke();
+        // Strings
+        ctx.strokeStyle = '#7A5A3A'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.4, y + size * 0.45); ctx.lineTo(x - size * 0.18, y + size * 0.85);
+        ctx.moveTo(x + size * 0.4, y + size * 0.45); ctx.lineTo(x + size * 0.18, y + size * 0.85);
+        ctx.stroke();
+        // Basket
+        const bgrad = ctx.createLinearGradient(x, y + size * 0.78, x, y + size * 1.05);
+        bgrad.addColorStop(0, '#A1714F');
+        bgrad.addColorStop(1, '#5D3A1F');
+        ctx.fillStyle = bgrad;
+        roundRect(ctx, x - size * 0.22, y + size * 0.78, size * 0.44, size * 0.25, 3); ctx.fill();
+      }
+
+      function shadeColor(hex, percent) {
+        const h = hex.replace('#', '');
+        const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+        const f = (v) => Math.max(0, Math.min(255, v + percent));
+        return `rgb(${f(r)},${f(g)},${f(b)})`;
+      }
+
+      function drawRainbow(ctx, x, y, radius) {
+        if (y < -radius - 100 || y > CONFIG.HEIGHT + radius) return;
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 6;
+        const colors = ['#E94B4B', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+        for (let i = 0; i < colors.length; i++) {
+          ctx.strokeStyle = colors[i];
+          ctx.beginPath();
+          ctx.arc(x, y, radius - i * 7, Math.PI, Math.PI * 1.6);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawBackgroundWaterfall(ctx, x, topY, length, t) {
+        ctx.save();
+        // body of waterfall
+        const grad = ctx.createLinearGradient(x, topY, x, topY + length);
+        grad.addColorStop(0, 'rgba(255,255,255,0.85)');
+        grad.addColorStop(0.5, 'rgba(180,224,255,0.55)');
+        grad.addColorStop(1, 'rgba(180,224,255,0)');
+        ctx.fillStyle = grad;
+        // slight zig-zag waterfall shape
+        ctx.beginPath();
+        ctx.moveTo(x - 8, topY);
+        ctx.lineTo(x + 8, topY);
+        ctx.lineTo(x + 14 + Math.sin(t) * 1.2, topY + length);
+        ctx.lineTo(x - 14 + Math.sin(t) * 1.2, topY + length);
+        ctx.closePath();
+        ctx.fill();
+        // sparkle lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          const fy = (Math.sin(t + i) * 0.5 + 0.5) * length;
+          ctx.beginPath();
+          ctx.moveTo(x - 6 + i * 4, topY + fy);
+          ctx.lineTo(x - 6 + i * 4, topY + fy + 8);
+          ctx.stroke();
+        }
+        // mist at bottom
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(x, topY + length, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // =========================================================
+      // 9. LEADERBOARD (localStorage)
+      // =========================================================
+      const Leaderboard = {
+        load() {
+          try {
+            const raw = localStorage.getItem(CONFIG.LEADERBOARD_KEY);
+            if (!raw) return [];
+            return JSON.parse(raw);
+          } catch (_) { return []; }
+        },
+        save(list) {
+          try { localStorage.setItem(CONFIG.LEADERBOARD_KEY, JSON.stringify(list)); }
+          catch (_) { }
+        },
+        // Add a score with EMAIL-BASED DEDUPLICATION.
+        //  - If the email already exists (case-insensitive): keep the SAME entry (preserve ts).
+        //      • If new score > existing score → update score + name (other fields untouched).
+        //      • If new score ≤ existing score → leave the entry completely intact.
+        //  - If the email is new (or empty)    → create a brand-new entry as before.
+        // ALWAYS returns { ts, rank, list } — `ts` is the entry the current session is bound to,
+        // so subsequent Leaderboard.update(ts, ...) calls (e.g. star rating) hit the right row.
+        add(name, score, extras = {}) {
+          const list = this.load();
+          const cleanName = name || 'Anonymous';
+          const emailKey = (extras.email || '').trim().toLowerCase();
+
+          // Look for an existing entry with the same email (case-insensitive)
+          const existingIdx = emailKey
+            ? list.findIndex(e => typeof e.email === 'string'
+              && e.email.trim().toLowerCase() === emailKey)
+            : -1;
+
+          let entryTs;
+          if (existingIdx >= 0) {
+            // === Same email — DEDUPE: keep original ts, optionally update score+name ===
+            const existing = list[existingIdx];
+            entryTs = existing.ts;
+            if (score > existing.score) {
+              list[existingIdx] = {
+                ...existing,
+                name: cleanName,
+                score
+                // ts, email, rating, and any other fields preserved
+              };
+            }
+            // else: new score ≤ existing → no changes at all
+          } else {
+            // === New email (or no email) — create fresh entry ===
+            entryTs = Date.now();
+            list.push({
+              name: cleanName,
+              score,
+              ts: entryTs,
+              ...extras
+            });
+          }
+
+          // Re-sort + trim + persist
+          list.sort((a, b) => b.score - a.score);
+          const trimmed = list.slice(0, CONFIG.MAX_LEADERBOARD);
+          this.save(trimmed);
+
+          return {
+            ts: entryTs,
+            rank: trimmed.findIndex(e => e.ts === entryTs) + 1,
+            list: trimmed
+          };
+        },
+        // Update an existing entry by ts. partial = { name?, email?, rating?, ... }
+        update(ts, partial) {
+          const list = this.load();
+          const idx = list.findIndex(e => e.ts === ts);
+          if (idx < 0) return null;
+          list[idx] = { ...list[idx], ...partial };
+          list.sort((a, b) => b.score - a.score);
+          const trimmed = list.slice(0, CONFIG.MAX_LEADERBOARD);
+          this.save(trimmed);
+          return { rank: trimmed.findIndex(e => e.ts === ts) + 1, list: trimmed };
+        },
+        isHighScore(score) {
+          const list = this.load();
+          if (list.length < CONFIG.MAX_LEADERBOARD) return true;
+          return score > (list[list.length - 1]?.score || 0);
+        }
+      };
+
+      // =========================================================
+      // 10. UI MANAGER
+      // =========================================================
+      const UI = {
+        el: {},
+        showingTop20: false,
+
+        init() {
+          this.el.menu = document.getElementById('main-menu');
+          this.el.hud = document.getElementById('game-hud');
+          this.el.gameOver = document.getElementById('game-over');
+          this.el.pause = document.getElementById('pause-screen');
+          this.el.score = document.getElementById('score-display');
+          this.el.mult = document.getElementById('multiplier-badge');
+          this.el.tally = document.getElementById('score-tally');
+          this.el.newHigh = document.getElementById('new-high-text');
+          this.el.rankText = document.getElementById('rank-text');
+          this.el.lbList = document.getElementById('leaderboard-list');
+          this.el.lbToggle = document.getElementById('leaderboard-toggle');
+          this.el.touch = document.getElementById('touch-controls');
+          this.el.toast = document.getElementById('toast');
+
+          // Game Over — new lead capture + rating + mini leaderboard refs
+          this.el.leadName = document.getElementById('lead-name');
+          this.el.leadEmail = document.getElementById('lead-email');
+          this.el.starRating = document.getElementById('star-rating');
+          this.el.miniLbList = document.getElementById('mini-lb-list');
+          this.el.gameoverClose = document.getElementById('gameover-close');
+
+          document.getElementById('start-btn').addEventListener('click', () => Game.start());
+          document.getElementById('pause-btn').addEventListener('click', () => Game.pause());
+          document.getElementById('resume-btn').addEventListener('click', () => Game.resume());
+          document.getElementById('quit-btn').addEventListener('click', () => Game.quitToMenu());
+          document.getElementById('play-again-btn').addEventListener('click', () => Game.start());
+          document.getElementById('share-btn').addEventListener('click', () => UI.share(0));
+          document.getElementById('gameover-share-btn').addEventListener('click', () => UI.share(Game.score));
+          // Close (×) on Game Over → back to Main Menu
+          this.el.gameoverClose.addEventListener('click', () => Game.quitToMenu());
+
+          // Wire up star rating + lead form (one-time setup)
+          this.setupStarRating();
+          this.setupGameOverInputs();
+
+          this.el.lbToggle.addEventListener('click', () => {
+            this.showingTop20 = !this.showingTop20;
+            this.renderLeaderboard();
+            this.el.lbToggle.textContent = this.showingTop20 ? 'Show Top 5 ▴' : 'Show Top 20 ▾';
+            this.el.lbList.classList.toggle('expanded', this.showingTop20);
+          });
+
+          // Detect touch device → show virtual D-pad
+          if (matchMedia('(hover: none)').matches) {
+            this.el.touch.classList.add('active');
+          }
+        },
+
+        showMenu() {
+          this.renderLeaderboard();
+          this.el.menu.classList.add('active');
+          this.el.menu.classList.remove('hidden');
+          this.el.hud.classList.remove('active');
+          this.el.gameOver.classList.remove('active');
+          this.el.pause.classList.remove('active');
+        },
+        showHUD() {
+          this.el.menu.classList.add('hidden');
+          this.el.hud.classList.add('active');
+          this.el.gameOver.classList.remove('active');
+          this.el.pause.classList.remove('active');
+        },
+        showPause() { this.el.pause.classList.add('active'); },
+        hidePause() { this.el.pause.classList.remove('active'); },
+
+        // === Game Over flow ===
+        // 1) Animate score tally
+        // 2) Pre-fill lead form from last session (localStorage)
+        // 3) After tally → silently add entry to leaderboard, capture ts for live updates
+        // 4) Render mini Top-10 leaderboard (with crown logic)
+        // 5) Live edits to name/email/rating update the SAME entry via Leaderboard.update(ts, ...)
+        showGameOver(score) {
+          this.el.gameOver.classList.add('active');
+          this.el.gameOver.scrollTop = 0;        // reset scroll on each open
+          this.el.tally.textContent = '0';
+          this.el.newHigh.style.display = 'none';
+          this.el.rankText.textContent = '';
+
+          // Reset session tracking + UI state
+          this._currentSession = null;
+          this._currentScore = score;
+
+          // Pre-fill form from last session
+          const lastName = localStorage.getItem(CONFIG.PLAYER_NAME_KEY) || '';
+          const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
+          this.el.leadName.value = lastName;
+          this.el.leadEmail.value = lastEmail;
+          this.setStarRating(0);                  // clear stars
+
+          // Show mini leaderboard immediately (current state, before save)
+          this.renderMiniLeaderboard();
+
+          // Animate score tally
+          const start = performance.now();
+          const dur = Math.min(1500, 400 + score * 1.0);
+          const animate = (t) => {
+            const p = Utils.clamp((t - start) / dur, 0, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            this.el.tally.textContent = Math.floor(score * eased).toLocaleString();
+            if (p < 1) requestAnimationFrame(animate);
+            else {
+              this.el.tally.textContent = score.toLocaleString();
+              this._saveInitialEntry(score);      // silent save after tally finishes
+            }
+          };
+          requestAnimationFrame(animate);
+        },
+
+        _saveInitialEntry(score) {
+          if (score <= 0) return;                 // don't save zero scores
+          const name = (this.el.leadName.value || 'Anonymous').slice(0, 14);
+          const email = (this.el.leadEmail.value || '').trim();   // trimmed for dedupe matching
+
+          // Personal-best detection BEFORE add() — needed to know if score actually
+          // improved over the user's existing email entry (Leaderboard dedupes by email).
+          let prevBest = -1;
+          if (email) {
+            const lowerEmail = email.toLowerCase();
+            const existing = Leaderboard.load().find(e =>
+              typeof e.email === 'string' && e.email.trim().toLowerCase() === lowerEmail
+            );
+            if (existing) prevBest = existing.score;
+          }
+          const isPersonalBest = score > prevBest;
+
+          // Pass email explicitly so Leaderboard.add can dedupe by email
+          const result = Leaderboard.add(name, score, { email, rating: 0 });
+          this._currentSession = { ts: result.ts, score };
+
+          // Persist defaults for next session
+          try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name); } catch (_) { }
+          try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) { }
+
+          // Show "NEW HIGH SCORE" badge only when (a) it actually beat their previous best
+          // AND (b) the score is good enough for the global Top N
+          if (isPersonalBest && Leaderboard.isHighScore(score)) {
+            this.el.newHigh.style.display = 'block';
+          }
+          this.el.rankText.textContent = `You ranked #${result.rank}`;
+
+          // Re-render mini leaderboard to highlight player's row
+          this.renderMiniLeaderboard();
+        },
+
+        // Wire up debounced live updates on name/email inputs.
+        // Called once on init — listeners persist across game sessions.
+        setupGameOverInputs() {
+          let timer;
+          const update = () => {
+            const name = (this.el.leadName.value || 'Anonymous').slice(0, 14);
+            const email = this.el.leadEmail.value;
+            // Persist defaults
+            try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name); } catch (_) { }
+            try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) { }
+            // Live-update the current leaderboard entry (same ts) — no duplicates
+            if (this._currentSession) {
+              Leaderboard.update(this._currentSession.ts, { name, email });
+              this.renderMiniLeaderboard();
+            }
+          };
+          const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 250); };
+          this.el.leadName.addEventListener('input', debounced);
+          this.el.leadEmail.addEventListener('input', debounced);
+          // Save immediately on blur (in case user closes before debounce fires)
+          this.el.leadName.addEventListener('blur', update);
+          this.el.leadEmail.addEventListener('blur', update);
+        },
+
+        setupStarRating() {
+          const stars = Array.from(this.el.starRating.querySelectorAll('.star'));
+          this.el.stars = stars;
+          stars.forEach((star, i) => {
+            star.addEventListener('click', () => this.setStarRating(i + 1));
+            star.addEventListener('mouseenter', () => {
+              stars.forEach((s, j) => s.classList.toggle('hover', j <= i));
+            });
+            star.addEventListener('mouseleave', () => {
+              stars.forEach(s => s.classList.remove('hover'));
+            });
+          });
+        },
+
+        setStarRating(value) {
+          this._currentRating = value;
+          if (this.el.stars) {
+            this.el.stars.forEach((s, i) => s.classList.toggle('filled', i < value));
+          }
+          // Persist to leaderboard if we have an active session
+          if (this._currentSession) {
+            Leaderboard.update(this._currentSession.ts, { rating: value });
+          }
+        },
+
+        renderMiniLeaderboard() {
+          const list = Leaderboard.load();
+          const top10 = list.slice(0, 10);
+          if (top10.length === 0) {
+            this.el.miniLbList.innerHTML =
+              '<li class="leaderboard-empty">No scores yet — you can be first! 🚀</li>';
+            return;
+          }
+          const myTs = this._currentSession && this._currentSession.ts;
+          const CROWN_TIER = ['gold', 'silver', 'bronze'];
+          this.el.miniLbList.innerHTML = top10.map((e, i) => {
+            const tier = CROWN_TIER[i] || '';
+            const youClass = (myTs && e.ts === myTs) ? 'you' : '';
+            const rankIcon = i < 3
+              ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
+              : `#${i + 1}`;
+            return `<li class="leaderboard-row ${tier} ${youClass}">
+        <span class="rank">${rankIcon}</span>
+        <span class="name">${escapeHtml(e.name)}</span>
+        <span class="score">${e.score.toLocaleString()}</span>
+      </li>`;
+          }).join('');
+        },
+
+        renderLeaderboard() {
+          const list = Leaderboard.load();
+          const limit = this.showingTop20 ? 20 : 5;
+          const top = list.slice(0, limit);
+          const myName = localStorage.getItem(CONFIG.PLAYER_NAME_KEY);
+          if (top.length === 0) {
+            this.el.lbList.innerHTML = `<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>`;
+            return;
+          }
+          // Top 3 use crowns (gold / silver / bronze) — rest use #N
+          const CROWN_TIER = ['gold', 'silver', 'bronze'];
+          this.el.lbList.innerHTML = top.map((e, i) => {
+            const tier = CROWN_TIER[i] || '';
+            const rankClass = tier;                              // applies row tint
+            const youClass = (myName && e.name === myName) ? 'you' : '';
+            const rankIcon = i < 3
+              ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
+              : `#${i + 1}`;
+            return `<li class="leaderboard-row ${rankClass} ${youClass}">
+        <span class="rank">${rankIcon}</span>
+        <span class="name">${escapeHtml(e.name)}</span>
+        <span class="score">${e.score.toLocaleString()}</span>
+      </li>`;
+          }).join('');
+        },
+
+        updateScore(score, multiplier) {
+          this.el.score.textContent = score.toLocaleString();
+          if (multiplier > 1) this.el.mult.classList.add('active');
+          else this.el.mult.classList.remove('active');
+        },
+
+        showToast(msg) {
+          this.el.toast.textContent = msg;
+          this.el.toast.classList.add('show');
+          clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => this.el.toast.classList.remove('show'), 1600);
+        },
+
+        // Resolve the share URL dynamically:
+        //  - if CONFIG.GAME_URL is an absolute http(s) URL → use it (canonical override)
+        //  - otherwise → use the current page URL (auto-detect, works wherever deployed)
+        getShareUrl() {
+          if (CONFIG.GAME_URL && /^https?:\/\//i.test(CONFIG.GAME_URL)) {
+            return CONFIG.GAME_URL;
+          }
+          // Strip hash + query from current location for a cleaner share link
+          return window.location.href.split('#')[0].split('?')[0];
+        },
+
+        share(score) {
+          const text = score > 0
+            ? `I scored ${score.toLocaleString()} in empeo Land Adventure! Can you beat me? 🚀`
+            : `Join me on empeo Land Adventure — a fun sky-jumping adventure! 🌤️`;
+          const url = this.getShareUrl();
+
+          // Warn if running locally — file:// links can't be shared with friends
+          if (url.startsWith('file:')) {
+            this.showToast('Deploy to a web host first — local file:// can\'t be shared');
+            return;
+          }
+
+          // 1) Try native Web Share API first (mobile)
+          if (navigator.share) {
+            navigator.share({ title: 'empeo Land Adventure', text, url })
+              .catch(err => {
+                // Ignore user cancellation; only fallback on real failures
+                if (err && err.name !== 'AbortError') {
+                  this.copyLinkToClipboard(url);
+                }
+              });
+            return;
+          }
+          // 2) Fallback: copy URL to clipboard (so user can paste anywhere)
+          this.copyLinkToClipboard(url);
+        },
+
+        copyLinkToClipboard(url) {
+          // Default to dynamically-resolved share URL if not provided
+          if (!url) url = this.getShareUrl();
+          // Modern Clipboard API (preferred)
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url)
+              .then(() => this.showToast('Link copied to clipboard!'))
+              .catch(() => this._legacyCopy(url));
+            return;
+          }
+          // Older browsers / non-secure context
+          this._legacyCopy(url);
+        },
+
+        _legacyCopy(text) {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.cssText = 'position:absolute;left:-9999px;top:-9999px;opacity:0;';
+          document.body.appendChild(ta);
+          ta.select();
+          ta.setSelectionRange(0, 99999);
+          let ok = false;
+          try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+          document.body.removeChild(ta);
+          this.showToast(ok ? 'Link copied to clipboard!' : 'Could not copy — please copy the URL manually');
+        }
+      };
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+      }
+
+      // Helper: rounded rect path
+      function roundRect(ctx, x, y, w, h, r) {
+        if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+        ctx.beginPath();
+        ctx.moveTo(x + r.tl, y);
+        ctx.lineTo(x + w - r.tr, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+        ctx.lineTo(x + w, y + h - r.br);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+        ctx.lineTo(x + r.bl, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+        ctx.lineTo(x, y + r.tl);
+        ctx.quadraticCurveTo(x, y, x + r.tl, y);
+        ctx.closePath();
+      }
+
+      // =========================================================
+      // 11. GAME CONTROLLER (state machine)
+      // =========================================================
+      const Game = {
+        canvas: null, ctx: null,
+        state: 'menu',     // menu | playing | paused | gameover
+        player: null,
+        platforms: [],
+        coins: [], boxes: [], springs: [], particles: [],
+        bg: null,
+        camY: 0,            // top of camera in world space
+        highestY: 0,        // tracking max climbed
+        score: 0,
+        multiplier: 1,
+        multiplierEnd: 0,
+        lastSpawnY: 0,
+        difficulty: 0,     // increases as player goes higher
+        lastTime: 0,
+        scaleX: 1, scaleY: 1, // canvas scale to viewport
+        lastRankedName: null,
+
+        init() {
+          this.canvas = document.getElementById('game-canvas');
+          this.ctx = this.canvas.getContext('2d');
+          this.bg = new Background();
+
+          // === Load image assets (gon.png — character sprite) ===
+          this.assets = {};
+          this.assets.gon = new Image();
+          this.assets.gon.src = 'gon.png';
+          this.assets.gon.onerror = () => console.warn('gon.png failed to load — fallback circle will be used');
+
+          UI.init();
+          Input.init();
+
+          this.resize();
+          addEventListener('resize', () => this.resize());
+          addEventListener('orientationchange', () => this.resize());
+
+          this.state = 'menu';
+          UI.showMenu();
+          this.showcaseLoop();
+        },
+
+        resize() {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          // Maintain aspect ratio of CONFIG.WIDTH:CONFIG.HEIGHT
+          const targetRatio = CONFIG.WIDTH / CONFIG.HEIGHT;
+          let cw = w, ch = h;
+          if (w / h > targetRatio) cw = h * targetRatio;
+          else ch = w / targetRatio;
+          this.canvas.style.width = cw + 'px';
+          this.canvas.style.height = ch + 'px';
+          this.canvas.width = CONFIG.WIDTH;
+          this.canvas.height = CONFIG.HEIGHT;
+        },
+
+        start() {
+          // Reset state
+          this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
+          this.platforms = [];
+          this.coins = []; this.boxes = []; this.springs = []; this.particles = [];
+          this.camY = 0;
+          this.highestY = this.player.y;
+          this.score = 0;
+          this.multiplier = 1; this.multiplierEnd = 0;
+          this.lastSpawnY = CONFIG.HEIGHT - 100;
+          this.difficulty = 0;
+          this.currentLevelIdx = 0;
+          this.autoScrollSpeed = 0;   // px/frame — 0 until score 2000
+
+          // Initial platforms
+          this.generateInitialPlatforms();
+
+          this.state = 'playing';
+          UI.showHUD();
+          UI.updateScore(0, 1);
+          this.lastTime = performance.now();
+          requestAnimationFrame(this.gameLoop);
+        },
+
+        pause() {
+          if (this.state !== 'playing') return;
+          this.state = 'paused';
+          UI.showPause();
+        },
+        resume() {
+          if (this.state !== 'paused') return;
+          this.state = 'playing';
+          UI.hidePause();
+          this.lastTime = performance.now();
+          requestAnimationFrame(this.gameLoop);
+        },
+        quitToMenu() {
+          this.state = 'menu';
+          UI.hidePause();
+          UI.showMenu();
+          this.showcaseLoop();
+        },
+
+        generateInitialPlatforms() {
+          // Starter platform directly under player so they don't fall instantly
+          this.platforms.push(new Platform(
+            this.player.x + this.player.w / 2 - CONFIG.PLATFORM_WIDTH / 2,
+            this.player.y + this.player.h + 4,
+            'normal'
+          ));
+          // Fill upward
+          let y = this.player.y;
+          while (y > -CONFIG.HEIGHT) {
+            y -= Utils.rand(CONFIG.PLATFORM_GAP_MIN, CONFIG.PLATFORM_GAP_MAX);
+            this.spawnPlatformRow(y);
+          }
+        },
+
+        // Returns current level definition based on score
+        getLevelDef() {
+          const lvls = CONFIG.LEVELS;
+          for (let i = lvls.length - 1; i >= 0; i--) {
+            if (this.score >= lvls[i].minScore) return { ...lvls[i], idx: i };
+          }
+          return { ...lvls[0], idx: 0 };
+        },
+
+        spawnPlatformRow(y) {
+          const lvl = this.getLevelDef();
+          // Spawn within SAFE ZONE — width shrinks each level
+          const x = Utils.rand(CONFIG.SAFE_X_MIN, CONFIG.SAFE_X_MAX - lvl.platWidth);
+
+          let type = 'normal';
+          const rnd = Math.random();
+          if (rnd < lvl.movingChance) type = 'moving';
+          else if (rnd < lvl.movingChance + lvl.breakableChance) type = 'breakable';
+
+          const p = new Platform(x, y, type);
+          p.w = lvl.platWidth;   // override width per level
+          this.platforms.push(p);
+
+          // Spawn collectibles
+          const r = Math.random();
+          if (type !== 'breakable') {
+            if (r < 0.10) {
+              this.springs.push(new Spring(p));
+            } else if (r < 0.18) {
+              this.boxes.push(new MysteryBox(p.x + p.w / 2 - 16, p.y - 52));
+            } else if (r < 0.50) {
+              this.coins.push(new Coin(p.x + p.w / 2 - 12, p.y - 32));
+            }
+          }
+        },
+
+        spawnParticles(x, y, color, n = 8) {
+          for (let i = 0; i < n; i++) this.particles.push(new Particle(x, y, color));
+        },
+
+        // Bound function for requestAnimationFrame
+        gameLoop: function (t) { },
+
+        update(dt) {
+          if (this.state !== 'playing') return;
+
+          // Player update
+          this.player.update(dt);
+
+          // Track highest position (for score/difficulty)
+          if (this.player.y < this.highestY) {
+            const delta = this.highestY - this.player.y;
+            this.highestY = this.player.y;
+            this.score += Math.floor(delta * CONFIG.HEIGHT_SCORE_RATIO * this.multiplier);
+          }
+
+          // === AUTO-SCROLL: ramp up speed based on score ===
+          if (this.score >= CONFIG.SCROLL_START_SCORE) {
+            const t = Math.min(1, (this.score - CONFIG.SCROLL_START_SCORE) / CONFIG.SCROLL_RAMP_SCORE);
+            const targetSpeed = CONFIG.SCROLL_MIN_SPEED + t * (CONFIG.SCROLL_MAX_SPEED - CONFIG.SCROLL_MIN_SPEED);
+            // Ease toward target speed smoothly
+            this.autoScrollSpeed += (targetSpeed - this.autoScrollSpeed) * 0.005;
+            this.camY -= this.autoScrollSpeed;
+          }
+
+          // Camera follow (only upward — player jumping still pushes camera up)
+          const triggerY = this.camY + CONFIG.HEIGHT * CONFIG.CAMERA_TRIGGER;
+          if (this.player.y < triggerY) {
+            this.camY = this.player.y - CONFIG.HEIGHT * CONFIG.CAMERA_TRIGGER;
+          }
+
+          // Spawn new platforms above — gap grows each level
+          while (this.lastSpawnY > this.camY - CONFIG.HEIGHT) {
+            const lvl = this.getLevelDef();
+            this.lastSpawnY -= Utils.rand(lvl.gapMin, lvl.gapMax);
+            this.spawnPlatformRow(this.lastSpawnY);
+          }
+
+          // Update platforms & cull off-screen below
+          for (const p of this.platforms) p.update(dt);
+          this.platforms = this.platforms.filter(p => p.y < this.camY + CONFIG.HEIGHT + 200 && !p.broken);
+
+          // Springs / boxes / coins update + cull
+          for (const s of this.springs) s.update(dt);
+          for (const b of this.boxes) b.update(dt);
+          for (const c of this.coins) c.update(dt);
+          this.springs = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.boxes = this.boxes.filter(b => !b.collected && b.y < this.camY + CONFIG.HEIGHT + 200);
+          this.coins = this.coins.filter(c => !c.collected && c.y < this.camY + CONFIG.HEIGHT + 200);
+
+          // Particles
+          for (const pt of this.particles) pt.update(dt);
+          this.particles = this.particles.filter(p => p.life > 0);
+
+          // ============== COLLISIONS ==============
+          // Platforms — only when falling (vy > 0). Continuous collision check.
+          if (this.player.vy > 0) {
+            const foot = this.player.bottomRect();
+            const footBottom = foot.y + foot.h;
+            const prevFootBottom = footBottom - this.player.vy;
+            for (const p of this.platforms) {
+              if (p.broken) continue;
+              // Foot crossed platform top this frame + horizontal overlap
+              if (prevFootBottom <= p.y &&
+                footBottom >= p.y &&
+                foot.x + foot.w > p.x + 4 &&
+                foot.x < p.x + p.w - 4) {
+                // Snap player to platform top (prevents tunneling at high speeds)
+                this.player.y = p.y - this.player.h;
+                // Check if there's a spring on this platform
+                const spring = this.springs.find(s => s.platform === p);
+                if (spring) {
+                  spring.trigger();
+                  this.player.jump(CONFIG.SPRING_VELOCITY);
+                  UI.showToast('🚀 BOING!');
+                } else {
+                  const ok = p.onBounce();
+                  if (ok) {
+                    this.player.jump();
+                    if (p.type === 'breakable') Game.spawnParticles(p.x + p.w / 2, p.y, '#C49A8B', 6);
+                  }
+                }
+                break;
+              }
+            }
+          }
+
+          // Coins
+          const pr = this.player.fullRect();
+          for (const c of this.coins) {
+            if (c.collected) continue;
+            if (Utils.rectsOverlap(pr, c.rect())) {
+              c.collected = true;
+              this.score += CONFIG.COIN_VALUE * this.multiplier;
+              Game.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FFC93C', 8);
+            }
+          }
+          // Mystery box
+          for (const b of this.boxes) {
+            if (b.collected) continue;
+            if (Utils.rectsOverlap(pr, b.rect())) {
+              b.collected = true;
+              this.multiplier = 2;
+              this.multiplierEnd = performance.now() + CONFIG.MULTIPLIER_DURATION;
+              UI.showToast('✨ x2 SCORE for 8s!');
+              Game.spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#FF66CC', 18);
+            }
+          }
+
+          // Multiplier expiry
+          if (this.multiplier > 1 && performance.now() > this.multiplierEnd) {
+            this.multiplier = 1;
+          }
+
+          UI.updateScore(this.score, this.multiplier);
+
+          // Level-up check
+          const lvlDef = this.getLevelDef();
+          if (lvlDef.idx !== this.currentLevelIdx) {
+            this.currentLevelIdx = lvlDef.idx;
+            const badge = document.getElementById('level-badge');
+            if (badge) {
+              badge.textContent = lvlDef.label;
+              badge.style.background = `linear-gradient(180deg, ${lvlDef.color}cc 0%, ${lvlDef.color} 100%)`;
+              badge.classList.remove('bump');
+              void badge.offsetWidth;  // reflow to restart animation
+              badge.classList.add('bump');
+            }
+            UI.showToast(`${lvlDef.label} — Getting harder! 💪`);
+          }
+
+          // GAME OVER condition: fell below camera (including scroll)
+          if (this.player.y > this.camY + CONFIG.HEIGHT + 30) {
+            this.gameOver();
+          }
+        },
+
+        gameOver() {
+          this.state = 'gameover';
+          UI.el.hud.classList.remove('active');
+          UI.showGameOver(this.score);
+        },
+
+        // Draw danger scroll bar at bottom of screen
+        _drawScrollWarning(ctx) {
+          if (this.autoScrollSpeed <= 0.01) return;
+          const alpha = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED) * 0.85;
+          const barH = 6 + this.autoScrollSpeed * 6;
+          // Pulsing red glow
+          const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+          ctx.save();
+          ctx.globalAlpha = alpha * (0.7 + 0.3 * pulse);
+          const grad = ctx.createLinearGradient(0, CONFIG.HEIGHT - barH, 0, CONFIG.HEIGHT);
+          grad.addColorStop(0, 'rgba(255,60,60,0)');
+          grad.addColorStop(1, 'rgba(255,30,30,0.95)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, CONFIG.HEIGHT - barH, CONFIG.WIDTH, barH);
+          // Danger label
+          if (this.autoScrollSpeed > CONFIG.SCROLL_MIN_SPEED * 1.5) {
+            ctx.globalAlpha = alpha * (0.6 + 0.4 * pulse);
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚠ RISING FLOOR ⚠', CONFIG.WIDTH / 2, CONFIG.HEIGHT - barH - 4);
+          }
+          ctx.restore();
+        },
+
+        render() {
+          const ctx = this.ctx;
+          ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+          this.bg.draw(ctx, this.camY);
+
+          // World offset for elements
+          const camY = this.camY;
+
+          for (const p of this.platforms) p.draw(ctx, camY);
+          for (const s of this.springs) s.draw(ctx, camY);
+          for (const b of this.boxes) b.draw(ctx, camY);
+          for (const c of this.coins) c.draw(ctx, camY);
+          if (this.player) this.player.draw(ctx, camY);
+          for (const p of this.particles) p.draw(ctx, camY);
+          this._drawScrollWarning(ctx);
+
+          // Edge fade (subtle vignette — lightened to match bright sky)
+          const vg = ctx.createRadialGradient(
+            CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, CONFIG.HEIGHT * 0.35,
+            CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, CONFIG.HEIGHT * 0.75
+          );
+          vg.addColorStop(0, 'rgba(0,0,0,0)');
+          vg.addColorStop(1, 'rgba(20,80,150,.18)');
+          ctx.fillStyle = vg;
+          ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+        },
+
+        showcaseLoop() {
+          // Animate background while in menu
+          if (this.state !== 'menu') return;
+          const ctx = this.ctx;
+          ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+          this.bg.draw(ctx, performance.now() * 0.02);
+          // Idle Nong Gon decoration
+          if (!this._showcasePlayer) {
+            this._showcasePlayer = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT * 0.65);
+          }
+          const sp = this._showcasePlayer;
+          sp.animTimer += 16;
+          sp.y = CONFIG.HEIGHT * 0.65 + Math.sin(performance.now() * 0.003) * 8;
+          sp.draw(ctx, 0);
+
+          requestAnimationFrame(() => this.showcaseLoop());
+        }
+      };
+
+      // Bind game loop with proper "this"
+      Game.gameLoop = function (t) {
+        if (Game.state !== 'playing') return;
+        const dt = Math.min(40, t - Game.lastTime);
+        Game.lastTime = t;
+        Game.update(dt);
+        Game.render();
+        requestAnimationFrame(Game.gameLoop);
+      };
+
+      // =========================================================
+      // 12. BOOT
+      // =========================================================
+      window.addEventListener('load', () => Game.init());
+
+    })();
+  </script>
+</body>
+
+</html>
