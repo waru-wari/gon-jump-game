@@ -61,6 +61,7 @@
       box-shadow: 0 0 60px rgba(0, 40, 100, .45);
       image-rendering: optimizeSpeed;
       image-rendering: -webkit-optimize-contrast;
+      pointer-events: none;   /* canvas is purely visual — all input handled by JS listeners */
     }
 
     /* Overlays — all UI sits inside SAFE ZONE (12.5% horizontal padding) */
@@ -1182,13 +1183,10 @@
           // Clamp fall speed so player doesn't rocket downward
           if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
 
-          // === Screen wrap at SAFE ZONE edges (center-based, instant teleport) ===
-          // When player center crosses a safe edge → shift by safe width.
-          // Visually we draw a "wrap copy" on the opposite side while body straddles the edge
-          // (handled in draw()), so the wrap looks seamless.
-          const cx = this.x + this.w / 2;
-          if (cx > CONFIG.SAFE_X_MAX) this.x -= CONFIG.SAFE_WIDTH;
-          else if (cx < CONFIG.SAFE_X_MIN) this.x += CONFIG.SAFE_WIDTH;
+          // === Screen wrap at SAFE ZONE edges (body-edge-based, instant teleport) ===
+          // Teleport as soon as the player body fully exits one side → appears on the other.
+          if (this.x > CONFIG.SAFE_X_MAX) this.x -= CONFIG.SAFE_WIDTH;
+          else if (this.x + this.w < CONFIG.SAFE_X_MIN) this.x += CONFIG.SAFE_WIDTH;
 
           // State
           if (this.vy < -0.1) this.state = 'jumping';
@@ -1213,22 +1211,9 @@
           }
         }
 
-        // Public draw — handles seamless safe-zone wrap by drawing a "ghost" copy
-        // on the opposite side when body straddles the safe zone edge.
+        // Public draw — just draw the player once (no ghost copy).
         draw(ctx, camY) {
           this._drawSelf(ctx, camY);
-          // If body crosses right safe edge → also draw copy on the left
-          if (this.x + this.w > CONFIG.SAFE_X_MAX) {
-            const oldX = this.x; this.x -= CONFIG.SAFE_WIDTH;
-            this._drawSelf(ctx, camY);
-            this.x = oldX;
-          }
-          // If body crosses left safe edge → also draw copy on the right
-          else if (this.x < CONFIG.SAFE_X_MIN) {
-            const oldX = this.x; this.x += CONFIG.SAFE_WIDTH;
-            this._drawSelf(ctx, camY);
-            this.x = oldX;
-          }
         }
 
         _drawSelf(ctx, camY) {
@@ -2107,12 +2092,8 @@
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
-              ctx.globalAlpha = 0.78;
+              ctx.globalAlpha = 0.62;   // slightly translucent — fakes atmospheric haze
               drawFloatingIslandSilhouette(ctx, it.x, py, it.size, true /*hasCastle*/);
-              // Atmospheric haze tint over the whole castle island
-              ctx.globalCompositeOperation = 'source-atop';
-              ctx.fillStyle = 'rgba(180, 215, 245, 0.30)';
-              ctx.fillRect(it.x - it.size, py - it.size, it.size * 2.2, it.size * 2.5);
               ctx.restore();
             }
           }
@@ -2133,15 +2114,11 @@
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
-              ctx.globalAlpha = 0.88;
+              ctx.globalAlpha = 0.82;   // mild transparency — fakes haze without rect artifact
               drawFloatingIslandSilhouette(ctx, it.x, py, it.size, false);
               if (it.waterfall) {
                 drawBackgroundWaterfall(ctx, it.x, py + it.size * 0.45, it.size * 0.5, performance.now() * 0.005 + it.wfPhase);
               }
-              // Subtle atmospheric tint
-              ctx.globalCompositeOperation = 'source-atop';
-              ctx.fillStyle = 'rgba(180, 215, 245, 0.18)';
-              ctx.fillRect(it.x - it.size, py - it.size * 0.3, it.size * 2.2, it.size * 2.5);
               ctx.restore();
             }
           }
@@ -2945,7 +2922,8 @@
         },
 
         start() {
-          // Reset state
+          // Guard: ignore if already playing (prevents double game-loop from stray clicks)
+          if (this.state === 'playing') return;
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
           this.coins = []; this.boxes = []; this.springs = []; this.particles = [];
