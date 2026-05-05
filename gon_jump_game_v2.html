@@ -1121,43 +1121,15 @@
             if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = false;
           });
 
-          // Mouse / touch — drag/tap to move horizontally
-          const canvas = document.getElementById('game-canvas');
-          let pointerActive = false;
+          // Block all click/touch on the canvas so events never bubble to overlay buttons.
+          // (Previously canvas drag-to-steer was here — removed as it caused unintended
+          //  speed boost when clicking the mascot. preventDefault also stops synthesised
+          //  'click' events on mobile that could re-trigger Game.start() mid-game.)
+          const cv = document.getElementById('game-canvas');
+          cv.addEventListener('click',      e => e.stopPropagation());
+          cv.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 
-          const updateFromPointer = (clientX) => {
-            const rect = canvas.getBoundingClientRect();
-            const px = ((clientX - rect.left) / rect.width) * CONFIG.WIDTH;
-            const player = Game.player;
-            if (!player) return;
-            const dx = px - (player.x + player.w / 2);
-            this.left = dx < -8;
-            this.right = dx > 8;
-          };
-
-          const onDown = (e) => {
-            if (Game.state !== 'playing') return;
-            pointerActive = true;
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            updateFromPointer(cx);
-          };
-          const onMove = (e) => {
-            if (!pointerActive) return;
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            updateFromPointer(cx);
-          };
-          const onUp = () => { pointerActive = false; this.left = this.right = false; };
-
-          canvas.addEventListener('mousedown', onDown);
-          canvas.addEventListener('mousemove', onMove);
-          canvas.addEventListener('mouseup', onUp);
-          canvas.addEventListener('mouseleave', onUp);
-          // Only preventDefault during gameplay — never on menu/gameover (so button taps register normally)
-          canvas.addEventListener('touchstart', e => { if (Game.state === 'playing') { e.preventDefault(); onDown(e); } }, { passive: false });
-          canvas.addEventListener('touchmove', e => { if (Game.state === 'playing') { e.preventDefault(); onMove(e); } }, { passive: false });
-          canvas.addEventListener('touchend', e => { if (Game.state === 'playing') { e.preventDefault(); onUp(); } }, { passive: false });
-
-          // Virtual D-pad (optional, visible on touch)
+          // Virtual D-pad (touch buttons)
           const tl = document.getElementById('touch-left');
           const tr = document.getElementById('touch-right');
           const setTouch = (el, key) => {
@@ -2993,7 +2965,9 @@
           UI.showHUD();
           UI.updateScore(0, 1);
           this.lastTime = performance.now();
-          requestAnimationFrame(this.gameLoop);
+          // Cancel any lingering loop before scheduling a fresh one
+          if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
+          this.rafId = requestAnimationFrame(this.gameLoop);
         },
 
         pause() {
@@ -3006,7 +2980,8 @@
           this.state = 'playing';
           UI.hidePause();
           this.lastTime = performance.now();
-          requestAnimationFrame(this.gameLoop);
+          if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
+          this.rafId = requestAnimationFrame(this.gameLoop);
         },
         quitToMenu() {
           this.state = 'menu';
@@ -3071,6 +3046,7 @@
         },
 
         // Bound function for requestAnimationFrame
+        rafId: null,         // guard against duplicate game loops
         gameLoop: function (t) { },
 
         update(dt) {
@@ -3291,7 +3267,7 @@
         Game.lastTime = t;
         Game.update(dt);
         Game.render();
-        requestAnimationFrame(Game.gameLoop);
+        Game.rafId = requestAnimationFrame(Game.gameLoop);
       };
 
       // =========================================================
