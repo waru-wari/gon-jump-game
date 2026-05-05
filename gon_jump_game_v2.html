@@ -56,12 +56,10 @@
       position: relative;
       /* explicit position so z-index applies */
       z-index: 1;
-      /* canvas at the bottom of the stack */
-      background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 35%, #81D4FA 75%, #B3E5FC 100%);
-      box-shadow: 0 0 60px rgba(0, 40, 100, .45);
+      background: transparent;   /* video shows through when in menu state */
       image-rendering: optimizeSpeed;
       image-rendering: -webkit-optimize-contrast;
-      pointer-events: none;   /* canvas is purely visual — all input handled by JS listeners */
+      pointer-events: none;
     }
 
     /* Overlays — all UI sits inside SAFE ZONE (12.5% horizontal padding) */
@@ -170,6 +168,7 @@
       box-shadow: 0 6px 0 rgba(0, 0, 0, .2), 0 10px 24px rgba(0, 0, 0, .2);
       transform: translateZ(0);
       transition: transform .1s, box-shadow .1s;
+      white-space: nowrap;
     }
 
     .btn:active {
@@ -184,10 +183,10 @@
       border: 4px solid #B14000;
       color: #FFFFFF;
       font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
-      font-size: clamp(24px, 6vw, 32px);
+      font-size: clamp(15px, 4.5vw, 20px);
       font-weight: 800;
-      letter-spacing: 3px;
-      padding: 18px 64px;
+      letter-spacing: 1px;
+      padding: 14px 16px;
       text-transform: uppercase;
       text-shadow: 0 2px 0 #8B3000, 0 4px 8px rgba(0, 0, 0, .30);
       box-shadow:
@@ -229,11 +228,33 @@
       box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0, 0, 0, .25);
     }
 
-    #start-btn {
+    /* Force equal width on both menu buttons via ID selectors (high specificity) */
+    #start-btn,
+    #share-btn {
       margin: 0;
+      width: calc(50% - 5px);   /* half of container minus half the gap (10px/2) */
+      flex: none;                /* don't let flex override our explicit width */
+      box-sizing: border-box;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
-    /* parent gap handles spacing to leaderboard */
+    /* Row that holds Start + Share side-by-side */
+    .menu-actions {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* Shared style overrides for menu buttons */
+    .menu-actions .btn {
+      font-size: clamp(14px, 4vw, 18px);
+      padding: 14px 8px;
+      letter-spacing: 0.5px;
+    }
 
     /* Leaderboard — full width within safe zone, capped at 320px */
     .leaderboard-card {
@@ -922,11 +943,50 @@
     .toast.show {
       opacity: 1;
     }
+
+    /* === VIDEO BACKGROUND (main menu only) === */
+    #menu-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;            /* behind canvas (z=1) and overlays (z=10) */
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+    #menu-video.active {
+      opacity: 1;
+    }
+
+    /* === PAUSE SCREEN BUTTONS (equal width row) === */
+    .pause-actions {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 280px;
+      margin-top: 8px;
+    }
+    #resume-btn, #quit-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      box-sizing: border-box;
+      text-align: center;
+      white-space: nowrap;
+      font-size: clamp(14px, 4vw, 18px);
+      padding: 14px 12px;
+    }
   </style>
 </head>
 
 <body>
   <div id="game-container">
+    <!-- VIDEO BACKGROUND — plays only on main menu -->
+    <video id="menu-video" src="video-background.mp4" autoplay loop muted playsinline></video>
+
     <canvas id="game-canvas"></canvas>
 
     <!-- MAIN MENU -->
@@ -935,15 +995,16 @@
         <img src="logo.png" alt="empeo Land Adventure" class="logo-img">
       </div>
 
-      <button id="start-btn" class="btn btn-primary">Start</button>
-
       <div class="leaderboard-card">
         <div class="leaderboard-title">🏆 LEADERBOARD</div>
         <ol id="leaderboard-list" class="leaderboard-list"></ol>
         <button id="leaderboard-toggle" class="leaderboard-toggle">Show Top 20 ▾</button>
       </div>
 
-      <button id="share-btn" class="btn btn-secondary">📣 Share &amp; Invite Friends</button>
+      <div class="menu-actions">
+        <button id="start-btn" class="btn btn-primary">▶ Start</button>
+        <button id="share-btn" class="btn btn-secondary">📣 Share</button>
+      </div>
     </div>
 
     <!-- IN-GAME HUD -->
@@ -963,8 +1024,10 @@
     <!-- PAUSE SCREEN -->
     <div id="pause-screen" class="overlay">
       <h2>Paused</h2>
-      <button id="resume-btn" class="btn btn-success">Resume</button>
-      <button id="quit-btn" class="btn btn-secondary">Quit to Menu</button>
+      <div class="pause-actions">
+        <button id="resume-btn" class="btn btn-success">Resume</button>
+        <button id="quit-btn" class="btn btn-secondary">Quit</button>
+      </div>
     </div>
 
     <!-- GAME OVER -->
@@ -2531,6 +2594,7 @@
           this.el.lbToggle = document.getElementById('leaderboard-toggle');
           this.el.touch = document.getElementById('touch-controls');
           this.el.toast = document.getElementById('toast');
+          this.el.menuVideo = document.getElementById('menu-video');
 
           // Game Over — new lead capture + rating + mini leaderboard refs
           this.el.leadName = document.getElementById('lead-name');
@@ -2573,12 +2637,22 @@
           this.el.hud.classList.remove('active');
           this.el.gameOver.classList.remove('active');
           this.el.pause.classList.remove('active');
+          // Play video background on menu
+          if (this.el.menuVideo) {
+            this.el.menuVideo.classList.add('active');
+            this.el.menuVideo.play().catch(() => {});
+          }
         },
         showHUD() {
           this.el.menu.classList.add('hidden');
           this.el.hud.classList.add('active');
           this.el.gameOver.classList.remove('active');
           this.el.pause.classList.remove('active');
+          // Pause video background when game starts
+          if (this.el.menuVideo) {
+            this.el.menuVideo.classList.remove('active');
+            this.el.menuVideo.pause();
+          }
         },
         showPause() { this.el.pause.classList.add('active'); },
         hidePause() { this.el.pause.classList.remove('active'); },
@@ -3220,20 +3294,10 @@
         },
 
         showcaseLoop() {
-          // Animate background while in menu
+          // Canvas stays transparent on menu — video background shows through.
+          // Nothing to draw here; loop is kept only to clear any stale pixels.
           if (this.state !== 'menu') return;
-          const ctx = this.ctx;
-          ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-          this.bg.draw(ctx, performance.now() * 0.02);
-          // Idle Nong Gon decoration
-          if (!this._showcasePlayer) {
-            this._showcasePlayer = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT * 0.65);
-          }
-          const sp = this._showcasePlayer;
-          sp.animTimer += 16;
-          sp.y = CONFIG.HEIGHT * 0.65 + Math.sin(performance.now() * 0.003) * 8;
-          sp.draw(ctx, 0);
-
+          this.ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
           requestAnimationFrame(() => this.showcaseLoop());
         }
       };
