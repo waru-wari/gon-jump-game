@@ -1049,6 +1049,21 @@
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
+      <!-- Tilt indicator — visible only when gyroscope is active -->
+      <div id="tilt-indicator" style="display:none; position:absolute; bottom:100px; left:50%; transform:translateX(-50%); flex-direction:column; align-items:center; gap:4px; background:rgba(0,0,0,0.45); border-radius:24px; padding:8px 16px 6px; pointer-events:none; backdrop-filter:blur(4px); border:1.5px solid rgba(255,255,255,0.18);">
+        <span style="font-size:12px; color:#fff; opacity:0.80; letter-spacing:0.5px; font-weight:700;">📱 TILT TO MOVE</span>
+        <!-- Track -->
+        <div style="position:relative; width:80px; height:14px; background:rgba(255,255,255,0.12); border-radius:7px; overflow:visible; border:1.5px solid rgba(255,255,255,0.25);">
+          <!-- Center marker -->
+          <div style="position:absolute; left:calc(50% - 0.75px); top:2px; width:1.5px; height:10px; background:rgba(255,255,255,0.35); border-radius:1px;"></div>
+          <!-- Needle -->
+          <div id="tilt-needle" style="position:absolute; left:calc(50% - 5px); top:2px; width:10px; height:10px; border-radius:5px; background:#4CAF50; transition:transform 0.04s linear, background 0.08s; box-shadow:0 0 6px rgba(76,175,80,0.7);"></div>
+        </div>
+      </div>
+
+      <!-- iOS 13+ permission prompt -->
+      <button id="tilt-perm-btn" style="display:none; position:absolute; bottom:105px; left:50%; transform:translateX(-50%); background:linear-gradient(180deg,#FFB300,#E65100); color:#fff; border:3px solid #8B3000; border-radius:24px; padding:10px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; z-index:20; box-shadow:0 4px 0 #5D2000,0 8px 16px rgba(0,0,0,0.3); font-family:'Fredoka','Baloo 2',system-ui,sans-serif; letter-spacing:0.5px;">📱 Enable Tilt Control</button>
+
       <div id="touch-controls" class="touch-controls">
         <div id="touch-left" class="touch-btn">◀</div>
         <div id="touch-right" class="touch-btn">▶</div>
@@ -1140,17 +1155,11 @@
         SAFE_MARGIN_PCT: 0.125,
 
         // === PHYSICS — Mega Jump-ish floaty feel ===
-        GRAVITY: 0.42,             // แรงโน้มถ่วง — ตกเร็วมาก
-        JUMP_VELOCITY: -11.0,      // เพิ่มแรงกระโดดชดเชย gravity ที่สูงขึ้น
-        SPRING_VELOCITY: -17.0,    // สปริงปรับตามสัดส่วน
-        MAX_FALL_SPEED: 14.0,      // fall speed สูงสุด
+        GRAVITY: 0.20,             // แรงโน้มถ่วงต่ำ → ลอยนาน
+        JUMP_VELOCITY: -9.5,       // กระโดดไม่สูงเกิน
+        SPRING_VELOCITY: -15.5,    // สปริงบูสตามสัดส่วน
+        MAX_FALL_SPEED: 5.5,       // จำกัดความเร็วตก → ไม่พุ่งลงไม่หยุด
         PLAYER_SPEED: 5.0,         // px/frame — restored for left/right control
-
-        // === GAME SPEED — เพิ่มทุก 2000 แต้ม (ตรงกับ Level boundary) ===
-        SPEED_STAGE_INTERVAL: 2000, // แต้มต่อ stage
-        SPEED_BASE: 1.0,            // ความเร็วเริ่มต้น
-        SPEED_INCREMENT: 0.08,      // +8% ต่อ stage (ค่อย ๆ เพิ่ม)
-        SPEED_MAX: 1.8,             // สูงสุด ~Lv.6
 
         // === PROPORTIONS (rebalanced — items scale with player) ===
         PLAYER_WIDTH: 52,
@@ -1162,23 +1171,23 @@
 
         CAMERA_TRIGGER: 0.40,           // camera follows when player above 40% from top
 
-        // === AUTO-SCROLL (death scroll) — activates at score 1000 ===
-        SCROLL_START_SCORE: 1000,       // เริ่มดึงฉากเร็วขึ้น
-        SCROLL_MIN_SPEED: 0.12,         // px/frame เริ่มต้น
-        SCROLL_MAX_SPEED: 0.75,         // px/frame สูงสุด (score 7000+)
+        // === AUTO-SCROLL (death scroll) — activates at score 2000 ===
+        SCROLL_START_SCORE: 2000,       // score ที่เริ่มดึงฉาก
+        SCROLL_MIN_SPEED: 0.15,         // px/frame เริ่มต้น (ช้ามาก)
+        SCROLL_MAX_SPEED: 0.90,         // px/frame สูงสุด (score 8000+)
         SCROLL_RAMP_SCORE: 6000,        // ช่วง score ที่ ramp จาก min → max
         MULTIPLIER_DURATION: 8000,      // ms
         COIN_VALUE: 50,
         HEIGHT_SCORE_RATIO: 0.25,       // calibrated for ~10k target score
 
-        // === LEVEL SYSTEM — score-gated tiers every 2000 pts, each with visual theme ===
+        // === LEVEL SYSTEM — score-gated difficulty tiers ===
+        // Each level: wider gaps + narrower platforms + more hard types
         LEVELS: [
-          { minScore:  0,    gapMin:  90, gapMax: 118, platWidth: 82, movingChance: 0.04, breakableChance: 0.04, label: '🌿 Lv.1 Meadow', color: '#2E7D32', theme: { sky: ['#1565C0','#42A5F5','#81D4FA','#B3E5FC'], hasMoon: false, stars: false, overlay: null,                    cloudTint: null,                     sunColor: 'rgba(255,250,200,0.70)', sunCore: 'rgba(255,255,230,0.95)' } },
-          { minScore:  2000, gapMin: 100, gapMax: 135, platWidth: 74, movingChance: 0.10, breakableChance: 0.08, label: '⛅ Lv.2 Hills',   color: '#388E3C', theme: { sky: ['#1B5E20','#388E3C','#66BB6A','#A5D6A7'], hasMoon: false, stars: false, overlay: 'rgba(200,255,200,0.06)',    cloudTint: 'rgba(220,255,220,0.15)',  sunColor: 'rgba(255,255,180,0.55)', sunCore: 'rgba(255,255,220,0.90)' } },
-          { minScore:  4000, gapMin: 110, gapMax: 150, platWidth: 66, movingChance: 0.18, breakableChance: 0.14, label: '🌤️ Lv.3 Cliffs',  color: '#E65100', theme: { sky: ['#BF360C','#E64A19','#FF7043','#FFAB91'], hasMoon: false, stars: false, overlay: 'rgba(255,100,0,0.07)',     cloudTint: 'rgba(255,180,120,0.20)', sunColor: 'rgba(255,200,100,0.65)', sunCore: 'rgba(255,220,150,0.90)' } },
-          { minScore:  6000, gapMin: 122, gapMax: 165, platWidth: 58, movingChance: 0.28, breakableChance: 0.22, label: '⚡ Lv.4 Peaks',   color: '#6A1B9A', theme: { sky: ['#1A0033','#4A148C','#7B1FA2','#CE93D8'], hasMoon: true,  stars: true,  overlay: 'rgba(100,0,200,0.08)',     cloudTint: 'rgba(180,130,255,0.20)', sunColor: 'rgba(200,150,255,0.50)', sunCore: 'rgba(220,180,255,0.85)' } },
-          { minScore:  8000, gapMin: 135, gapMax: 180, platWidth: 50, movingChance: 0.38, breakableChance: 0.30, label: '✨ Lv.5 Heaven',  color: '#C62828', theme: { sky: ['#B71C1C','#E53935','#FF5252','#FF8A80'], hasMoon: false, stars: false, overlay: 'rgba(255,50,50,0.08)',     cloudTint: 'rgba(255,150,150,0.25)', sunColor: 'rgba(255,150,150,0.60)', sunCore: 'rgba(255,200,200,0.90)' } },
-          { minScore: 10000, gapMin: 148, gapMax: 200, platWidth: 42, movingChance: 0.48, breakableChance: 0.38, label: '🌌 Lv.6 Space',   color: '#01579B', theme: { sky: ['#000000','#0D0D2B','#0A0A40','#0D1B4A'], hasMoon: true,  stars: true,  overlay: 'rgba(0,100,255,0.05)',     cloudTint: 'rgba(100,150,255,0.20)', sunColor: 'rgba(150,200,255,0.40)', sunCore: 'rgba(200,230,255,0.80)' } },
+          { minScore: 0, gapMin: 90, gapMax: 118, platWidth: 80, movingChance: 0.04, breakableChance: 0.04, label: '🌿 Lv.1 Meadow', color: '#1565C0' },
+          { minScore: 2000, gapMin: 108, gapMax: 145, platWidth: 70, movingChance: 0.15, breakableChance: 0.12, label: '⛅ Lv.2 Hills', color: '#2E7D32' },
+          { minScore: 4000, gapMin: 125, gapMax: 165, platWidth: 60, movingChance: 0.26, breakableChance: 0.20, label: '🌤️ Lv.3 Cliffs', color: '#F57F17' },
+          { minScore: 6500, gapMin: 145, gapMax: 185, platWidth: 52, movingChance: 0.36, breakableChance: 0.28, label: '⚡ Lv.4 Peaks', color: '#6A1B9A' },
+          { minScore: 8500, gapMin: 162, gapMax: 205, platWidth: 44, movingChance: 0.45, breakableChance: 0.34, label: '✨ Lv.5 Heaven', color: '#B71C1C' },
         ],
 
         LEADERBOARD_KEY: 'empeoLand_leaderboard_v1',
@@ -1269,6 +1278,8 @@
               this.tiltMode = true;
               const tc = document.getElementById('touch-controls');
               if (tc) tc.style.opacity = '0.18';     // dim D-pad
+              const ind = document.getElementById('tilt-indicator');
+              if (ind) ind.style.display = 'flex';
             }
 
             // ── Analog tilt strength (−1 … +1) ──────────────────────────────
@@ -1286,6 +1297,13 @@
             this.left  = this._tiltVx < -0.05;
             this.right = this._tiltVx >  0.05;
 
+            // ── Update tilt indicator needle ─────────────────────────────────
+            const needle = document.getElementById('tilt-needle');
+            if (needle) {
+              const pct = Utils.clamp(g / max, -1, 1);
+              needle.style.transform = `translateX(${pct * 20}px)`;
+              needle.style.background = Math.abs(g) < dead ? '#4CAF50' : '#FF9800';
+            }
           };
         },
 
@@ -1294,7 +1312,14 @@
           if (typeof DeviceOrientationEvent === 'undefined') return;
 
           if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // iOS 13+ — permission requested silently on game start (Game.start → Input.requestTiltPermission)
+            // iOS 13+ — must call from a user-gesture context.
+            // We hook into the Start button click (see Game.start → Input.requestTiltPermission).
+            // Also show the fallback permission button as a safety net.
+            const permBtn = document.getElementById('tilt-perm-btn');
+            if (permBtn) {
+              permBtn.style.display = 'flex';
+              permBtn.addEventListener('click', () => this.requestTiltPermission(), { once: true });
+            }
           } else {
             // Android / older iOS — register immediately, no permission needed
             addEventListener('deviceorientation', this._handler);
@@ -1316,6 +1341,8 @@
             if (state === 'granted') {
               addEventListener('deviceorientation', this._handler);
               this._permissionGranted = true;
+              const permBtn = document.getElementById('tilt-perm-btn');
+              if (permBtn) permBtn.style.display = 'none';
             }
             return state;
           }).catch(err => { console.warn('Tilt permission error:', err); return 'denied'; });
@@ -1349,7 +1376,7 @@
           this.springAnim = 0;
         }
 
-        update(dt, gameSpeed = 1) {
+        update(dt) {
           // ── Horizontal movement ──────────────────────────────────────────
           // Tilt mode: drive vx DIRECTLY from analog gamma (MegaJump style).
           // D-pad / keyboard: classic acceleration + friction.
@@ -1379,14 +1406,13 @@
             }
           }
 
-          // Apply velocity — normalized to 60fps, scaled by gameSpeed for stage acceleration
-          const dtFactor = (dt / 16.667) * gameSpeed;
-          this.x += this.vx * dtFactor;
-          this.y += this.vy * dtFactor;
+          // Apply velocity
+          this.x += this.vx;
+          this.y += this.vy;
 
-          // Gravity (also scaled by gameSpeed so fall feels heavier at higher stages)
-          this.vy += CONFIG.GRAVITY * dtFactor;
-          // Clamp fall speed
+          // Gravity
+          this.vy += CONFIG.GRAVITY;
+          // Clamp fall speed so player doesn't rocket downward
           if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
 
           // === Screen wrap at SAFE ZONE edges (body-edge-based, instant teleport) ===
@@ -1521,11 +1547,10 @@
         }
         rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
 
-        update(dt, gameSpeed = 1) {
+        update(dt) {
           if (this.broken) return;
-          const dtFactor = (dt / 16.667) * gameSpeed;
           if (this.type === 'moving') {
-            this.x += this.dir * this.speed * dtFactor;
+            this.x += this.dir * this.speed;
             // Clamp moving platform to SAFE ZONE only
             if (this.x < CONFIG.SAFE_X_MIN) { this.x = CONFIG.SAFE_X_MIN; this.dir = 1; }
             if (this.x + this.w > CONFIG.SAFE_X_MAX) { this.x = CONFIG.SAFE_X_MAX - this.w; this.dir = -1; }
@@ -1559,15 +1584,15 @@
           // Determine palette by platform type
           let grassTop, grassMid, grassBottom, dirtTop, dirtBot, edgeColor, vineColor, vineDark;
           if (this.type === 'moving') {
-            // Same lush-grass look as normal platforms
-            grassTop = '#C8F08A';
-            grassMid = '#7CB342';
-            grassBottom = '#558B2F';
-            dirtTop = '#A1714F';
-            dirtBot = '#3E2723';
-            edgeColor = '#2E5E14';
-            vineColor = '#7CB342';
-            vineDark = '#33691E';
+            // Stone-blue floating chunk for moving platforms
+            grassTop = '#4FC3F7';
+            grassMid = '#29B6F6';
+            grassBottom = '#0277BD';
+            dirtTop = '#90A4AE';
+            dirtBot = '#37474F';
+            edgeColor = '#01579B';
+            vineColor = '#26C6DA';
+            vineDark = '#006064';
           } else if (this.type === 'breakable') {
             grassTop = this.cracked ? '#FFCC80' : '#D7B299';
             grassMid = this.cracked ? '#FF9800' : '#8D6E63';
@@ -1780,6 +1805,21 @@
             const seed = Math.floor((this.x * 13 + this.y * 7) % 100);
             if (seed % 3 === 0) drawStarFlower(ctx, sx + w * 0.25, sy + 2, 5);
             if (seed % 5 === 1) drawStarFlower(ctx, sx + w * 0.70, sy + 2, 4);
+          } else if (this.type === 'moving') {
+            // Direction arrow (white, bigger)
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 4;
+            const ax = sx + w / 2, ay = sy + h * 0.30;
+            ctx.beginPath();
+            if (this.dir > 0) {
+              ctx.moveTo(ax - 7, ay - 5); ctx.lineTo(ax + 7, ay); ctx.lineTo(ax - 7, ay + 5);
+            } else {
+              ctx.moveTo(ax + 7, ay - 5); ctx.lineTo(ax - 7, ay); ctx.lineTo(ax + 7, ay + 5);
+            }
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
           } else if (this.type === 'breakable' && this.cracked) {
             // Crack lines
             ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
@@ -2123,9 +2163,8 @@
           this.size = Utils.rand(2, 5);
         }
         update(dt) {
-          const dtFactor = dt / 16.667;
-          this.x += this.vx * dtFactor; this.y += this.vy * dtFactor; this.vy += 0.2 * dtFactor;
-          this.life -= 0.02 * dtFactor;
+          this.x += this.vx; this.y += this.vy; this.vy += 0.2;
+          this.life -= 0.02;
         }
         draw(ctx, camY) {
           if (this.life <= 0) return;
@@ -2218,128 +2257,75 @@
           }
         }
 
-        draw(ctx, camY, theme) {
-          const T = theme || CONFIG.LEVELS[0].theme;
-
-          // === SKY GRADIENT — dynamic per theme ===
+        draw(ctx, camY) {
+          // === SKY GRADIENT (rich blue → light cyan) ===
           const sky = ctx.createLinearGradient(0, 0, 0, CONFIG.HEIGHT);
-          sky.addColorStop(0,    T.sky[0]);
-          sky.addColorStop(0.35, T.sky[1]);
-          sky.addColorStop(0.7,  T.sky[2]);
-          sky.addColorStop(1,    T.sky[3]);
+          sky.addColorStop(0, '#1976D2');
+          sky.addColorStop(0.35, '#42A5F5');
+          sky.addColorStop(0.7, '#81D4FA');
+          sky.addColorStop(1, '#B3E5FC');
           ctx.fillStyle = sky;
           ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
 
-          // === STARS (Peaks & Space themes) ===
-          if (T.stars) {
-            ctx.save();
-            const nt = performance.now();
-            for (let i = 0; i < 60; i++) {
-              const sx = ((Math.sin(i * 127.1) * 0.5 + 0.5)) * CONFIG.WIDTH;
-              const sy = ((Math.sin(i * 311.7) * 0.5 + 0.5)) * CONFIG.HEIGHT;
-              const twinkle = 0.5 + 0.5 * Math.sin(nt * 0.002 + i * 1.3);
-              ctx.globalAlpha = 0.3 + 0.5 * twinkle;
-              ctx.fillStyle = '#fff';
-              ctx.beginPath();
-              ctx.arc(sx, sy, 0.8 + (i % 3) * 0.5, 0, Math.PI * 2);
-              ctx.fill();
-            }
-            ctx.restore();
-          }
+          // === SUN GLOW (top-right, big & warm) ===
+          const sunX = CONFIG.WIDTH * 0.83;
+          const sunY = CONFIG.HEIGHT * 0.10;
+          // Outer glow — wide warm corona
+          const coronaGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 320);
+          coronaGrad.addColorStop(0, 'rgba(255, 250, 220, 0.65)');
+          coronaGrad.addColorStop(0.25, 'rgba(255, 235, 170, 0.35)');
+          coronaGrad.addColorStop(0.55, 'rgba(255, 220, 130, 0.15)');
+          coronaGrad.addColorStop(1, 'rgba(255, 220, 130, 0)');
+          ctx.fillStyle = coronaGrad;
+          ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+          // Inner sun core (bright disc)
+          const sunCore = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+          sunCore.addColorStop(0, 'rgba(255, 255, 240, 0.95)');
+          sunCore.addColorStop(0.5, 'rgba(255, 245, 200, 0.55)');
+          sunCore.addColorStop(1, 'rgba(255, 220, 130, 0)');
+          ctx.fillStyle = sunCore;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+          ctx.fill();
 
-          // === MOON (Peaks & Space) / SUN (all others) ===
-          if (T.hasMoon) {
-            const mx = CONFIG.WIDTH * 0.80, my = CONFIG.HEIGHT * 0.12;
-            ctx.save();
-            const moonGlow = ctx.createRadialGradient(mx, my, 0, mx, my, 90);
-            moonGlow.addColorStop(0, 'rgba(220,240,255,0.30)');
-            moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = moonGlow;
-            ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-            const moonGrad = ctx.createRadialGradient(mx - 8, my - 8, 2, mx, my, 28);
-            moonGrad.addColorStop(0, '#ECEFF1');
-            moonGrad.addColorStop(0.6, '#CFD8DC');
-            moonGrad.addColorStop(1, '#90A4AE');
-            ctx.fillStyle = moonGrad;
-            ctx.beginPath();
-            ctx.arc(mx, my, 28, 0, Math.PI * 2);
-            ctx.fill();
-            // Crescent shadow using sky color
-            ctx.fillStyle = T.sky[1];
-            ctx.beginPath();
-            ctx.arc(mx + 10, my - 6, 22, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-          } else {
-            const sunX = CONFIG.WIDTH * 0.83;
-            const sunY = CONFIG.HEIGHT * 0.10;
-            const coronaGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 320);
-            coronaGrad.addColorStop(0,    T.sunColor);
-            coronaGrad.addColorStop(0.35, T.sunColor.replace(/[\d.]+\)$/, '0.20)'));
-            coronaGrad.addColorStop(1,    'rgba(0,0,0,0)');
-            ctx.fillStyle = coronaGrad;
-            ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-            const sunCore = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
-            sunCore.addColorStop(0, T.sunCore);
-            sunCore.addColorStop(0.5, T.sunColor.replace(/[\d.]+\)$/, '0.45)'));
-            sunCore.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = sunCore;
-            ctx.beginPath();
-            ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // === THEME OVERLAY TINT ===
-          if (T.overlay) { ctx.fillStyle = T.overlay; ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT); }
-
-          // === ATMOSPHERIC HAZE BAND ===
+          // === ATMOSPHERIC HAZE BAND (mid-altitude) — fakes deep distance ===
           const haze = ctx.createLinearGradient(0, CONFIG.HEIGHT * 0.30, 0, CONFIG.HEIGHT * 0.70);
           haze.addColorStop(0, 'rgba(255,255,255,0)');
-          haze.addColorStop(0.5, 'rgba(220,235,250,0.12)');
+          haze.addColorStop(0.5, 'rgba(220,235,250,0.18)');
           haze.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.fillStyle = haze;
           ctx.fillRect(0, CONFIG.HEIGHT * 0.30, CONFIG.WIDTH, CONFIG.HEIGHT * 0.40);
 
-          // === RAINBOW (Meadow only) ===
-          if (!T.hasMoon && !T.stars && T.sky[0] === '#1565C0') {
-            ctx.save();
-            ctx.beginPath(); ctx.rect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT); ctx.clip();
-            drawRainbow(ctx, CONFIG.WIDTH * 0.50, CONFIG.HEIGHT + 60, CONFIG.WIDTH * 0.82);
-            ctx.restore();
-          }
+          // === RAINBOW (very slow parallax — gives sense of distance) ===
+          drawRainbow(ctx, CONFIG.WIDTH + 30, CONFIG.HEIGHT * 0.55 - camY * 0.10, 240);
 
-          const now = performance.now();
-
-          // === SUPER-FAR HAZY CLOUDS ===
+          // === SUPER-FAR HAZY CLOUDS (background atmospheric layer) ===
           for (const c of this.farClouds) {
             c.x += c.speed;
             if (c.x > CONFIG.WIDTH + 60) c.x = -60;
             const py = wrapY(c.y - camY * c.depth);
             if (py > -50 && py < CONFIG.HEIGHT + 50) {
-              drawFluffyCloud(ctx, c.x, py, c.size, 0.30 + c.depth * 0.4, c.seed, T.cloudTint);
+              drawFluffyCloud(ctx, c.x, py, c.size, 0.30 + c.depth * 0.4, c.seed);
             }
           }
 
-          // === DISTANT BIRDS (hidden in dark/space themes) ===
-          if (!T.stars) {
-            for (const b of this.birds) {
-              b.x += b.speed;
-              if (b.x > CONFIG.WIDTH + 30) b.x = -30;
-              const py = wrapY(b.y - camY * b.depth);
-              if (py > -20 && py < CONFIG.HEIGHT + 20) {
-                drawBird(ctx, b.x, py, b.size, now * 0.008 + b.flapPhase);
-              }
+          // === DISTANT BIRDS (V silhouettes) ===
+          for (const b of this.birds) {
+            b.x += b.speed;
+            if (b.x > CONFIG.WIDTH + 30) b.x = -30;
+            const py = wrapY(b.y - camY * b.depth);
+            if (py > -20 && py < CONFIG.HEIGHT + 20) {
+              drawBird(ctx, b.x, py, b.size, performance.now() * 0.008 + b.flapPhase);
             }
           }
 
-          // === CASTLE ISLANDS ===
+          // === CASTLE ISLANDS (far, slowest parallax) — with atmospheric tint ===
           for (const it of this.castleIslands) {
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
-              ctx.globalAlpha = 0.62;
-              const bob = Math.sin(now * 0.0007 + it.x) * 5;
-              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, true, now);
+              ctx.globalAlpha = 0.62;   // slightly translucent — fakes atmospheric haze
+              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, true /*hasCastle*/);
               ctx.restore();
             }
           }
@@ -2355,28 +2341,28 @@
             }
           }
 
-          // === MID-DISTANCE ISLANDS ===
+          // === MID-DISTANCE ISLANDS (with waterfalls) — slight haze ===
           for (const it of this.farIslands) {
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
-              ctx.globalAlpha = 0.82;
-              const bob = Math.sin(now * 0.0009 + it.x * 0.05) * 4;
-              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, false, now);
+              ctx.globalAlpha = 0.82;   // mild transparency — fakes haze without rect artifact
+              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, false);
               if (it.waterfall) {
-                drawBackgroundWaterfall(ctx, it.x, py + bob + it.size * 0.45, it.size * 0.5, now * 0.005 + it.wfPhase);
+                drawBackgroundWaterfall(ctx, it.x, py + it.size * 0.45, it.size * 0.5, performance.now() * 0.005 + it.wfPhase);
               }
               ctx.restore();
             }
           }
 
-          // === FOREGROUND FLUFFY 3D CLOUDS ===
+          // === FOREGROUND FLUFFY 3D CLOUDS (parallax based on depth) ===
           for (const c of this.clouds) {
             c.x += c.speed;
             if (c.x > CONFIG.WIDTH + 150) c.x = -150;
             const py = wrapY(c.y - camY * c.depth);
             if (py > -120 && py < CONFIG.HEIGHT + 120) {
-              drawFluffyCloud(ctx, c.x, py, c.size, 0.65 + c.depth * 0.35, c.seed, T.cloudTint);
+              const alpha = 0.65 + c.depth * 0.35;
+              drawFluffyCloud(ctx, c.x, py, c.size, alpha, c.seed);
             }
           }
         }
@@ -2388,7 +2374,7 @@
         return ((y % period) + period) % period;
       }
 
-      function drawFluffyCloud(ctx, x, y, size, alpha, seed, cloudTint) {
+      function drawFluffyCloud(ctx, x, y, size, alpha, seed) {
         ctx.save();
         ctx.globalAlpha = alpha;
 
@@ -2462,18 +2448,6 @@
           ctx.fill();
         }
 
-        // 5) OPTIONAL THEME TINT on cloud tops
-        if (cloudTint) {
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = cloudTint;
-          for (const p of puffs) {
-            ctx.beginPath();
-            ctx.arc(p.dx, p.dy, p.r, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
         ctx.restore();
         ctx.restore();
       }
@@ -2494,27 +2468,18 @@
         ctx.restore();
       }
 
-      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle, time) {
-        const t = time || 0;
-
-        // === GRASS TOP (lush green oval) ===
+      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle) {
+        // Grass top (lush green oval)
         const grassGrad = ctx.createLinearGradient(x, y - size * 0.18, x, y + size * 0.10);
-        grassGrad.addColorStop(0, '#B8F067');
-        grassGrad.addColorStop(0.55, '#7CB342');
+        grassGrad.addColorStop(0, '#A8E063');
+        grassGrad.addColorStop(0.6, '#7CB342');
         grassGrad.addColorStop(1, '#558B2F');
         ctx.fillStyle = grassGrad;
         ctx.beginPath();
         ctx.ellipse(x, y, size * 0.55, size * 0.18, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Grass rim highlight
-        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.ellipse(x, y - size * 0.04, size * 0.46, size * 0.10, 0, Math.PI, Math.PI * 2);
-        ctx.stroke();
-
-        // === DIRT / ROCK CONE UNDERNEATH ===
+        // Dirt/rock cone underneath (jagged downward)
         const dirtGrad = ctx.createLinearGradient(x, y, x, y + size * 0.55);
         dirtGrad.addColorStop(0, '#8D6E63');
         dirtGrad.addColorStop(0.5, '#6D4C41');
@@ -2532,7 +2497,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // Rock highlight streak
+        // Rock highlights
         ctx.fillStyle = 'rgba(255,255,255,0.10)';
         ctx.beginPath();
         ctx.moveTo(x - size * 0.40, y + size * 0.05);
@@ -2540,38 +2505,6 @@
         ctx.lineTo(x - size * 0.30, y + size * 0.10);
         ctx.closePath();
         ctx.fill();
-
-        // === SMALL TREES on grass top (gently sway with time) ===
-        if (!hasCastle) {
-          const swayAmt = Math.sin(t * 0.0012) * 0.04;  // subtle gentle sway
-          const drawBgTree = (tx, ts) => {
-            ctx.save();
-            ctx.translate(tx, y - size * 0.14);
-            ctx.rotate(swayAmt);
-            // Trunk
-            ctx.fillStyle = '#795548';
-            ctx.fillRect(-ts * 0.08, -ts * 0.28, ts * 0.16, ts * 0.30);
-            // Canopy — two layered circles for depth
-            const cg = ctx.createRadialGradient(-ts*0.1, -ts*0.55, 0, 0, -ts*0.40, ts*0.42);
-            cg.addColorStop(0, '#AED581');
-            cg.addColorStop(0.55, '#7CB342');
-            cg.addColorStop(1, '#33691E');
-            ctx.fillStyle = cg;
-            ctx.beginPath();
-            ctx.arc(0, -ts * 0.44, ts * 0.38, 0, Math.PI * 2);
-            ctx.fill();
-            // Highlight shimmer
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
-            ctx.beginPath();
-            ctx.ellipse(-ts*0.10, -ts*0.58, ts*0.16, ts*0.10, -0.4, 0, Math.PI*2);
-            ctx.fill();
-            ctx.restore();
-          };
-          const ts = size * 0.28;
-          drawBgTree(x - size * 0.22, ts * 0.85);
-          drawBgTree(x + size * 0.18, ts);
-          if (size > 75) drawBgTree(x, ts * 0.75);
-        }
 
         if (hasCastle) {
           drawCastle(ctx, x, y - size * 0.05, size * 0.55);
@@ -2673,31 +2606,17 @@
         return `rgb(${f(r)},${f(g)},${f(b)})`;
       }
 
-      function drawRainbow(ctx, cx, cy, radius) {
-        // Draw each band as many short arc segments, fading alpha near endpoints
-        // → no compositing tricks, no rectangular artifacts
+      function drawRainbow(ctx, x, y, radius) {
+        if (y < -radius - 100 || y > CONFIG.HEIGHT + radius) return;
         ctx.save();
-        const colors = ['#E94B4B','#FF9800','#FFEB3B','#4CAF50','#2196F3','#9C27B0'];
-        const bandW  = 7;
-        const SEGS   = 80;           // number of segments per arc
-        const fadeZone = 0.15;       // fraction of arc that fades at each end
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 6;
+        const colors = ['#E94B4B', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
         for (let i = 0; i < colors.length; i++) {
-          const r = radius - i * bandW;
-          ctx.lineWidth   = bandW;
-          ctx.lineCap     = 'round';
-          for (let s = 0; s < SEGS; s++) {
-            const t0 = s       / SEGS;   // 0..1 along the arc
-            const t1 = (s + 1) / SEGS;
-            const a0 = Math.PI * t0;     // angle: 0=right, PI=left
-            const a1 = Math.PI * t1;
-            // Edge fade: smooth alpha near t=0 and t=1
-            const edge = Math.min(t0 / fadeZone, 1, (1 - t1) / fadeZone);
-            ctx.globalAlpha = 0.50 * edge;
-            ctx.strokeStyle = colors[i];
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, a0, a1, false);
-            ctx.stroke();
-          }
+          ctx.strokeStyle = colors[i];
+          ctx.beginPath();
+          ctx.arc(x, y, radius - i * 7, Math.PI, Math.PI * 1.6);
+          ctx.stroke();
         }
         ctx.restore();
       }
@@ -3234,23 +3153,14 @@
         resize() {
           const w = window.innerWidth;
           const h = window.innerHeight;
-          const isPortrait = h >= w;   // portrait = mobile/tablet held upright
-
-          let scale;
-          if (isPortrait) {
-            // Mobile portrait: cover-fill — scale to fill height fully, no black bars
-            // Gameplay stays in the SAFE ZONE so slight horizontal overflow is fine
-            scale = Math.max(h / CONFIG.HEIGHT, w / CONFIG.WIDTH);
-          } else {
-            // Landscape / PC desktop: contain — fit within window, maintain aspect ratio
-            scale = Math.min(h / CONFIG.HEIGHT, w / CONFIG.WIDTH);
-          }
-
-          const cssW = Math.round(CONFIG.WIDTH * scale);
-          const cssH = Math.round(CONFIG.HEIGHT * scale);
-          this.canvas.style.width  = cssW + 'px';
-          this.canvas.style.height = cssH + 'px';
-          this.canvas.width  = CONFIG.WIDTH;
+          // Maintain aspect ratio of CONFIG.WIDTH:CONFIG.HEIGHT
+          const targetRatio = CONFIG.WIDTH / CONFIG.HEIGHT;
+          let cw = w, ch = h;
+          if (w / h > targetRatio) cw = h * targetRatio;
+          else ch = w / targetRatio;
+          this.canvas.style.width = cw + 'px';
+          this.canvas.style.height = ch + 'px';
+          this.canvas.width = CONFIG.WIDTH;
           this.canvas.height = CONFIG.HEIGHT;
         },
 
@@ -3270,8 +3180,6 @@
           this.difficulty = 0;
           this.currentLevelIdx = 0;
           this.autoScrollSpeed = 0;   // px/frame — 0 until score 2000
-          this.gameSpeed = CONFIG.SPEED_BASE;  // speed multiplier, ramps per stage
-          this.lastSpeedStage = 0;             // last stage threshold crossed
 
           // Initial platforms
           this.generateInitialPlatforms();
@@ -3379,19 +3287,8 @@
         update(dt) {
           if (this.state !== 'playing') return;
 
-          // === GAME SPEED: เพิ่มทุก 4000 แต้ม ===
-          const speedStage = Math.floor(this.score / CONFIG.SPEED_STAGE_INTERVAL);
-          if (speedStage > this.lastSpeedStage) {
-            this.lastSpeedStage = speedStage;
-            this.gameSpeed = Math.min(
-              CONFIG.SPEED_MAX,
-              CONFIG.SPEED_BASE + speedStage * CONFIG.SPEED_INCREMENT
-            );
-            if (speedStage > 0) UI.showToast(`⚡ Speed x${this.gameSpeed.toFixed(1)}!`);
-          }
-
-          // Player update (pass gameSpeed so physics scale)
-          this.player.update(dt, this.gameSpeed);
+          // Player update
+          this.player.update(dt);
 
           // Track highest position (for score/difficulty)
           if (this.player.y < this.highestY) {
@@ -3404,9 +3301,9 @@
           if (this.score >= CONFIG.SCROLL_START_SCORE) {
             const t = Math.min(1, (this.score - CONFIG.SCROLL_START_SCORE) / CONFIG.SCROLL_RAMP_SCORE);
             const targetSpeed = CONFIG.SCROLL_MIN_SPEED + t * (CONFIG.SCROLL_MAX_SPEED - CONFIG.SCROLL_MIN_SPEED);
-            // Ease toward target speed smoothly — also scales with gameSpeed
+            // Ease toward target speed smoothly
             this.autoScrollSpeed += (targetSpeed - this.autoScrollSpeed) * 0.005;
-            this.camY -= this.autoScrollSpeed * this.gameSpeed * (dt / 16.667);
+            this.camY -= this.autoScrollSpeed;
           }
 
           // Camera follow (only upward — player jumping still pushes camera up)
@@ -3423,7 +3320,7 @@
           }
 
           // Update platforms & cull off-screen below
-          for (const p of this.platforms) p.update(dt, this.gameSpeed);
+          for (const p of this.platforms) p.update(dt);
           this.platforms = this.platforms.filter(p => p.y < this.camY + CONFIG.HEIGHT + 200 && !p.broken);
 
           // Springs / boxes / coins update + cull
@@ -3443,7 +3340,7 @@
           if (this.player.vy > 0) {
             const foot = this.player.bottomRect();
             const footBottom = foot.y + foot.h;
-            const prevFootBottom = footBottom - this.player.vy * (dt / 16.667) * this.gameSpeed;
+            const prevFootBottom = footBottom - this.player.vy;
             for (const p of this.platforms) {
               if (p.broken) continue;
               // Foot crossed platform top this frame + horizontal overlap
@@ -3454,17 +3351,15 @@
                 // Snap player to platform top (prevents tunneling at high speeds)
                 this.player.y = p.y - this.player.h;
                 // Check if there's a spring on this platform
-                // Scale jump velocity by √gameSpeed so apex height stays constant
-                // regardless of speed stage (compensates for stronger gravity)
-                const jumpScale = Math.sqrt(this.gameSpeed);
                 const spring = this.springs.find(s => s.platform === p);
                 if (spring) {
                   spring.trigger();
-                  this.player.jump(CONFIG.SPRING_VELOCITY * jumpScale);
+                  this.player.jump(CONFIG.SPRING_VELOCITY);
+                  UI.showToast('🚀 BOING!');
                 } else {
                   const ok = p.onBounce();
                   if (ok) {
-                    this.player.jump(CONFIG.JUMP_VELOCITY * jumpScale);
+                    this.player.jump();
                     if (p.type === 'breakable') Game.spawnParticles(p.x + p.w / 2, p.y, '#C49A8B', 6);
                   }
                 }
@@ -3490,6 +3385,7 @@
               b.collected = true;
               this.multiplier = 2;
               this.multiplierEnd = performance.now() + CONFIG.MULTIPLIER_DURATION;
+              UI.showToast('✨ x2 SCORE for 8s!');
               Game.spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#FF66CC', 18);
             }
           }
@@ -3608,8 +3504,7 @@
         render() {
           const ctx = this.ctx;
           ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-          const theme = this.getLevelDef().theme;
-          this.bg.draw(ctx, this.camY, theme);
+          this.bg.draw(ctx, this.camY);
 
           // World offset for elements
           const camY = this.camY;
