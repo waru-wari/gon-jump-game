@@ -1049,21 +1049,6 @@
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
-      <!-- Tilt indicator — visible only when gyroscope is active -->
-      <div id="tilt-indicator" style="display:none; position:absolute; bottom:100px; left:50%; transform:translateX(-50%); flex-direction:column; align-items:center; gap:4px; background:rgba(0,0,0,0.45); border-radius:24px; padding:8px 16px 6px; pointer-events:none; backdrop-filter:blur(4px); border:1.5px solid rgba(255,255,255,0.18);">
-        <span style="font-size:12px; color:#fff; opacity:0.80; letter-spacing:0.5px; font-weight:700;">📱 TILT TO MOVE</span>
-        <!-- Track -->
-        <div style="position:relative; width:80px; height:14px; background:rgba(255,255,255,0.12); border-radius:7px; overflow:visible; border:1.5px solid rgba(255,255,255,0.25);">
-          <!-- Center marker -->
-          <div style="position:absolute; left:calc(50% - 0.75px); top:2px; width:1.5px; height:10px; background:rgba(255,255,255,0.35); border-radius:1px;"></div>
-          <!-- Needle -->
-          <div id="tilt-needle" style="position:absolute; left:calc(50% - 5px); top:2px; width:10px; height:10px; border-radius:5px; background:#4CAF50; transition:transform 0.04s linear, background 0.08s; box-shadow:0 0 6px rgba(76,175,80,0.7);"></div>
-        </div>
-      </div>
-
-      <!-- iOS 13+ permission prompt -->
-      <button id="tilt-perm-btn" style="display:none; position:absolute; bottom:105px; left:50%; transform:translateX(-50%); background:linear-gradient(180deg,#FFB300,#E65100); color:#fff; border:3px solid #8B3000; border-radius:24px; padding:10px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; z-index:20; box-shadow:0 4px 0 #5D2000,0 8px 16px rgba(0,0,0,0.3); font-family:'Fredoka','Baloo 2',system-ui,sans-serif; letter-spacing:0.5px;">📱 Enable Tilt Control</button>
-
       <div id="touch-controls" class="touch-controls">
         <div id="touch-left" class="touch-btn">◀</div>
         <div id="touch-right" class="touch-btn">▶</div>
@@ -1278,8 +1263,6 @@
               this.tiltMode = true;
               const tc = document.getElementById('touch-controls');
               if (tc) tc.style.opacity = '0.18';     // dim D-pad
-              const ind = document.getElementById('tilt-indicator');
-              if (ind) ind.style.display = 'flex';
             }
 
             // ── Analog tilt strength (−1 … +1) ──────────────────────────────
@@ -1297,13 +1280,6 @@
             this.left  = this._tiltVx < -0.05;
             this.right = this._tiltVx >  0.05;
 
-            // ── Update tilt indicator needle ─────────────────────────────────
-            const needle = document.getElementById('tilt-needle');
-            if (needle) {
-              const pct = Utils.clamp(g / max, -1, 1);
-              needle.style.transform = `translateX(${pct * 20}px)`;
-              needle.style.background = Math.abs(g) < dead ? '#4CAF50' : '#FF9800';
-            }
           };
         },
 
@@ -1312,14 +1288,7 @@
           if (typeof DeviceOrientationEvent === 'undefined') return;
 
           if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // iOS 13+ — must call from a user-gesture context.
-            // We hook into the Start button click (see Game.start → Input.requestTiltPermission).
-            // Also show the fallback permission button as a safety net.
-            const permBtn = document.getElementById('tilt-perm-btn');
-            if (permBtn) {
-              permBtn.style.display = 'flex';
-              permBtn.addEventListener('click', () => this.requestTiltPermission(), { once: true });
-            }
+            // iOS 13+ — permission requested silently on game start (Game.start → Input.requestTiltPermission)
           } else {
             // Android / older iOS — register immediately, no permission needed
             addEventListener('deviceorientation', this._handler);
@@ -1341,8 +1310,6 @@
             if (state === 'granted') {
               addEventListener('deviceorientation', this._handler);
               this._permissionGranted = true;
-              const permBtn = document.getElementById('tilt-perm-btn');
-              if (permBtn) permBtn.style.display = 'none';
             }
             return state;
           }).catch(err => { console.warn('Tilt permission error:', err); return 'denied'; });
@@ -1584,15 +1551,15 @@
           // Determine palette by platform type
           let grassTop, grassMid, grassBottom, dirtTop, dirtBot, edgeColor, vineColor, vineDark;
           if (this.type === 'moving') {
-            // Stone-blue floating chunk for moving platforms
-            grassTop = '#4FC3F7';
-            grassMid = '#29B6F6';
-            grassBottom = '#0277BD';
-            dirtTop = '#90A4AE';
-            dirtBot = '#37474F';
-            edgeColor = '#01579B';
-            vineColor = '#26C6DA';
-            vineDark = '#006064';
+            // Same lush-grass look as normal platforms
+            grassTop = '#C8F08A';
+            grassMid = '#7CB342';
+            grassBottom = '#558B2F';
+            dirtTop = '#A1714F';
+            dirtBot = '#3E2723';
+            edgeColor = '#2E5E14';
+            vineColor = '#7CB342';
+            vineDark = '#33691E';
           } else if (this.type === 'breakable') {
             grassTop = this.cracked ? '#FFCC80' : '#D7B299';
             grassMid = this.cracked ? '#FF9800' : '#8D6E63';
@@ -1805,21 +1772,6 @@
             const seed = Math.floor((this.x * 13 + this.y * 7) % 100);
             if (seed % 3 === 0) drawStarFlower(ctx, sx + w * 0.25, sy + 2, 5);
             if (seed % 5 === 1) drawStarFlower(ctx, sx + w * 0.70, sy + 2, 4);
-          } else if (this.type === 'moving') {
-            // Direction arrow (white, bigger)
-            ctx.save();
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.shadowColor = 'rgba(0,0,0,0.4)';
-            ctx.shadowBlur = 4;
-            const ax = sx + w / 2, ay = sy + h * 0.30;
-            ctx.beginPath();
-            if (this.dir > 0) {
-              ctx.moveTo(ax - 7, ay - 5); ctx.lineTo(ax + 7, ay); ctx.lineTo(ax - 7, ay + 5);
-            } else {
-              ctx.moveTo(ax + 7, ay - 5); ctx.lineTo(ax - 7, ay); ctx.lineTo(ax + 7, ay + 5);
-            }
-            ctx.closePath(); ctx.fill();
-            ctx.restore();
           } else if (this.type === 'breakable' && this.cracked) {
             // Crack lines
             ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
@@ -2296,8 +2248,18 @@
           ctx.fillStyle = haze;
           ctx.fillRect(0, CONFIG.HEIGHT * 0.30, CONFIG.WIDTH, CONFIG.HEIGHT * 0.40);
 
-          // === RAINBOW (very slow parallax — gives sense of distance) ===
-          drawRainbow(ctx, CONFIG.WIDTH + 30, CONFIG.HEIGHT * 0.55 - camY * 0.10, 240);
+          // === RAINBOW (fixed in lower canvas, tips hidden below frame) ===
+          ctx.save();
+          // Clip to canvas so arc tips never show outside
+          ctx.beginPath();
+          ctx.rect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+          ctx.clip();
+          // Centre is below the canvas bottom-edge → only upper arch is visible
+          const rbCx = CONFIG.WIDTH * 0.50;
+          const rbCy = CONFIG.HEIGHT + 60;   // sink centre below visible area
+          const rbR  = CONFIG.WIDTH * 0.82;  // wide enough to fill nicely
+          drawRainbow(ctx, rbCx, rbCy, rbR);
+          ctx.restore();
 
           // === SUPER-FAR HAZY CLOUDS (background atmospheric layer) ===
           for (const c of this.farClouds) {
@@ -2320,12 +2282,14 @@
           }
 
           // === CASTLE ISLANDS (far, slowest parallax) — with atmospheric tint ===
+          const now = performance.now();
           for (const it of this.castleIslands) {
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
               ctx.globalAlpha = 0.62;   // slightly translucent — fakes atmospheric haze
-              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, true /*hasCastle*/);
+              const bob = Math.sin(now * 0.0007 + it.x) * 5;   // gentle float
+              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, true /*hasCastle*/, now);
               ctx.restore();
             }
           }
@@ -2346,10 +2310,11 @@
             const py = wrapY(it.y - camY * it.depth);
             if (py > -200 && py < CONFIG.HEIGHT + 200) {
               ctx.save();
-              ctx.globalAlpha = 0.82;   // mild transparency — fakes haze without rect artifact
-              drawFloatingIslandSilhouette(ctx, it.x, py, it.size, false);
+              ctx.globalAlpha = 0.82;
+              const bob = Math.sin(now * 0.0009 + it.x * 0.05) * 4;  // each island has unique phase
+              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, false, now);
               if (it.waterfall) {
-                drawBackgroundWaterfall(ctx, it.x, py + it.size * 0.45, it.size * 0.5, performance.now() * 0.005 + it.wfPhase);
+                drawBackgroundWaterfall(ctx, it.x, py + bob + it.size * 0.45, it.size * 0.5, now * 0.005 + it.wfPhase);
               }
               ctx.restore();
             }
@@ -2468,18 +2433,27 @@
         ctx.restore();
       }
 
-      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle) {
-        // Grass top (lush green oval)
+      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle, time) {
+        const t = time || 0;
+
+        // === GRASS TOP (lush green oval) ===
         const grassGrad = ctx.createLinearGradient(x, y - size * 0.18, x, y + size * 0.10);
-        grassGrad.addColorStop(0, '#A8E063');
-        grassGrad.addColorStop(0.6, '#7CB342');
+        grassGrad.addColorStop(0, '#B8F067');
+        grassGrad.addColorStop(0.55, '#7CB342');
         grassGrad.addColorStop(1, '#558B2F');
         ctx.fillStyle = grassGrad;
         ctx.beginPath();
         ctx.ellipse(x, y, size * 0.55, size * 0.18, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Dirt/rock cone underneath (jagged downward)
+        // Grass rim highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(x, y - size * 0.04, size * 0.46, size * 0.10, 0, Math.PI, Math.PI * 2);
+        ctx.stroke();
+
+        // === DIRT / ROCK CONE UNDERNEATH ===
         const dirtGrad = ctx.createLinearGradient(x, y, x, y + size * 0.55);
         dirtGrad.addColorStop(0, '#8D6E63');
         dirtGrad.addColorStop(0.5, '#6D4C41');
@@ -2497,7 +2471,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // Rock highlights
+        // Rock highlight streak
         ctx.fillStyle = 'rgba(255,255,255,0.10)';
         ctx.beginPath();
         ctx.moveTo(x - size * 0.40, y + size * 0.05);
@@ -2505,6 +2479,38 @@
         ctx.lineTo(x - size * 0.30, y + size * 0.10);
         ctx.closePath();
         ctx.fill();
+
+        // === SMALL TREES on grass top (gently sway with time) ===
+        if (!hasCastle) {
+          const swayAmt = Math.sin(t * 0.0012) * 0.04;  // subtle gentle sway
+          const drawBgTree = (tx, ts) => {
+            ctx.save();
+            ctx.translate(tx, y - size * 0.14);
+            ctx.rotate(swayAmt);
+            // Trunk
+            ctx.fillStyle = '#795548';
+            ctx.fillRect(-ts * 0.08, -ts * 0.28, ts * 0.16, ts * 0.30);
+            // Canopy — two layered circles for depth
+            const cg = ctx.createRadialGradient(-ts*0.1, -ts*0.55, 0, 0, -ts*0.40, ts*0.42);
+            cg.addColorStop(0, '#AED581');
+            cg.addColorStop(0.55, '#7CB342');
+            cg.addColorStop(1, '#33691E');
+            ctx.fillStyle = cg;
+            ctx.beginPath();
+            ctx.arc(0, -ts * 0.44, ts * 0.38, 0, Math.PI * 2);
+            ctx.fill();
+            // Highlight shimmer
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.beginPath();
+            ctx.ellipse(-ts*0.10, -ts*0.58, ts*0.16, ts*0.10, -0.4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+          };
+          const ts = size * 0.28;
+          drawBgTree(x - size * 0.22, ts * 0.85);
+          drawBgTree(x + size * 0.18, ts);
+          if (size > 75) drawBgTree(x, ts * 0.75);
+        }
 
         if (hasCastle) {
           drawCastle(ctx, x, y - size * 0.05, size * 0.55);
@@ -2606,17 +2612,31 @@
         return `rgb(${f(r)},${f(g)},${f(b)})`;
       }
 
-      function drawRainbow(ctx, x, y, radius) {
-        if (y < -radius - 100 || y > CONFIG.HEIGHT + radius) return;
+      function drawRainbow(ctx, cx, cy, radius) {
+        // Draw each band as many short arc segments, fading alpha near endpoints
+        // → no compositing tricks, no rectangular artifacts
         ctx.save();
-        ctx.globalAlpha = 0.55;
-        ctx.lineWidth = 6;
-        const colors = ['#E94B4B', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+        const colors = ['#E94B4B','#FF9800','#FFEB3B','#4CAF50','#2196F3','#9C27B0'];
+        const bandW  = 7;
+        const SEGS   = 80;           // number of segments per arc
+        const fadeZone = 0.15;       // fraction of arc that fades at each end
         for (let i = 0; i < colors.length; i++) {
-          ctx.strokeStyle = colors[i];
-          ctx.beginPath();
-          ctx.arc(x, y, radius - i * 7, Math.PI, Math.PI * 1.6);
-          ctx.stroke();
+          const r = radius - i * bandW;
+          ctx.lineWidth   = bandW;
+          ctx.lineCap     = 'round';
+          for (let s = 0; s < SEGS; s++) {
+            const t0 = s       / SEGS;   // 0..1 along the arc
+            const t1 = (s + 1) / SEGS;
+            const a0 = Math.PI * t0;     // angle: 0=right, PI=left
+            const a1 = Math.PI * t1;
+            // Edge fade: smooth alpha near t=0 and t=1
+            const edge = Math.min(t0 / fadeZone, 1, (1 - t1) / fadeZone);
+            ctx.globalAlpha = 0.50 * edge;
+            ctx.strokeStyle = colors[i];
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, a0, a1, false);
+            ctx.stroke();
+          }
         }
         ctx.restore();
       }
@@ -3355,7 +3375,6 @@
                 if (spring) {
                   spring.trigger();
                   this.player.jump(CONFIG.SPRING_VELOCITY);
-                  UI.showToast('🚀 BOING!');
                 } else {
                   const ok = p.onBounce();
                   if (ok) {
@@ -3385,7 +3404,6 @@
               b.collected = true;
               this.multiplier = 2;
               this.multiplierEnd = performance.now() + CONFIG.MULTIPLIER_DURATION;
-              UI.showToast('✨ x2 SCORE for 8s!');
               Game.spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#FF66CC', 18);
             }
           }
