@@ -42,47 +42,62 @@
       touch-action: none;
     }
 
-    /* FIX #1 — Responsive canvas wrapper: maintains 400×700 aspect ratio, no side bars */
+    /* Full-screen game container */
     #game-container {
       position: relative;
       width: 100%;
-      /* FIX #2 — use dvh with svh fallback so Safari toolbar doesn't overlap */
       height: 100svh;
       height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: #1E88E5;
+      background: #000;
     }
 
-    /* Aspect-ratio wrapper — constrains canvas to 4:7 (400×700) with letterbox in landscape */
+    /*
+     * Canvas wrapper — COVER mode (like object-fit:cover for divs).
+     * Portrait phones: fills 100vw × 100dvh, cropping slightly on whichever
+     *   axis overflows (usually none on a standard portrait phone).
+     * Landscape: caps at 100vw so the 400:700 canvas stays readable.
+     * The internal canvas resolution remains 400×700 px; CSS scales it.
+     */
     #canvas-wrap {
       position: relative;
-      /* Fit within viewport keeping 400:700 ratio; object-fit:contain equivalent for divs */
       aspect-ratio: 400 / 700;
-      /* In portrait: fill full height (width will be narrower than vw → no side bars) */
-      height: 100%;
-      max-height: 100%;
-      /* In landscape: don't overflow width */
-      max-width: 100%;
+      /* Cover portrait: satisfy both min-width and min-height */
+      width: 100%;
+      height: 100svh;
+      height: 100dvh;
+      /* If aspect-ratio makes it overflow one axis, let parent clip */
+      max-width: none;
+      max-height: none;
       overflow: hidden;
-      /* Gradient lives here so it's clipped to the play area */
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
+    }
+
+    /* Landscape: constrain width so canvas doesn't go off-screen horizontally */
+    @media (orientation: landscape) {
+      #canvas-wrap {
+        width: auto;
+        height: 100svh;
+        height: 100dvh;
+        max-width: 100vw;
+      }
     }
 
     canvas#game-canvas {
       display: block;
-      /* FIX #1 — fill the wrapper exactly; CSS scales the logical 400×700 canvas */
       width: 100%;
       height: 100%;
       position: relative;
       z-index: 1;
-      background: transparent;   /* video shows through when in menu state */
+      background: transparent;
       image-rendering: optimizeSpeed;
       image-rendering: -webkit-optimize-contrast;
       pointer-events: none;
     }
+
 
     /* Overlays — all UI sits inside SAFE ZONE (12.5% horizontal padding) */
     .overlay {
