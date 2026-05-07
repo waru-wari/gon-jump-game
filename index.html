@@ -3134,36 +3134,21 @@
         },
 
         async _submitScore() {
-          const email   = (this.el.leadEmail.value || '').trim();
-          const name    = (this.el.leadName.value  || 'Anonymous').slice(0, 20);
-          const score   = Game.score;
-          const level   = Game.currentLevelIdx + 1;
-          const session = Game._session;       // { sessionToken, sessionSecret }
-
-          if (!session) { this.showToast('Session expired — please play again'); return; }
+          const email = (this.el.leadEmail.value || '').trim();
+          const name  = (this.el.leadName.value  || 'Anonymous').slice(0, 20);
+          const score = Game.score;
+          const level = Game.currentLevelIdx + 1;
 
           this.el.submitScoreBtn.disabled = true;
           this.el.submitScoreBtn.textContent = '⏳ ส่ง...';
 
           try {
-            // Client-side HMAC signature for anti-cheat
-            const data    = `${score}|${level}|${session.sessionToken}`;
-            const scoreSig = await hmacSignClient(data, session.sessionSecret);
-
             const res = await fetch('/api/leaderboard', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionToken: session.sessionToken,
-                scoreSig,
-                score,
-                level,
-                coinsEarned: Game.totalCoins ?? 0,
-                email,
-                name,
-                consentedAt: Date.now(),
-              }),
+              body: JSON.stringify({ score, level, email, name }),
             });
+
 
             const data2 = await res.json();
             if (!res.ok) throw new Error(data2.error ?? `HTTP ${res.status}`);

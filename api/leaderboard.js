@@ -1,12 +1,11 @@
 /**
  * api/leaderboard.js
- * GET  /api/leaderboard?limit=20   → public leaderboard (cached 30s at edge)
- * POST /api/leaderboard            → submit score (requires valid session + consent)
+ * GET  /api/leaderboard?limit=10&season=id  → public leaderboard
+ * POST /api/leaderboard                     → submit score
  */
 import { kv } from '../lib/kv.js';
-import { emailHash, hmacSign } from '../lib/crypto.js';
+import { emailHash } from '../lib/crypto.js';
 import { validateEmail, censorEmail } from '../lib/email.js';
-import { runAllChecks } from '../lib/anticheat.js';
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'https://gon-jump-game.vercel.app';
 
@@ -16,17 +15,12 @@ function cors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-// ─── Today's date as "YYYY-MM-DD" (UTC) ──────────────────────────────────────
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-// ─── Build display rows from a sorted set (zrange with scores) ───────────────
-async function buildRows(members, startRank = 0) {
+// ─── Build display rows from a sorted set ────────────────────────────────────
+// Upstash zrange withScores returns alternating [member, score, member, score, ...]
+async function buildRows(members) {
   if (!members || members.length === 0) return [];
-  // Upstash returns alternating [member, score, member, score, ...]
   const rows = [];
-  let rank = startRank + 1;
+  let rank = 1;
   for (let i = 0; i < members.length; i += 2) {
     const hash  = members[i];
     const score = Number(members[i + 1]);
@@ -35,11 +29,9 @@ async function buildRows(members, startRank = 0) {
     if (!profile) continue;
     rows.push({
       rank,
-      name: profile.name ?? 'Anonymous',
-      emailDisplay: profile.emailDisplay ?? '****',
+      name:         profile.name         ?? 'Anonymous',
+      emailDisplay: profile.emailDisplay  ?? '****',
       score,
-      bestLevel: profile.bestLevel ?? 1,
-      timesPlayed: profile.timesPlayed ?? 1,
     });
     rank++;
   }
@@ -50,18 +42,14 @@ async function buildRows(members, startRank = 0) {
 async function handleGet(req, res) {
   const limit = Math.min(parseInt(req.query?.limit ?? '10', 10), 100);
 
-  // Determine which season to show
-  const activeId   = await kv.get('season:active');
-  const seasonId   = req.query?.season ?? activeId ?? null;
-  const lbKey      = seasonId ? `leaderboard:season:${seasonId}` : 'leaderboard:global';
+  // Season-aware key
+  const activeId = await kv.get('season:active');
+  const seasonId = req.query?.season ?? activeId ?? null;
+  const lbKey    = seasonId ? `leaderboard:season:${seasonId}` : 'leaderboard:global';
 
-  // Global board (descending — highest score first)
-  const globalMembers = await kv.zrange(lbKey, 0, limit - 1, {
-    rev: true,
-    withScores: true,
-  });
+  const members = await kv.zrange(lbKey, 0, limit - 1, { rev: true, withScores: true });
 
-  // All seasons for dropdown
+  // Season list for dropdown
   const rawSeasons = await kv.zrange('season:list', 0, -1, { rev: true, withScores: true });
   const seasons = [];
   for (let i = 0; i < rawSeasons.length; i += 2) {
@@ -70,151 +58,81 @@ async function handleGet(req, res) {
     seasons.push({ id: sid, name: info?.name ?? sid, createdAt: Number(rawSeasons[i + 1]) });
   }
 
-  // Daily board
-  const dailyKey = `leaderboard:daily:${todayKey()}`;
-  const dailyMembers = await kv.zrange(dailyKey, 0, limit - 1, {
-    rev: true,
-    withScores: true,
-  });
-
-  const [globalRows, dailyRows] = await Promise.all([
-    buildRows(globalMembers),
-    buildRows([]),   // daily disabled for now (season-aware daily TBD)
-  ]);
+  const global = await buildRows(members);
 
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  return res.status(200).json({
-    global: globalRows,
-    daily:  dailyRows,
-    seasonId:     seasonId,
-    activeSeason: activeId,
-    seasons,
-  });
+  return res.status(200).json({ global, daily: [], seasonId, activeSeason: activeId, seasons });
 }
 
 // ─── POST /api/leaderboard ───────────────────────────────────────────────────
 async function handlePost(req, res) {
   const {
-    sessionToken,
-    scoreSig,
     score: rawScore,
     level: rawLevel,
-    coinsEarned: rawCoins,
     email,
     name: rawName,
-    consentedAt,
   } = req.body ?? {};
 
-  // ── Basic field presence ───────────────────────────────────────────────────
-  if (!sessionToken || !scoreSig || rawScore == null || !email || !consentedAt) {
-    return res.status(400).json({ error: 'Missing required fields.' });
+  // Basic validation
+  if (rawScore == null || !email) {
+    return res.status(400).json({ error: 'Missing required fields (score, email).' });
   }
 
   const score = parseInt(rawScore, 10);
   const level = parseInt(rawLevel ?? '1', 10);
-  const coins = parseInt(rawCoins ?? '0', 10);
 
   if (isNaN(score) || score < 0) {
     return res.status(400).json({ error: 'Invalid score.' });
   }
 
-  // ── Email validation ───────────────────────────────────────────────────────
   if (!validateEmail(email)) {
-    return res.status(400).json({ error: 'Invalid or disposable email address.' });
+    return res.status(400).json({ error: 'Invalid email address.' });
   }
 
-  // ── Load session from KV ───────────────────────────────────────────────────
-  const session = await kv.hgetall(`session:${sessionToken}`);
-  if (!session) {
-    return res.status(401).json({ error: 'Session not found or expired.' });
-  }
-
-  // ── Client IP ─────────────────────────────────────────────────────────────
-  const ip =
-    (req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() ||
-    req.socket?.remoteAddress ||
-    'unknown';
-
-  // ── Derive same per-session secret as game-start did ─────────────────────
-  const masterSecret = process.env.SESSION_HMAC_SECRET;
-  const sessionSecret = await hmacSign(sessionToken, masterSecret);
-
-  // ── Run all anti-cheat checks ─────────────────────────────────────────────
-  const check = await runAllChecks({
-    session,
-    score,
-    level,
-    sessionToken,
-    scoreSig,
-    ip,
-    kv,
-  });
-  if (!check.ok) {
-    return res.status(check.status).json({ error: check.error });
-  }
-
-  // ── Hash email (PDPA — plaintext email dies here) ─────────────────────────
-  const hash = await emailHash(email);
+  // Hash email (PDPA — plaintext never stored)
+  const hash         = await emailHash(email);
   const emailDisplay = censorEmail(email);
-  const name = (rawName ?? 'Anonymous').trim().slice(0, 20) || 'Anonymous';
-  const now = Date.now();
+  const name         = (rawName ?? 'Anonymous').trim().slice(0, 20) || 'Anonymous';
+  const now          = Date.now();
 
-  // ── KV writes ─────────────────────────────────────────────────────────────
-  const today = todayKey();
-
-  // Determine active season → write to its leaderboard key
+  // Determine active season → write to its key
   const activeSeason = await kv.get('season:active');
   const lbKey = activeSeason ? `leaderboard:season:${activeSeason}` : 'leaderboard:global';
 
-  // Season sorted set — GT: only update if new score is higher
+  // Write to sorted set (GT: only update if higher score)
   await kv.zadd(lbKey, { gt: true }, { member: hash, score });
 
-  // Update max tracker for anti-cheat sanity check
-  const maxKey    = `${lbKey}:max`;
-  const currentMax = Number(await kv.get(maxKey) ?? 0);
-  if (score > currentMax) await kv.set(maxKey, score);
-
-  // Score history — push snapshot, keep latest 200
-  const snapshot = JSON.stringify({ score, level, name, ts: now });
-  await kv.lpush(`profile:${hash}:history`, snapshot);
-  await kv.ltrim(`profile:${hash}:history`, 0, 199);
-
-  // Profile hash — update live fields
+  // Update profile
+  const prevBestScore = Number(await kv.hget(`profile:${hash}`, 'bestScore') ?? 0);
+  const prevBestLevel = Number(await kv.hget(`profile:${hash}`, 'bestLevel') ?? 1);
   await kv.hset(`profile:${hash}`, {
     name,
     emailDisplay,
-    bestScore: Math.max(score, Number(await kv.hget(`profile:${hash}`, 'bestScore') ?? 0)),
-    bestLevel: Math.max(level, Number(await kv.hget(`profile:${hash}`, 'bestLevel') ?? 1)),
-    timesPlayed: await kv.hincrby(`profile:${hash}`, 'timesPlayed', 1),
+    bestScore:   Math.max(score, prevBestScore),
+    bestLevel:   Math.max(level, prevBestLevel),
     lastPlayedAt: now,
-    consentedAt,
-    coins: await kv.hincrby(`profile:${hash}`, 'coins', coins),
+    consentedAt:  now,
   });
+  await kv.hincrby(`profile:${hash}`, 'timesPlayed', 1);
 
-  // Mark session as submitted (prevents double-submit)
-  await kv.hset(`session:${sessionToken}`, { submitted: 'ok' });
+  // Score history
+  await kv.lpush(`profile:${hash}:history`, JSON.stringify({ score, level, name, ts: now }));
+  await kv.ltrim(`profile:${hash}:history`, 0, 199);
 
-  // ── Compute rank in current season ───────────────────────────────────────
-  const zeroRank    = await kv.zrevrank(lbKey, hash);
-  const rank        = zeroRank != null ? zeroRank + 1 : null;
+  // Rank
+  const zeroRank     = await kv.zrevrank(lbKey, hash);
+  const rank         = zeroRank != null ? zeroRank + 1 : null;
   const totalEntries = await kv.zcard(lbKey);
 
-  return res.status(200).json({
-    ok: true,
-    rank,
-    totalEntries,
-    emailDisplay,
-    name,
-  });
+  return res.status(200).json({ ok: true, rank, totalEntries, emailDisplay, name });
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-
   try {
-    if (req.method === 'GET') return await handleGet(req, res);
+    if (req.method === 'GET')  return await handleGet(req, res);
     if (req.method === 'POST') return await handlePost(req, res);
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
