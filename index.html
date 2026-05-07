@@ -1388,20 +1388,7 @@
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
-      <!-- Tilt indicator — visible only when gyroscope is active -->
-      <div id="tilt-indicator" style="display:none; position:absolute; bottom:100px; left:50%; transform:translateX(-50%); flex-direction:column; align-items:center; gap:4px; background:rgba(0,0,0,0.45); border-radius:24px; padding:8px 16px 6px; pointer-events:none; backdrop-filter:blur(4px); border:1.5px solid rgba(255,255,255,0.18);">
-        <span style="font-size:12px; color:#fff; opacity:0.80; letter-spacing:0.5px; font-weight:700;">📱 TILT TO MOVE</span>
-        <!-- Track -->
-        <div style="position:relative; width:80px; height:14px; background:rgba(255,255,255,0.12); border-radius:7px; overflow:visible; border:1.5px solid rgba(255,255,255,0.25);">
-          <!-- Center marker -->
-          <div style="position:absolute; left:calc(50% - 0.75px); top:2px; width:1.5px; height:10px; background:rgba(255,255,255,0.35); border-radius:1px;"></div>
-          <!-- Needle -->
-          <div id="tilt-needle" style="position:absolute; left:calc(50% - 5px); top:2px; width:10px; height:10px; border-radius:5px; background:#4CAF50; transition:transform 0.04s linear, background 0.08s; box-shadow:0 0 6px rgba(76,175,80,0.7);"></div>
-        </div>
-      </div>
 
-      <!-- iOS 13+ permission prompt -->
-      <button id="tilt-perm-btn" style="display:none; position:absolute; bottom:105px; left:50%; transform:translateX(-50%); background:linear-gradient(180deg,#FFB300,#E65100); color:#fff; border:3px solid #8B3000; border-radius:24px; padding:10px 22px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; z-index:20; box-shadow:0 4px 0 #5D2000,0 8px 16px rgba(0,0,0,0.3); font-family:'Fredoka','Baloo 2',system-ui,sans-serif; letter-spacing:0.5px;">📱 Enable Tilt Control</button>
 
       <div id="touch-controls" class="touch-controls">
         <div id="touch-left" class="touch-btn">◀</div>
@@ -1633,12 +1620,9 @@
             this._gamma = g;
 
             if (!this.tiltMode) {
-              // First real reading → switch to tilt mode
               this.tiltMode = true;
               const tc = document.getElementById('touch-controls');
               if (tc) tc.style.opacity = '0.18';     // dim D-pad
-              const ind = document.getElementById('tilt-indicator');
-              if (ind) ind.style.display = 'flex';
             }
 
             // ── Analog tilt strength (−1 … +1) ──────────────────────────────
@@ -1656,34 +1640,18 @@
             this.left  = this._tiltVx < -0.05;
             this.right = this._tiltVx >  0.05;
 
-            // ── Update tilt indicator needle ─────────────────────────────────
-            const needle = document.getElementById('tilt-needle');
-            if (needle) {
-              const pct = Utils.clamp(g / max, -1, 1);
-              needle.style.transform = `translateX(${pct * 20}px)`;
-              needle.style.background = Math.abs(g) < dead ? '#4CAF50' : '#FF9800';
-            }
           };
         },
 
-        // Register deviceorientation — handles iOS 13+ permission transparently
+        // Register deviceorientation — no UI prompt, just register
         _initTilt() {
           if (typeof DeviceOrientationEvent === 'undefined') return;
-
-          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // iOS 13+ — must call from a user-gesture context.
-            // We hook into the Start button click (see Game.start → Input.requestTiltPermission).
-            // Also show the fallback permission button as a safety net.
-            const permBtn = document.getElementById('tilt-perm-btn');
-            if (permBtn) {
-              permBtn.style.display = 'flex';
-              permBtn.addEventListener('click', () => this.requestTiltPermission(), { once: true });
-            }
-          } else {
-            // Android / older iOS — register immediately, no permission needed
+          // Android / non-permission browsers: register immediately
+          if (typeof DeviceOrientationEvent.requestPermission !== 'function') {
             addEventListener('deviceorientation', this._handler);
             this._permissionGranted = true;
           }
+          // iOS 13+: permission requested via Game.start() → requestTiltPermission()
         },
 
         // Call this from a user-gesture (e.g. Start button) to request iOS permission
@@ -1700,8 +1668,6 @@
             if (state === 'granted') {
               addEventListener('deviceorientation', this._handler);
               this._permissionGranted = true;
-              const permBtn = document.getElementById('tilt-perm-btn');
-              if (permBtn) permBtn.style.display = 'none';
             }
             return state;
           }).catch(err => { console.warn('Tilt permission error:', err); return 'denied'; });
