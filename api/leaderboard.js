@@ -89,7 +89,7 @@ async function handlePost(req, res) {
     return res.status(400).json({ error: 'Invalid email address.' });
   }
 
-  // Hash email (PDPA — plaintext never stored)
+  // Hash email → used as unique Redis key (keeps leaderboard deduplicated)
   const hash         = await emailHash(email);
   const emailDisplay = censorEmail(email);
   const name         = (rawName ?? 'Anonymous').trim().slice(0, 20) || 'Anonymous';
@@ -106,8 +106,9 @@ async function handlePost(req, res) {
   const prevBestScore = Number(await kv.hget(`profile:${hash}`, 'bestScore') ?? 0);
   const prevBestLevel = Number(await kv.hget(`profile:${hash}`, 'bestLevel') ?? 1);
   await kv.hset(`profile:${hash}`, {
+    email,              // stored securely, never exposed via API
+    emailDisplay,       // censored version shown on leaderboard
     name,
-    emailDisplay,
     bestScore:   Math.max(score, prevBestScore),
     bestLevel:   Math.max(level, prevBestLevel),
     lastPlayedAt: now,
