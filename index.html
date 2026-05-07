@@ -2228,6 +2228,11 @@
       CLOUD_IMGS.c.src = '/cloud-c.png';
       CLOUD_IMGS.d.src = '/cloud-d.png';
       CLOUD_IMGS.e.src = '/cloud-e.png';
+      // Background platform sprites (3 variants)
+      const PLAT_IMGS = { a: new Image(), b: new Image(), c: new Image() };
+      PLAT_IMGS.a.src = '/platform-a.png';
+      PLAT_IMGS.b.src = '/platform-b.png';
+      PLAT_IMGS.c.src = '/platform-c.png';
 
       class Dragon {
         constructor(x, y) {
@@ -2399,12 +2404,13 @@
       // =========================================================
       class Background {
         constructor() {
-          this.clouds = [];
-          this.farClouds = [];         // super-far hazy clouds for depth
-          this.farIslands = [];        // mid-distance: with waterfalls
-          this.castleIslands = [];     // far: with castle
-          this.balloons = [];
-          this.birds = [];
+          this.clouds     = [];
+          this.farClouds  = [];
+          this.farIslands = [];
+          this.castleIslands = [];
+          this.balloons   = [];
+          this.birds      = [];
+          this.bgPlatforms = [];  // decorative background platforms
 
           // Foreground clouds — variants a/b/c (large fluffy pixel-art)
           for (let i = 0; i < 12; i++) {
@@ -2459,16 +2465,15 @@
               bobPhase: Math.random() * Math.PI * 2,
             });
           }
-          // Hot air balloons
-          for (let i = 0; i < 3; i++) {
-            this.balloons.push({
+          // Background platforms — decorative, distant, low opacity
+          for (let i = 0; i < 10; i++) {
+            this.bgPlatforms.push({
               x: Math.random() * CONFIG.WIDTH,
-              y: Utils.rand(100, CONFIG.HEIGHT * 5),
-              size: Utils.rand(28, 44),
-              depth: Utils.rand(0.20, 0.35),
-              drift: Utils.rand(0.02, 0.05),
-              bobPhase: Math.random() * Math.PI * 2,
-              color: ['#FF8A65', '#FFB74D', '#F06292'][i % 3],
+              y: Utils.rand(150, CONFIG.HEIGHT * 5),
+              w: Utils.rand(50, 110),     // draw width
+              depth: Utils.rand(0.08, 0.22),  // very slow parallax = far away
+              alpha: Utils.rand(0.12, 0.26),  // low opacity — won't distract player
+              variant: ['a', 'b', 'c'][i % 3],
             });
           }
         }
@@ -2642,7 +2647,20 @@
               ctx.restore();
             }
           }
-
+          // === BACKGROUND PLATFORMS (distant scenery, low opacity) ===
+          for (const p of this.bgPlatforms) {
+            const py = wrapY(p.y - camY * p.depth);
+            if (py > -60 && py < CONFIG.HEIGHT + 60) {
+              const img = PLAT_IMGS[p.variant];
+              if (img.complete && img.naturalWidth > 0) {
+                const h = p.w * (img.naturalHeight / img.naturalWidth);
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
+                ctx.restore();
+              }
+            }
+          }
 
           // === FOREGROUND CLOUDS (large pixel-art — variants a/b/c) ===
           for (const c of this.clouds) {
