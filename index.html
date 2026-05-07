@@ -2068,36 +2068,14 @@
       // 6. COLLECTIBLES
       // =========================================================
       class Coin {
-        // Round empeo-orange coin (+25 score)
-        constructor(x, y) { this.x = x; this.y = y; this.w = 22; this.h = 22; this.collected = false; this.t = 0; }
-        rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+        // Crown coin sprite (+25 score)
+        constructor(x, y) { this.x = x; this.y = y; this.w = 36; this.h = 36; this.collected = false; this.t = 0; }
+        rect() { return { x: this.x + 4, y: this.y + 4, w: this.w - 8, h: this.h - 8 }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
           if (this.collected) return;
-          const cx = this.x + this.w / 2;
-          const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.005) * 3;
-          const r = this.w * 0.5;
-          ctx.save();
-          // Orange glow
-          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2);
-          glow.addColorStop(0, 'rgba(255,140,42,0.45)');
-          glow.addColorStop(1, 'rgba(255,140,42,0)');
-          ctx.fillStyle = glow;
-          ctx.beginPath(); ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2); ctx.fill();
-          // Coin body
-          const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx, cy, r);
-          grad.addColorStop(0, '#FFD580');
-          grad.addColorStop(0.4, '#FF8C2A');
-          grad.addColorStop(1, '#C25000');
-          ctx.fillStyle = grad;
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = '#7A2E00'; ctx.lineWidth = 1.5; ctx.stroke();
-          // Highlight
-          ctx.fillStyle = 'rgba(255,255,255,0.42)';
-          ctx.beginPath();
-          ctx.ellipse(cx - r * 0.25, cy - r * 0.28, r * 0.28, r * 0.16, -0.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          const bob = Math.sin(this.t * 0.005) * 3;
+          ctx.drawImage(IMG_COIN, this.x, this.y - camY + bob, this.w, this.h);
         }
       }
 
@@ -2161,118 +2139,38 @@
       }
 
       // =========================================================
-      // 7. OBSTACLES — Dragon, ObstacleBird (instant-kill; stompable from above)
+      // 7. OBSTACLES — Dragon (stationary, stompable from above)
       // =========================================================
+
+      // Preload sprites once (at module level so they're ready before first draw)
+      const IMG_COIN   = new Image(); IMG_COIN.src   = '/sprite-coin.png';
+      const IMG_DRAGON = new Image(); IMG_DRAGON.src = '/sprite-dragon.png';
+
       class Dragon {
         constructor(x, y) {
-          this.x = x; this.baseX = x; this.y = y;
-          this.w = 64; this.h = 44;
-          this.t = Math.random() * Math.PI * 2;
-          this.dir = Math.random() > 0.5 ? 1 : -1;
+          this.x = x; this.y = y;
+          this.w = 72; this.h = 72;   // rendered size
           this.dying = false; this.dyingTimer = 0;
+          this.bobPhase = Math.random() * Math.PI * 2;
         }
-        // Hit-box (body, shrunk slightly from edges)
-        rect() { return { x: this.x + this.w * 0.12, y: this.y + this.h * 0.15, w: this.w * 0.76, h: this.h * 0.75 }; }
-        // Stompable top-quarter hit-zone
-        topRect() { return { x: this.x + this.w * 0.12, y: this.y, w: this.w * 0.76, h: this.h * 0.28 }; }
+        // Hitbox = centre 60% of sprite
+        rect() { return { x: this.x + this.w * 0.20, y: this.y + this.h * 0.15, w: this.w * 0.60, h: this.h * 0.75 }; }
+        // Stompable top strip
+        topRect() { return { x: this.x + this.w * 0.20, y: this.y, w: this.w * 0.60, h: this.h * 0.28 }; }
         stomp() { this.dying = true; this.dyingTimer = 0; }
         update(dt) {
           if (this.dying) { this.dyingTimer += dt; return; }
-          this.t += dt * 0.002;
-          this.x = this.baseX + Math.sin(this.t) * 72;
+          this.bobPhase += dt * 0.003;
         }
         draw(ctx, camY) {
           const alpha = this.dying ? Math.max(0, 1 - this.dyingTimer / 300) : 1;
           if (alpha <= 0) return;
+          const bob = Math.sin(this.bobPhase) * 3;
           ctx.globalAlpha = alpha;
-          const sx = this.x, sy = this.y - camY;
-          ctx.save();
-          // Body
-          const bg = ctx.createRadialGradient(sx + this.w * 0.4, sy + this.h * 0.52, 2, sx + this.w * 0.44, sy + this.h * 0.5, this.w * 0.44);
-          bg.addColorStop(0, '#EF5350'); bg.addColorStop(1, '#B71C1C');
-          ctx.fillStyle = bg;
-          ctx.beginPath();
-          ctx.ellipse(sx + this.w * 0.42, sy + this.h * 0.58, this.w * 0.36, this.h * 0.33, 0, 0, Math.PI * 2);
-          ctx.fill();
-          // Head
-          const hx = this.dir > 0 ? sx + this.w * 0.78 : sx + this.w * 0.22;
-          ctx.fillStyle = '#EF5350';
-          ctx.beginPath();
-          ctx.ellipse(hx, sy + this.h * 0.35, this.w * 0.22, this.h * 0.25, 0, 0, Math.PI * 2);
-          ctx.fill();
-          // Eye
-          ctx.fillStyle = '#FFF9C4'; ctx.beginPath(); ctx.arc(hx + this.dir * 4, sy + this.h * 0.27, 5, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#B71C1C'; ctx.beginPath(); ctx.arc(hx + this.dir * 5, sy + this.h * 0.28, 2.5, 0, Math.PI * 2); ctx.fill();
-          // Wing
-          ctx.fillStyle = 'rgba(183,28,28,0.72)';
-          ctx.beginPath();
-          ctx.moveTo(sx + this.w * 0.38, sy + this.h * 0.20);
-          ctx.quadraticCurveTo(sx + this.w * 0.08, sy - this.h * 0.20, sx, sy + this.h * 0.42);
-          ctx.quadraticCurveTo(sx + this.w * 0.20, sy + this.h * 0.30, sx + this.w * 0.38, sy + this.h * 0.44);
-          ctx.closePath(); ctx.fill();
-          // Tail
-          ctx.strokeStyle = '#C62828'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(sx + this.w * 0.10, sy + this.h * 0.68);
-          ctx.quadraticCurveTo(sx - this.w * 0.08, sy + this.h * 0.90, sx + this.w * 0.04, sy + this.h * 1.05);
-          ctx.stroke();
-          ctx.restore(); ctx.globalAlpha = 1;
+          ctx.drawImage(IMG_DRAGON, this.x, this.y - camY + bob, this.w, this.h);
+          ctx.globalAlpha = 1;
         }
       }
-
-      class ObstacleBird {
-        constructor(x, y) {
-          this.x = x; this.y = y;
-          this.w = 42; this.h = 32;
-          this.dir = x < CONFIG.WIDTH / 2 ? 1 : -1;
-          this.vx = this.dir * 2.4;
-          this.t = Math.random() * Math.PI * 2;
-          this.dying = false; this.dyingTimer = 0;
-        }
-        rect() { return { x: this.x + this.w * 0.1, y: this.y + this.h * 0.2, w: this.w * 0.8, h: this.h * 0.65 }; }
-        topRect() { return { x: this.x + this.w * 0.1, y: this.y, w: this.w * 0.8, h: this.h * 0.28 }; }
-        stomp() { this.dying = true; this.dyingTimer = 0; }
-        offScreen() { return this.x > CONFIG.WIDTH + 80 || this.x < -80; }
-        update(dt, gameSpeed) {
-          if (this.dying) { this.dyingTimer += dt; return; }
-          this.t += dt * 0.01;
-          this.x += this.vx * gameSpeed * (dt / 16.667);
-          this.y += Math.sin(this.t) * 0.5;
-        }
-        draw(ctx, camY) {
-          const alpha = this.dying ? Math.max(0, 1 - this.dyingTimer / 300) : 1;
-          if (alpha <= 0) return;
-          ctx.globalAlpha = alpha;
-          const sx = this.x, sy = this.y - camY;
-          const flap = Math.sin(this.t * 3) * 0.38;
-          ctx.save();
-          // Body
-          ctx.fillStyle = '#FF7043';
-          ctx.beginPath();
-          ctx.ellipse(sx + this.w * 0.5, sy + this.h * 0.62, this.w * 0.30, this.h * 0.24, 0, 0, Math.PI * 2);
-          ctx.fill();
-          // Head
-          const hx = this.dir > 0 ? sx + this.w * 0.76 : sx + this.w * 0.24;
-          ctx.fillStyle = '#FF8A65';
-          ctx.beginPath(); ctx.arc(hx, sy + this.h * 0.40, this.h * 0.24, 0, Math.PI * 2); ctx.fill();
-          // Eye
-          ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(hx + this.dir * 3, sy + this.h * 0.33, 2.5, 0, Math.PI * 2); ctx.fill();
-          // Beak
-          ctx.fillStyle = '#FFA726'; ctx.beginPath();
-          ctx.moveTo(hx + this.dir * 7, sy + this.h * 0.41);
-          ctx.lineTo(hx + this.dir * 14, sy + this.h * 0.44);
-          ctx.lineTo(hx + this.dir * 7, sy + this.h * 0.49);
-          ctx.closePath(); ctx.fill();
-          // Wing
-          ctx.fillStyle = 'rgba(230,74,25,0.82)';
-          ctx.save(); ctx.translate(sx + this.w * 0.5, sy + this.h * 0.48); ctx.rotate(-flap);
-          ctx.beginPath();
-          ctx.ellipse(0, -this.h * 0.36, this.w * 0.26, this.h * 0.17, 0, 0, Math.PI * 2);
-          ctx.fill(); ctx.restore();
-          ctx.restore(); ctx.globalAlpha = 1;
-        }
-      }
-
 
 
       class Spring {
@@ -3636,7 +3534,7 @@
         state: 'menu',     // menu | playing | paused | gameover
         player: null,
         platforms: [],
-        coins: [], diamonds: [], dragons: [], obstacleBirds: [], springs: [], particles: [],
+        coins: [], diamonds: [], dragons: [], springs: [], particles: [],
         bg: null,
         camY: 0,            // top of camera in world space
         highestY: 0,        // tracking max climbed
@@ -3688,7 +3586,7 @@
           Input.requestTiltPermission();
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
-          this.coins = []; this.diamonds = []; this.dragons = []; this.obstacleBirds = []; this.springs = []; this.particles = [];
+          this.coins = []; this.diamonds = []; this.dragons = []; this.springs = []; this.particles = [];
           this.camY = 0;
           this.highestY = this.player.y;
           this.score = 0;
@@ -3822,13 +3720,8 @@
           }
           // Spawn Dragon (Lv.2+ = idx>=1)
           if (lvlIdx >= 1 && Math.random() < 0.04) {
-            const dx = Math.random() * (CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN - 64) + CONFIG.SAFE_X_MIN;
-            this.dragons.push(new Dragon(dx, y - 60));
-          }
-          // Spawn ObstacleBird (Lv.2+)
-          if (lvlIdx >= 1 && Math.random() < 0.05) {
-            const bx = Math.random() < 0.5 ? -42 : CONFIG.WIDTH;
-            this.obstacleBirds.push(new ObstacleBird(bx, y - 40));
+            const dx = Math.random() * (CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN - 72) + CONFIG.SAFE_X_MIN;
+            this.dragons.push(new Dragon(dx, y - 80));
           }
         },
 
@@ -3891,15 +3784,13 @@
 
           // Collectibles + obstacles update & cull
           for (const s of this.springs) s.update(dt);
-          for (const c of this.coins)   c.update(dt);
-          for (const d of this.diamonds) d.update(dt);
-          for (const d of this.dragons)  d.update(dt);
-          for (const b of this.obstacleBirds) b.update(dt, this.gameSpeed);
+          for (const c of this.coins)    c.update(dt);
+          for (const d of this.diamonds)  d.update(dt);
+          for (const d of this.dragons)   d.update(dt);
           this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.coins         = this.coins.filter(c => !c.collected && c.y < this.camY + CONFIG.HEIGHT + 200);
           this.diamonds      = this.diamonds.filter(d => !d.collected && d.y < this.camY + CONFIG.HEIGHT + 200);
           this.dragons       = this.dragons.filter(d => !(d.dying && d.dyingTimer > 350));
-          this.obstacleBirds = this.obstacleBirds.filter(b => !(b.dying && b.dyingTimer > 350) && !b.offScreen());
 
           // Particles
           for (const pt of this.particles) pt.update(dt);
@@ -3962,8 +3853,7 @@
           }
           // Obstacles — stomp (from above, vy>0) or kill (side/belly)
           if (!this._dead) {
-            const allObstacles = [...this.dragons, ...this.obstacleBirds];
-            for (const ob of allObstacles) {
+            for (const ob of this.dragons) {
               if (ob.dying) continue;
               const playerBottom = this.player.y + this.player.h;
               const topZone = ob.topRect();
@@ -3972,15 +3862,12 @@
                 { x: this.player.x + 4, y: playerBottom - 8, w: this.player.w - 8, h: 10 },
                 topZone
               )) {
-                // Stomp!
                 ob.stomp();
                 Sound.play('stomp');
-                const bonus = ob instanceof Dragon ? CONFIG.DRAGON_STOMP : CONFIG.BIRD_STOMP;
-                this.score += bonus * this.multiplier;
-                this.player.vy = -8;  // bounce up
+                this.score += CONFIG.DRAGON_STOMP * this.multiplier;
+                this.player.vy = -8;
                 Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 10);
               } else if (Utils.rectsOverlap(pr, bodyZone)) {
-                // Side/belly hit — instant kill
                 this.gameOver();
                 return;
               }
@@ -4128,7 +4015,6 @@
           for (const c of this.coins)          c.draw(ctx, camY);
           for (const d of this.diamonds)       d.draw(ctx, camY);
           for (const d of this.dragons)        d.draw(ctx, camY);
-          for (const b of this.obstacleBirds)  b.draw(ctx, camY);
           if (this.player) this.player.draw(ctx, camY);
           for (const p of this.particles) p.draw(ctx, camY);
           this._drawScrollWarning(ctx);
