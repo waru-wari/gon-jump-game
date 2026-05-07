@@ -2107,49 +2107,18 @@
       }
 
       class Diamond {
-        // Cyan faceted diamond gem (+100 score)
-        constructor(x, y) { this.x = x; this.y = y; this.w = 26; this.h = 26; this.collected = false; this.t = 0; }
-        rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+        // Blue diamond sprite (+100 score)
+        constructor(x, y) { this.x = x; this.y = y; this.w = 36; this.h = 36; this.collected = false; this.t = 0; }
+        rect() { return { x: this.x + 4, y: this.y + 4, w: this.w - 8, h: this.h - 8 }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
           if (this.collected) return;
-          const cx = this.x + this.w / 2;
-          const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.004) * 2;
-          const rw = this.w * 0.5, rh = this.h * 0.5;
+          const bob = Math.sin(this.t * 0.004) * 3;
+          // Subtle glow
           ctx.save();
-          // Cyan glow
-          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, rw * 2.2);
-          glow.addColorStop(0, 'rgba(0,229,255,0.38)');
-          glow.addColorStop(1, 'rgba(0,229,255,0)');
-          ctx.fillStyle = glow;
-          ctx.beginPath(); ctx.arc(cx, cy, rw * 2.2, 0, Math.PI * 2); ctx.fill();
-          // Diamond facet shape
-          ctx.beginPath();
-          ctx.moveTo(cx, cy - rh);
-          ctx.lineTo(cx + rw, cy - rh * 0.15);
-          ctx.lineTo(cx + rw * 0.6, cy + rh);
-          ctx.lineTo(cx - rw * 0.6, cy + rh);
-          ctx.lineTo(cx - rw, cy - rh * 0.15);
-          ctx.closePath();
-          const grad = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
-          grad.addColorStop(0, '#E0FFFF');
-          grad.addColorStop(0.3, '#00E5FF');
-          grad.addColorStop(0.7, '#0097A7');
-          grad.addColorStop(1, '#004D5C');
-          ctx.fillStyle = grad; ctx.fill();
-          ctx.strokeStyle = '#00BCD4'; ctx.lineWidth = 1.5; ctx.stroke();
-          // Facet lines
-          ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy - rh); ctx.lineTo(cx, cy + rh * 0.55);
-          ctx.moveTo(cx + rw, cy - rh * 0.15); ctx.lineTo(cx, cy + rh * 0.55);
-          ctx.moveTo(cx - rw, cy - rh * 0.15); ctx.lineTo(cx, cy + rh * 0.55);
-          ctx.stroke();
-          // Glint
-          const glint = (Math.sin(this.t * 0.007) + 1) / 2;
-          ctx.globalAlpha = glint * 0.9;
-          ctx.fillStyle = '#fff';
-          ctx.beginPath(); ctx.arc(cx - rw * 0.2, cy - rh * 0.5, 2.5, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowColor = '#4FC3F7';
+          ctx.shadowBlur = 10;
+          ctx.drawImage(IMG_DIAMOND, this.x, this.y - camY + bob, this.w, this.h);
           ctx.restore();
         }
       }
@@ -2166,36 +2135,74 @@
       }
 
       // =========================================================
-      // 7. OBSTACLES — Dragon (stationary, stompable from above)
+      // 7. OBSTACLES — Dragon (fly-in + idle life, stompable from above)
       // =========================================================
 
-      // Preload sprites once (at module level so they're ready before first draw)
-      const IMG_COIN   = new Image(); IMG_COIN.src   = '/sprite-coin.png';
-      const IMG_DRAGON = new Image(); IMG_DRAGON.src = '/sprite-dragon.png';
+      // Preload sprites
+      const IMG_COIN    = new Image(); IMG_COIN.src    = '/sprite-coin.png';
+      const IMG_DIAMOND = new Image(); IMG_DIAMOND.src = '/sprite-diamond.png';
+      const IMG_DRAGON  = new Image(); IMG_DRAGON.src  = '/sprite-dragon.png';
 
       class Dragon {
         constructor(x, y) {
-          this.x = x; this.y = y;
-          this.w = 72; this.h = 72;   // rendered size
+          this.targetX = x;              // where it stops
+          this.y = y;
+          this.w = 72; this.h = 72;
           this.dying = false; this.dyingTimer = 0;
-          this.bobPhase = Math.random() * Math.PI * 2;
+
+          // Fly-in: spawn off-screen left or right
+          this.fromLeft = Math.random() > 0.5;
+          this.x = this.fromLeft ? -this.w - 10 : CONFIG.WIDTH + 10;
+          this.phase = 'flying';         // 'flying' | 'idle'
+          this.flySpeed = 4.5;           // px/frame-equivalent at 60fps
+
+          // Idle animation phases (all independent speeds for organic feel)
+          this.t = Math.random() * Math.PI * 2;
         }
-        // Hitbox = centre 60% of sprite
-        rect() { return { x: this.x + this.w * 0.20, y: this.y + this.h * 0.15, w: this.w * 0.60, h: this.h * 0.75 }; }
-        // Stompable top strip
-        topRect() { return { x: this.x + this.w * 0.20, y: this.y, w: this.w * 0.60, h: this.h * 0.28 }; }
-        stomp() { this.dying = true; this.dyingTimer = 0; }
+
+        rect()    { return { x: this.x + this.w * 0.20, y: this.y + this.h * 0.15, w: this.w * 0.60, h: this.h * 0.75 }; }
+        topRect() { return { x: this.x + this.w * 0.20, y: this.y,                  w: this.w * 0.60, h: this.h * 0.28 }; }
+        stomp()   { this.dying = true; this.dyingTimer = 0; }
+
         update(dt) {
           if (this.dying) { this.dyingTimer += dt; return; }
-          this.bobPhase += dt * 0.003;
+          this.t += dt;
+
+          if (this.phase === 'flying') {
+            // Ease-out approach: speed proportional to distance
+            const dist = this.targetX - this.x;
+            const step = dist * 0.10;  // 10% of remaining distance per update
+            const minSpeed = this.flySpeed * (dt / 16.667);
+            this.x += Math.abs(step) < minSpeed ? dist : step;
+            if (Math.abs(this.x - this.targetX) < 1) {
+              this.x = this.targetX;
+              this.phase = 'idle';
+            }
+          }
+          // Idle animation runs always (even tiny bit while flying for smoothness)
         }
+
         draw(ctx, camY) {
           const alpha = this.dying ? Math.max(0, 1 - this.dyingTimer / 300) : 1;
           if (alpha <= 0) return;
-          const bob = Math.sin(this.bobPhase) * 3;
+
+          // Idle transforms: bob (y), wobble (rotation), breathe (scale)
+          const bob      = Math.sin(this.t * 0.003) * 4;               // up-down
+          const wobble   = Math.sin(this.t * 0.0025) * 0.06;           // tilt
+          const breathe  = 1 + Math.sin(this.t * 0.004) * 0.035;      // scale pulse
+          // Extra wing-flap feel: faster small jitter
+          const jitter   = Math.sin(this.t * 0.012) * 1.2;
+
+          const cx = this.x + this.w / 2;
+          const cy = this.y - camY + this.h / 2 + bob + jitter;
+
+          ctx.save();
           ctx.globalAlpha = alpha;
-          ctx.drawImage(IMG_DRAGON, this.x, this.y - camY + bob, this.w, this.h);
-          ctx.globalAlpha = 1;
+          ctx.translate(cx, cy);
+          ctx.rotate(wobble);
+          ctx.scale(breathe * (this.fromLeft ? 1 : -1), breathe); // mirror if from right
+          ctx.drawImage(IMG_DRAGON, -this.w / 2, -this.h / 2, this.w, this.h);
+          ctx.restore();
         }
       }
 
