@@ -3455,7 +3455,8 @@
           ? `<span class="name">${escapeHtml(e.name)}</span>
              <span class="email-secondary">${escapeHtml(e.emailDisplay ?? '')}</span>`
           : `<span class="name">${escapeHtml(e.emailDisplay || 'Anonymous')}</span>`;
-        const youBadge = isMe ? ' <span style="font-size:10px;background:#FFC93C;color:#7A2E00;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle">YOU</span>' : '';
+        const youBadge = '';  // highlight only — no text badge
+
         const meClass = isMe ? ' lb-me' : '';
         return `<li class="leaderboard-row ${tier}${meClass}">
           <span class="rank">${rankIcon}</span>
