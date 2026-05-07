@@ -1,18 +1,18 @@
 /**
  * api/leaderboard-admin.js
- * POST /api/leaderboard-admin
+ * POST /api/leaderboard-admin  (x-admin-token header required)
  *
- * Token-gated admin API. Token is validated via constant-time comparison against
- * ADMIN_RESET_TOKEN env var. Token MUST be passed in the x-admin-token header —
- * never in the URL, never in the body.
- *
- * Supported actions:
- *   status   → { ok: true, totalEntries }
- *   top100   → { entries: [...] }         full PII (admin only)
- *   search   → { entry } | { entry: null }
- *   delete   → { ok: true, removed: bool }
- *   reset    → { ok: true, deleted: number }
- *   export   → { entries: [...] }         full PII dump for backup
+ * Actions:
+ *   status         → { ok, totalEntries, activeSeasonId, activeSeasonName }
+ *   seasons        → { seasons: [{id, name, createdAt, isActive, playerCount}], activeId }
+ *   createSeason   → { ok, id, name }
+ *   setActive      → { ok, activeId }
+ *   resetSeason    → { ok, deleted, seasonId }
+ *   players        → { entries, seasonId }
+ *   top100         → { entries }   (optional seasonId in body)
+ *   search         → { entry }
+ *   delete         → { ok, removed }
+ *   export         → { entries }
  */
 import { kv } from '../lib/kv.js';
 import { emailHash } from '../lib/crypto.js';
@@ -25,56 +25,130 @@ function cors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-admin-token');
 }
 
-// Constant-time string comparison to prevent timing attacks on the admin token
 function safeEqual(a, b) {
   if (!a || !b || a.length !== b.length) return false;
   let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
 
-function unauthorized(res) {
-  return res.status(401).json({ error: 'Unauthorized.' });
+function unauthorized(res) { return res.status(401).json({ error: 'Unauthorized.' }); }
+
+// ─── Season helpers ───────────────────────────────────────────────────────────
+
+async function getActiveSeason() {
+  return kv.get('season:active');
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+function seasonKey(id) { return `leaderboard:season:${id}`; }
 
-async function getTopN(n) {
-  const members = await kv.zrange('leaderboard:global', 0, n - 1, {
-    rev: true,
-    withScores: true,
-  });
+// ─── Shared: fetch top-N entries from a season (or legacy global key) ─────────
+// Upstash zrange withScores returns alternating [member, score, member, score, ...]
+async function getTopN(n, sid) {
+  const key = sid ? seasonKey(sid) : (await getActiveSeason().then(a => a ? seasonKey(a) : 'leaderboard:global'));
+  const members = await kv.zrange(key, 0, n - 1, { rev: true, withScores: true });
   if (!members || members.length === 0) return [];
+  const entries = [];
+  for (let i = 0; i < members.length; i += 2) {
+    const hash  = members[i];
+    const score = Number(members[i + 1]);
+    if (!hash || score <= 0) continue;
+    const profile = await kv.hgetall(`profile:${hash}`);
+    entries.push({
+      rank: entries.length + 1,
+      hash,
+      name:         profile?.name         ?? 'Anonymous',
+      emailDisplay: profile?.emailDisplay  ?? '****',
+      score,
+      bestLevel:    profile?.bestLevel     ?? 1,
+      timesPlayed:  Number(profile?.timesPlayed ?? 1),
+      lastPlayedAt: profile?.lastPlayedAt  ?? null,
+      consentedAt:  profile?.consentedAt   ?? null,
+    });
+  }
+  return entries;
+}
 
-  return Promise.all(
-    members.map(async ({ member: hash, score }, i) => {
-      const profile = await kv.hgetall(`profile:${hash}`);
-      return {
-        rank: i + 1,
-        hash,
-        name: profile?.name ?? 'Anonymous',
-        emailDisplay: profile?.emailDisplay ?? '****',
-        score: Number(score),
-        bestLevel: profile?.bestLevel ?? 1,
-        timesPlayed: Number(profile?.timesPlayed ?? 1),
-        lastPlayedAt: profile?.lastPlayedAt ?? null,
-        consentedAt: profile?.consentedAt ?? null,
-      };
-    }),
-  );
+// ─── Season list helper ───────────────────────────────────────────────────────
+async function listSeasons() {
+  const raw = await kv.zrange('season:list', 0, -1, { rev: true, withScores: true });
+  const activeId = await getActiveSeason();
+  const seasons = [];
+  for (let i = 0; i < raw.length; i += 2) {
+    const id   = raw[i];
+    const ts   = Number(raw[i + 1]);
+    const info = await kv.hgetall(`season:${id}`);
+    const playerCount = await kv.zcard(seasonKey(id));
+    seasons.push({
+      id,
+      name:        info?.name ?? id,
+      createdAt:   ts,
+      isActive:    id === activeId,
+      playerCount,
+    });
+  }
+  return { seasons, activeId };
 }
 
 // ─── Action handlers ──────────────────────────────────────────────────────────
 
 async function actionStatus(res) {
-  const totalEntries = await kv.zcard('leaderboard:global');
-  return res.status(200).json({ ok: true, totalEntries });
+  const activeId  = await getActiveSeason();
+  const key       = activeId ? seasonKey(activeId) : 'leaderboard:global';
+  const totalEntries = await kv.zcard(key);
+  let activeName = null;
+  if (activeId) {
+    const info = await kv.hgetall(`season:${activeId}`);
+    activeName = info?.name ?? activeId;
+  }
+  return res.status(200).json({ ok: true, totalEntries, activeSeasonId: activeId, activeSeasonName: activeName });
 }
 
-async function actionTop100(res) {
-  const entries = await getTopN(100);
+async function actionSeasons(res) {
+  const result = await listSeasons();
+  return res.status(200).json(result);
+}
+
+async function actionCreateSeason(body, res) {
+  const name = (body.name ?? '').trim();
+  if (!name) return res.status(400).json({ error: 'Season name required.' });
+  const id  = `s_${Date.now()}`;
+  const now = Date.now();
+  await kv.zadd('season:list', { score: now, member: id });
+  await kv.hset(`season:${id}`, { name, createdAt: now });
+  // Auto-activate if it's the first season
+  const current = await getActiveSeason();
+  if (!current) await kv.set('season:active', id);
+  return res.status(200).json({ ok: true, id, name });
+}
+
+async function actionSetActive(body, res) {
+  const { seasonId } = body;
+  if (!seasonId) return res.status(400).json({ error: 'seasonId required.' });
+  const exists = await kv.hgetall(`season:${seasonId}`);
+  if (!exists) return res.status(404).json({ error: 'Season not found.' });
+  await kv.set('season:active', seasonId);
+  return res.status(200).json({ ok: true, activeId: seasonId });
+}
+
+async function actionResetSeason(body, res) {
+  const { seasonId } = body;
+  if (!seasonId) return res.status(400).json({ error: 'seasonId required.' });
+  const key = seasonKey(seasonId);
+  const deleted = await kv.zcard(key);
+  await kv.del(key);
+  await kv.del(`${key}:max`);
+  return res.status(200).json({ ok: true, deleted, seasonId });
+}
+
+async function actionPlayers(body, res) {
+  const limit = Math.min(parseInt(body.limit ?? '100', 10), 500);
+  const entries = await getTopN(limit, body.seasonId);
+  return res.status(200).json({ entries, seasonId: body.seasonId ?? null });
+}
+
+async function actionTop100(body, res) {
+  const entries = await getTopN(100, body.seasonId);
   return res.status(200).json({ entries });
 }
 
@@ -84,52 +158,43 @@ async function actionSearch(body, res) {
 
   const hash = await emailHash(email);
   const profile = await kv.hgetall(`profile:${hash}`);
-  const score = await kv.zscore('leaderboard:global', hash);
+
+  // Find score in active season (or legacy global)
+  const activeId  = await getActiveSeason();
+  const key       = activeId ? seasonKey(activeId) : 'leaderboard:global';
+  const score     = await kv.zscore(key, hash);
 
   if (!profile) return res.status(200).json({ entry: null });
 
   return res.status(200).json({
     entry: {
       hash,
-      name: profile.name ?? 'Anonymous',
-      emailDisplay: profile.emailDisplay ?? '****',
-      score: score ? Number(score) : 0,
-      bestLevel: profile.bestLevel ?? 1,
-      timesPlayed: Number(profile.timesPlayed ?? 1),
-      lastPlayedAt: profile.lastPlayedAt ?? null,
-      consentedAt: profile.consentedAt ?? null,
+      name:         profile.name         ?? 'Anonymous',
+      emailDisplay: profile.emailDisplay  ?? '****',
+      score:        score ? Number(score) : 0,
+      bestLevel:    profile.bestLevel     ?? 1,
+      timesPlayed:  Number(profile.timesPlayed ?? 1),
+      lastPlayedAt: profile.lastPlayedAt  ?? null,
+      consentedAt:  profile.consentedAt   ?? null,
     },
   });
 }
 
 async function actionDelete(body, res) {
-  const { email } = body;
+  const { email, seasonId } = body;
   if (!email) return res.status(400).json({ error: 'email required.' });
 
   const hash = await emailHash(email);
-
-  // Remove from sorted sets + profile
-  const removed = await kv.zrem('leaderboard:global', hash);
-  const today = new Date().toISOString().slice(0, 10);
-  await kv.zrem(`leaderboard:daily:${today}`, hash);
-  await kv.del(`profile:${hash}`);
-  await kv.del(`profile:${hash}:history`);
-
+  // Remove from specified season, or active season
+  const activeId = seasonId ?? (await getActiveSeason());
+  const key = activeId ? seasonKey(activeId) : 'leaderboard:global';
+  const removed = await kv.zrem(key, hash);
+  // Keep profile for cross-season history (don't delete unless specifically requested)
   return res.status(200).json({ ok: true, removed: removed > 0 });
 }
 
-async function actionReset(res) {
-  // Count before delete for the audit log
-  const deleted = await kv.zcard('leaderboard:global');
-  await kv.del('leaderboard:global');
-  await kv.del('leaderboard:global:max');
-  // Daily boards have their own TTL so we don't enumerate them
-  return res.status(200).json({ ok: true, deleted });
-}
-
-async function actionExport(res) {
-  // Full PII dump — treat as sensitive; admin should store securely
-  const entries = await getTopN(1000);
+async function actionExport(body, res) {
+  const entries = await getTopN(1000, body.seasonId);
   res.setHeader('Content-Disposition', 'attachment; filename="leaderboard-export.json"');
   return res.status(200).json({ entries });
 }
@@ -141,8 +206,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Token check — header only, constant-time
-  const token = req.headers['x-admin-token'] ?? '';
+  const token    = req.headers['x-admin-token'] ?? '';
   const expected = process.env.ADMIN_RESET_TOKEN ?? '';
   if (!expected || !safeEqual(token, expected)) return unauthorized(res);
 
@@ -150,13 +214,17 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
-      case 'status': return await actionStatus(res);
-      case 'top100': return await actionTop100(res);
-      case 'search': return await actionSearch(body, res);
-      case 'delete': return await actionDelete(body, res);
-      case 'reset':  return await actionReset(res);
-      case 'export': return await actionExport(res);
-      default:       return res.status(400).json({ error: `Unknown action: ${action}` });
+      case 'status':        return await actionStatus(res);
+      case 'seasons':       return await actionSeasons(res);
+      case 'createSeason':  return await actionCreateSeason(body, res);
+      case 'setActive':     return await actionSetActive(body, res);
+      case 'resetSeason':   return await actionResetSeason(body, res);
+      case 'players':       return await actionPlayers(body, res);
+      case 'top100':        return await actionTop100(body, res);
+      case 'search':        return await actionSearch(body, res);
+      case 'delete':        return await actionDelete(body, res);
+      case 'export':        return await actionExport(body, res);
+      default:              return res.status(400).json({ error: `Unknown action: ${action}` });
     }
   } catch (err) {
     console.error('[leaderboard-admin]', err);

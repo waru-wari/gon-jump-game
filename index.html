@@ -318,12 +318,29 @@
 
     .leaderboard-list {
       list-style: none;
-      max-height: 220px;
+      padding: 0;
+      margin: 0;
+      max-height: 280px;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .leaderboard-list.expanded {
-      max-height: 360px;
+    .leaderboard-list.expanded { max-height: 600px; }
+
+    .season-select {
+      width: 100%;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      color: #1F5099;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      outline: none;
     }
 
     .leaderboard-row {
@@ -1204,8 +1221,11 @@
 
       <div class="leaderboard-card">
         <div class="leaderboard-title">🏆 LEADERBOARD</div>
+        <select id="season-select" class="season-select" style="display:none">
+          <option value="">Loading…</option>
+        </select>
         <ol id="leaderboard-list" class="leaderboard-list"></ol>
-        <button id="leaderboard-toggle" class="leaderboard-toggle">Show Top 20 ▾</button>
+        <button id="leaderboard-toggle" class="leaderboard-toggle">ดูเพิ่มเติม (50) ▾</button>
       </div>
 
       <div class="menu-actions">
@@ -2975,7 +2995,10 @@
           this.el.newHigh = document.getElementById('new-high-text');
           this.el.rankText = document.getElementById('rank-text');
           this.el.lbList = document.getElementById('leaderboard-list');
-          this.el.lbToggle = document.getElementById('leaderboard-toggle');
+          this.el.lbToggle   = document.getElementById('leaderboard-toggle');
+          this.el.seasonSelect = document.getElementById('season-select');
+          this.showingTop50    = false;
+          this._currentSeasonId = null;
           this.el.touch = document.getElementById('touch-controls');
           this.el.toast = document.getElementById('toast');
           this.el.menuVideo = document.getElementById('menu-video');
@@ -3024,6 +3047,12 @@
             this.renderLeaderboard();
             this.el.lbToggle.textContent = this.showingTop50 ? 'แสดงน้อยลง ▴' : 'ดูเพิ่มเติม (50) ▾';
             this.el.lbList.classList.toggle('expanded', this.showingTop50);
+          });
+
+          // Season dropdown
+          this.el.seasonSelect.addEventListener('change', () => {
+            this._currentSeasonId = this.el.seasonSelect.value || null;
+            this.renderLeaderboard();
           });
 
           // Detect touch device → show virtual D-pad
@@ -3259,10 +3288,24 @@
         // v0.6 renderLeaderboard: fetch online, fall back to localStorage if offline
         async renderLeaderboard() {
           const limit = this.showingTop50 ? 50 : 10;
+          const sid   = this._currentSeasonId ?? '';
+          const url   = `/api/leaderboard?limit=${limit}${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
           try {
-            const res  = await fetch(`/api/leaderboard?limit=${limit}`);
+            const res  = await fetch(url);
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
+
+            // Populate season dropdown (only if seasons exist)
+            if (data.seasons && data.seasons.length > 0 && this.el.seasonSelect) {
+              const activeSeason = data.activeSeason;
+              this.el.seasonSelect.style.display = 'block';
+              this.el.seasonSelect.innerHTML = data.seasons.map(s =>
+                `<option value="${escapeHtml(s.id)}" ${s.id === (sid || activeSeason) ? 'selected' : ''}>${escapeHtml(s.name)}${s.id === activeSeason ? ' ⭐' : ''}</option>`
+              ).join('');
+              // Sync internal state if first load
+              if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
+            }
+
             const list = (data.global ?? []).slice(0, limit);
             if (list.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';

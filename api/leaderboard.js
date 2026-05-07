@@ -48,13 +48,27 @@ async function buildRows(members, startRank = 0) {
 
 // ─── GET /api/leaderboard ────────────────────────────────────────────────────
 async function handleGet(req, res) {
-  const limit = Math.min(parseInt(req.query?.limit ?? '20', 10), 100);
+  const limit = Math.min(parseInt(req.query?.limit ?? '10', 10), 100);
+
+  // Determine which season to show
+  const activeId   = await kv.get('season:active');
+  const seasonId   = req.query?.season ?? activeId ?? null;
+  const lbKey      = seasonId ? `leaderboard:season:${seasonId}` : 'leaderboard:global';
 
   // Global board (descending — highest score first)
-  const globalMembers = await kv.zrange('leaderboard:global', 0, limit - 1, {
+  const globalMembers = await kv.zrange(lbKey, 0, limit - 1, {
     rev: true,
     withScores: true,
   });
+
+  // All seasons for dropdown
+  const rawSeasons = await kv.zrange('season:list', 0, -1, { rev: true, withScores: true });
+  const seasons = [];
+  for (let i = 0; i < rawSeasons.length; i += 2) {
+    const sid  = rawSeasons[i];
+    const info = await kv.hgetall(`season:${sid}`);
+    seasons.push({ id: sid, name: info?.name ?? sid, createdAt: Number(rawSeasons[i + 1]) });
+  }
 
   // Daily board
   const dailyKey = `leaderboard:daily:${todayKey()}`;
@@ -65,11 +79,17 @@ async function handleGet(req, res) {
 
   const [globalRows, dailyRows] = await Promise.all([
     buildRows(globalMembers),
-    buildRows(dailyMembers),
+    buildRows([]),   // daily disabled for now (season-aware daily TBD)
   ]);
 
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  return res.status(200).json({ global: globalRows, daily: dailyRows });
+  return res.status(200).json({
+    global: globalRows,
+    daily:  dailyRows,
+    seasonId:     seasonId,
+    activeSeason: activeId,
+    seasons,
+  });
 }
 
 // ─── POST /api/leaderboard ───────────────────────────────────────────────────
@@ -139,22 +159,20 @@ async function handlePost(req, res) {
   const name = (rawName ?? 'Anonymous').trim().slice(0, 20) || 'Anonymous';
   const now = Date.now();
 
-  // ── KV writes (pipeline for atomicity) ───────────────────────────────────
+  // ── KV writes ─────────────────────────────────────────────────────────────
   const today = todayKey();
-  const dailyKey = `leaderboard:daily:${today}`;
 
-  // Global sorted set — GT: only update if new score is higher
-  await kv.zadd('leaderboard:global', { gt: true }, { member: hash, score });
+  // Determine active season → write to its leaderboard key
+  const activeSeason = await kv.get('season:active');
+  const lbKey = activeSeason ? `leaderboard:season:${activeSeason}` : 'leaderboard:global';
 
-  // Update global max tracker (used by score sanity check)
-  const currentMax = Number(await kv.get('leaderboard:global:max') ?? 0);
-  if (score > currentMax) {
-    await kv.set('leaderboard:global:max', score);
-  }
+  // Season sorted set — GT: only update if new score is higher
+  await kv.zadd(lbKey, { gt: true }, { member: hash, score });
 
-  // Daily sorted set (TTL 8 days = 691200s)
-  await kv.zadd(dailyKey, { gt: true }, { member: hash, score });
-  await kv.expire(dailyKey, 691200);
+  // Update max tracker for anti-cheat sanity check
+  const maxKey    = `${lbKey}:max`;
+  const currentMax = Number(await kv.get(maxKey) ?? 0);
+  if (score > currentMax) await kv.set(maxKey, score);
 
   // Score history — push snapshot, keep latest 200
   const snapshot = JSON.stringify({ score, level, name, ts: now });
@@ -176,11 +194,10 @@ async function handlePost(req, res) {
   // Mark session as submitted (prevents double-submit)
   await kv.hset(`session:${sessionToken}`, { submitted: 'ok' });
 
-  // ── Compute rank ──────────────────────────────────────────────────────────
-  // zrevrank gives 0-indexed position in descending order
-  const zeroRank = await kv.zrevrank('leaderboard:global', hash);
-  const rank = zeroRank != null ? zeroRank + 1 : null;
-  const totalEntries = await kv.zcard('leaderboard:global');
+  // ── Compute rank in current season ───────────────────────────────────────
+  const zeroRank    = await kv.zrevrank(lbKey, hash);
+  const rank        = zeroRank != null ? zeroRank + 1 : null;
+  const totalEntries = await kv.zcard(lbKey);
 
   return res.status(200).json({
     ok: true,

@@ -3,373 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — empeo Land Leaderboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>Admin — Gon Jump Leaderboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface2: #21262d;
-      --border: #30363d;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --accent: #388bfd;
-      --accent-hover: #58a6ff;
-      --danger: #da3633;
-      --danger-hover: #f85149;
-      --success: #3fb950;
-      --warning: #d29922;
-      --gold: #ffc93c;
+      --bg: #0d1117; --surface: #161b22; --surface2: #21262d;
+      --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+      --accent: #388bfd; --accent-h: #58a6ff;
+      --danger: #da3633; --danger-h: #f85149;
+      --success: #3fb950; --warning: #d29922; --gold: #ffc93c;
     }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-      min-height: 100vh;
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+    .shell { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .header h1 { font-family: 'Fredoka', sans-serif; font-size: 22px; color: var(--gold); }
+    .badge { background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .card-title { font-weight: 700; font-size: 12px; letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+    input[type="text"], input[type="password"], input[type="email"] {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 14px; font-family: inherit; padding: 9px 13px; outline: none; transition: border-color .15s;
     }
-
-    /* ── Layout ── */
-    .shell {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 16px;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 28px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .header h1 {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 24px;
-      color: var(--gold);
-    }
-
-    .badge {
-      background: var(--danger);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .card-title {
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-
-    /* ── Form elements ── */
-    .input-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    input[type="text"],
-    input[type="password"],
-    input[type="email"] {
-      flex: 1;
-      min-width: 200px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: 'Inter', monospace;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color .15s;
-    }
-
-    input:focus {
-      border-color: var(--accent);
-    }
-
-    .btn {
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      padding: 10px 18px;
-      transition: opacity .15s, background .15s;
-      white-space: nowrap;
-    }
-
+    input:focus { border-color: var(--accent); }
+    .btn { border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; padding: 9px 16px; transition: opacity .15s, background .15s; white-space: nowrap; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary  { background: var(--accent);  color: #fff; }
-    .btn-primary:hover:not(:disabled)  { background: var(--accent-hover); }
-    .btn-danger   { background: var(--danger);  color: #fff; }
-    .btn-danger:hover:not(:disabled)   { background: var(--danger-hover); }
-    .btn-ghost    { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover:not(:disabled)    { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover:not(:disabled) { opacity: .85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: var(--danger-h); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-sm { font-size: 12px; padding: 5px 11px; }
 
-    /* ── Status bar ── */
-    #status-bar {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      display: none;
-    }
+    /* Status bar */
+    #status-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 13px; font-size: 13px; color: var(--muted); margin-bottom: 14px; display: none; }
+    #status-bar.ok    { border-color: var(--success); color: var(--success); }
+    #status-bar.error { border-color: var(--danger);  color: var(--danger); }
+    #status-bar.warn  { border-color: var(--warning); color: var(--warning); }
 
-    #status-bar.ok      { border-color: var(--success); color: var(--success); }
-    #status-bar.error   { border-color: var(--danger);  color: var(--danger);  }
-    #status-bar.warning { border-color: var(--warning); color: var(--warning); }
+    /* Login overlay */
+    #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 100%; max-width: 340px; text-align: center; }
+    .login-card h2 { font-family: 'Fredoka', sans-serif; font-size: 22px; color: var(--gold); margin-bottom: 6px; }
+    .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .login-card input { width: 100%; margin-bottom: 10px; }
+    .login-card .btn { width: 100%; }
+    .login-error { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 18px; }
 
-    /* ── Login overlay ── */
-    #login-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      backdrop-filter: blur(8px);
-    }
+    /* Season list */
+    .season-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; background: var(--surface2); }
+    .season-row.active-season { border-color: var(--gold); background: rgba(255,201,60,.06); }
+    .season-name { flex: 1; font-weight: 600; }
+    .season-meta { font-size: 12px; color: var(--muted); }
+    .active-badge { background: var(--gold); color: #000; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .season-actions { display: flex; gap: 6px; }
 
-    .login-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
-
-    .login-card h2 {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 22px;
-      color: var(--gold);
-      margin-bottom: 6px;
-    }
-
-    .login-card p {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-bottom: 20px;
-    }
-
-    .login-card input {
-      width: 100%;
-      margin-bottom: 12px;
-    }
-
-    .login-card .btn {
-      width: 100%;
-    }
-
-    .login-error {
-      color: var(--danger);
-      font-size: 13px;
-      margin-top: 10px;
-      min-height: 18px;
-    }
-
-    /* ── Table ── */
-    .table-wrap {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    thead th {
-      background: var(--surface2);
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
+    /* Player table */
+    .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { background: var(--surface2); color: var(--muted); font-weight: 600; padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
     tbody tr:hover { background: rgba(255,255,255,.03); }
-
-    tbody td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
+    tbody td { padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
-
-    .rank-badge {
-      display: inline-block;
-      min-width: 28px;
-      text-align: center;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
     .score-val { color: var(--gold); font-weight: 700; }
-    .email-val { font-family: monospace; color: var(--text-muted); }
+    .email-val { font-family: monospace; color: var(--muted); }
+    .rank-badge { font-weight: 700; color: var(--muted); }
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
 
-    .btn-del {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--danger);
-      cursor: pointer;
-      font-size: 12px;
-      padding: 4px 10px;
-      transition: background .1s, border-color .1s;
-    }
-
-    .btn-del:hover { background: rgba(218,54,51,.12); border-color: var(--danger); }
-
-    /* ── Danger zone ── */
-    .danger-zone {
-      border-color: var(--danger);
-    }
-
-    .danger-zone .card-title {
-      color: var(--danger);
-    }
-
-    /* ── Confirm modal ── */
-    #confirm-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
-
+    /* Confirm modal */
+    #confirm-modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 200; }
     #confirm-modal.open { display: flex; }
+    .confirm-card { background: var(--surface); border: 1px solid var(--danger); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; }
+    .confirm-card h3 { color: var(--danger); margin-bottom: 8px; font-size: 15px; }
+    .confirm-card p { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+    .confirm-card code { background: var(--surface2); border-radius: 4px; padding: 2px 6px; font-family: monospace; color: var(--warning); }
+    .confirm-card input { width: 100%; margin-bottom: 10px; }
+    .confirm-actions { display: flex; gap: 8px; }
 
-    .confirm-card {
-      background: var(--surface);
-      border: 1px solid var(--danger);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 400px;
-      width: 90%;
-    }
-
-    .confirm-card h3 {
-      color: var(--danger);
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-
-    .confirm-card p {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-bottom: 16px;
-    }
-
-    .confirm-card code {
-      background: var(--surface2);
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-family: monospace;
-      color: var(--warning);
-    }
-
-    .confirm-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    /* ── Misc ── */
-    .stat-row {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      margin-bottom: 4px;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--gold);
-      font-family: 'Fredoka', sans-serif;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-    }
-
-    .section { display: none; }
-    .section.active { display: block; }
+    /* Misc */
+    .stat-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 26px; font-weight: 700; color: var(--gold); font-family: 'Fredoka', sans-serif; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .mt { margin-top: 12px; }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     LOGIN OVERLAY — shown until token is verified
-     ════════════════════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-overlay">
   <div class="login-card">
     <h2>🏆 Admin Panel</h2>
-    <p>empeo Land Leaderboard</p>
+    <p>Gon Jump Leaderboard</p>
     <input type="password" id="token-input" placeholder="Admin token" autocomplete="off">
     <button class="btn btn-primary" id="login-btn">Unlock →</button>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CONFIRM MODAL (delete / reset)
-     ════════════════════════════════════════════════════════ -->
+<!-- CONFIRM MODAL -->
 <div id="confirm-modal">
   <div class="confirm-card">
-    <h3 id="confirm-title">Confirm Action</h3>
+    <h3 id="confirm-title">Confirm</h3>
     <p id="confirm-desc"></p>
     <input type="text" id="confirm-input" placeholder="">
     <div class="confirm-actions">
@@ -379,94 +118,83 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MAIN SHELL
-     ════════════════════════════════════════════════════════ -->
+<!-- MAIN -->
 <div class="shell" id="main-shell" style="display:none">
   <div class="header">
     <h1>🏆 Leaderboard Admin</h1>
     <span class="badge">RESTRICTED</span>
-    <span style="margin-left:auto; color:var(--text-muted); font-size:12px" id="status-summary"></span>
-    <button class="btn btn-ghost" id="logout-btn" style="font-size:12px;padding:6px 12px">Logout</button>
+    <span style="margin-left:auto;color:var(--muted);font-size:12px" id="status-summary"></span>
+    <button class="btn btn-ghost btn-sm" id="logout-btn">Logout</button>
   </div>
 
   <div id="status-bar"></div>
 
-  <!-- ── Dashboard stats ── -->
+  <!-- Overview -->
   <div class="card">
     <div class="card-title">Overview</div>
     <div class="stat-row">
-      <div class="stat">
-        <span class="stat-label">Total Players</span>
-        <span class="stat-value" id="stat-total">—</span>
-      </div>
+      <div class="stat"><span class="stat-label">Active Season Players</span><span class="stat-value" id="stat-total">—</span></div>
+      <div class="stat"><span class="stat-label">Active Season</span><span class="stat-value" id="stat-season" style="font-size:16px;padding-top:6px">—</span></div>
     </div>
   </div>
 
-  <!-- ── Actions row ── -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-    <button class="btn btn-primary" id="btn-view">View Top 100</button>
-    <button class="btn btn-ghost"   id="btn-search-open">Search by Email</button>
-    <button class="btn btn-ghost"   id="btn-export">Export JSON</button>
-    <button class="btn btn-danger"  id="btn-reset-open" style="margin-left:auto">⚠ Reset Board</button>
-  </div>
+  <!-- Season Management -->
+  <div class="card">
+    <div class="card-title">🎯 Season Management</div>
 
-  <!-- ── Search by email ── -->
-  <div class="card" id="search-section" style="display:none">
-    <div class="card-title">Search by Email</div>
-    <div class="input-row">
-      <input type="email" id="search-email" placeholder="player@example.com">
-      <button class="btn btn-primary" id="search-btn">Search</button>
+    <!-- Create season -->
+    <div class="row" style="margin-bottom:16px">
+      <input type="text" id="new-season-name" placeholder="Season name (e.g. Season 1, May 2025)" style="flex:1;min-width:200px">
+      <button class="btn btn-success" id="btn-create-season">+ Create Season</button>
     </div>
-    <div id="search-result" style="margin-top:14px"></div>
+
+    <!-- Season list -->
+    <div id="season-list"><div class="empty-state">Loading seasons…</div></div>
   </div>
 
-  <!-- ── Top 100 table ── -->
-  <div class="card section" id="top100-section">
-    <div class="card-title">Top 100 Players</div>
+  <!-- Player list -->
+  <div class="card" id="players-card" style="display:none">
+    <div class="card-title" id="players-card-title">Players</div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email (censored)</th>
-            <th>Score</th>
-            <th>Level</th>
-            <th>Played</th>
-            <th>Last Seen</th>
-            <th></th>
-          </tr>
+          <tr><th>#</th><th>Name</th><th>Email</th><th>Score</th><th>Level</th><th>Played</th><th>Last Seen</th><th></th></tr>
         </thead>
-        <tbody id="top100-body"></tbody>
+        <tbody id="players-body"></tbody>
       </table>
     </div>
-    <div class="empty-state" id="top100-empty" style="display:none">No entries yet.</div>
+    <div class="empty-state" id="players-empty" style="display:none">No players in this season.</div>
+  </div>
+
+  <!-- Search -->
+  <div class="card">
+    <div class="card-title">Search by Email</div>
+    <div class="row">
+      <input type="email" id="search-email" placeholder="player@example.com" style="flex:1">
+      <button class="btn btn-primary" id="search-btn">Search</button>
+    </div>
+    <div id="search-result" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Export -->
+  <div class="card">
+    <div class="card-title">Export</div>
+    <div class="row">
+      <button class="btn btn-ghost" id="btn-export">Export Active Season JSON</button>
+    </div>
   </div>
 </div>
 
 <script>
-  // ── Tab-memory only — token NEVER written to storage ──────────────────────
-  let _adminToken = null;
-
+  let _token = null;
+  let _viewingSeasonId = null;
   const API = '/api/leaderboard-admin';
-
-  // ── DOM refs ──────────────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
-  const loginOverlay  = $('login-overlay');
-  const mainShell     = $('main-shell');
-  const loginError    = $('login-error');
-  const statusBar     = $('status-bar');
-  const confirmModal  = $('confirm-modal');
 
-  // ── Admin API call helper ─────────────────────────────────────────────────
   async function adminCall(action, extra = {}) {
     const res = await fetch(API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-token': _adminToken,
-      },
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': _token },
       body: JSON.stringify({ action, ...extra }),
     });
     const json = await res.json();
@@ -474,102 +202,148 @@
     return json;
   }
 
-  // ── Status bar ────────────────────────────────────────────────────────────
   function showStatus(msg, type = 'ok') {
-    statusBar.textContent = msg;
-    statusBar.className = type;
-    statusBar.style.display = 'block';
-    setTimeout(() => { statusBar.style.display = 'none'; }, 5000);
+    const bar = $('status-bar');
+    bar.textContent = msg;
+    bar.className = type;
+    bar.style.display = 'block';
+    setTimeout(() => bar.style.display = 'none', 4000);
   }
 
-  // ── Login ─────────────────────────────────────────────────────────────────
+  // ── Login ──
   async function tryLogin() {
     const token = $('token-input').value.trim();
-    if (!token) { loginError.textContent = 'Enter the admin token.'; return; }
-    loginError.textContent = '';
+    if (!token) { $('login-error').textContent = 'Enter the admin token.'; return; }
+    $('login-error').textContent = '';
     $('login-btn').disabled = true;
     try {
-      _adminToken = token;
+      _token = token;
       const data = await adminCall('status');
-      // Success — hide overlay, show shell
-      loginOverlay.style.display = 'none';
-      mainShell.style.display = 'block';
-      $('stat-total').textContent = data.totalEntries ?? 0;
+      $('login-overlay').style.display = 'none';
+      $('main-shell').style.display = 'block';
+      $('stat-total').textContent   = data.totalEntries ?? 0;
+      $('stat-season').textContent  = data.activeSeasonName ?? '(none)';
       $('status-summary').textContent = `${data.totalEntries ?? 0} players`;
-      $('token-input').value = ''; // clear from DOM
+      $('token-input').value = '';
+      await loadSeasons();
     } catch (e) {
-      _adminToken = null;
-      loginError.textContent = 'Invalid token — try again.';
+      _token = null;
+      $('login-error').textContent = 'Invalid token.';
     } finally {
       $('login-btn').disabled = false;
     }
   }
-
   $('login-btn').addEventListener('click', tryLogin);
   $('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  $('logout-btn').addEventListener('click', () => { _token = null; location.reload(); });
 
-  // ── Logout ────────────────────────────────────────────────────────────────
-  $('logout-btn').addEventListener('click', () => {
-    _adminToken = null;
-    location.reload();
-  });
-
-  // ── View Top 100 ──────────────────────────────────────────────────────────
-  $('btn-view').addEventListener('click', async () => {
-    try {
-      const data = await adminCall('top100');
-      renderTop100(data.entries ?? []);
-      $('top100-section').classList.add('active');
-    } catch (e) {
-      showStatus('Error loading top 100: ' + e.message, 'error');
-    }
-  });
-
-  function renderTop100(entries) {
-    const tbody = $('top100-body');
-    tbody.innerHTML = '';
-    if (!entries.length) {
-      $('top100-empty').style.display = 'block';
+  // ── Seasons ──
+  async function loadSeasons() {
+    const { seasons, activeId } = await adminCall('seasons');
+    const container = $('season-list');
+    if (!seasons.length) {
+      container.innerHTML = '<div class="empty-state">No seasons yet — create one above.</div>';
       return;
     }
-    $('top100-empty').style.display = 'none';
-    entries.forEach(e => {
-      const tr = document.createElement('tr');
+    container.innerHTML = seasons.map(s => `
+      <div class="season-row ${s.isActive ? 'active-season' : ''}" id="season-row-${s.id}">
+        <div>
+          <div class="season-name">${esc(s.name)} ${s.isActive ? '<span class="active-badge">ACTIVE</span>' : ''}</div>
+          <div class="season-meta">${s.playerCount} players · Created ${new Date(s.createdAt).toLocaleDateString('th-TH')}</div>
+        </div>
+        <div class="season-actions" style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="viewPlayers('${s.id}','${esc(s.name)}')">👥 Players</button>
+          ${!s.isActive ? `<button class="btn btn-success btn-sm" onclick="setActive('${s.id}')">▶ Set Active</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="resetSeason('${s.id}','${esc(s.name)}')">⚠ Reset</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function setActive(seasonId) {
+    try {
+      await adminCall('setActive', { seasonId });
+      showStatus('Active season updated.', 'ok');
+      await loadSeasons();
+      const data = await adminCall('status');
+      $('stat-total').textContent  = data.totalEntries ?? 0;
+      $('stat-season').textContent = data.activeSeasonName ?? '(none)';
+    } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+  }
+
+  async function resetSeason(seasonId, name) {
+    openConfirm(
+      `⚠ Reset Season: ${name}`,
+      `This will delete ALL scores in this season. Type <code>RESET</code> to confirm:`,
+      'RESET',
+      async () => {
+        const d = await adminCall('resetSeason', { seasonId });
+        showStatus(`Season reset — ${d.deleted} entries deleted.`, 'warn');
+        await loadSeasons();
+        if (_viewingSeasonId === seasonId) await viewPlayers(seasonId, name);
+      }
+    );
+  }
+
+  // Create season
+  $('btn-create-season').addEventListener('click', async () => {
+    const name = $('new-season-name').value.trim();
+    if (!name) { showStatus('Enter a season name.', 'error'); return; }
+    try {
+      const d = await adminCall('createSeason', { name });
+      showStatus(`Season "${d.name}" created.`, 'ok');
+      $('new-season-name').value = '';
+      await loadSeasons();
+    } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+  });
+
+  // ── Players ──
+  async function viewPlayers(seasonId, seasonName) {
+    _viewingSeasonId = seasonId;
+    $('players-card').style.display = 'block';
+    $('players-card-title').textContent = `👥 Players — ${seasonName}`;
+    $('players-body').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>';
+    try {
+      const { entries } = await adminCall('players', { seasonId });
+      renderPlayers(entries, seasonId);
+    } catch (e) { showStatus('Error loading players: ' + e.message, 'error'); }
+  }
+
+  function renderPlayers(entries, seasonId) {
+    const tbody = $('players-body');
+    $('players-empty').style.display = entries.length ? 'none' : 'block';
+    if (!entries.length) { tbody.innerHTML = ''; return; }
+    tbody.innerHTML = entries.map(e => {
       const lastSeen = e.lastPlayedAt
         ? new Date(Number(e.lastPlayedAt)).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
         : '—';
-      tr.innerHTML = `
+      return `<tr>
         <td><span class="rank-badge">#${e.rank}</span></td>
         <td>${esc(e.name)}</td>
         <td class="email-val">${esc(e.emailDisplay)}</td>
         <td class="score-val">${Number(e.score).toLocaleString()}</td>
         <td>Lv.${e.bestLevel}</td>
         <td>${e.timesPlayed}</td>
-        <td style="font-size:12px;color:var(--text-muted)">${lastSeen}</td>
-        <td><button class="btn-del" data-hash="${esc(e.hash)}" data-email="${esc(e.emailDisplay)}">Delete</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // Wire delete buttons
-    tbody.querySelectorAll('.btn-del').forEach(btn => {
-      btn.addEventListener('click', () => {
-        openConfirm(
-          'Delete Player',
-          `Re-type the censored email to confirm deletion of <code>${btn.dataset.email}</code>:`,
-          btn.dataset.email,
-          async () => { await adminCall('delete', { email: btn.dataset.email }); btn.closest('tr').remove(); },
-        );
-      });
-    });
+        <td style="font-size:12px;color:var(--muted)">${lastSeen}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deletePlayer('${esc(e.emailDisplay)}','${seasonId}')">Del</button></td>
+      </tr>`;
+    }).join('');
   }
 
-  // ── Search ────────────────────────────────────────────────────────────────
-  $('btn-search-open').addEventListener('click', () => {
-    $('search-section').style.display =
-      $('search-section').style.display === 'none' ? 'block' : 'none';
-  });
+  async function deletePlayer(emailDisplay, seasonId) {
+    openConfirm(
+      'Delete Player from Season',
+      `Type <code>${emailDisplay}</code> to confirm removal:`,
+      emailDisplay,
+      async () => {
+        await adminCall('delete', { email: emailDisplay, seasonId });
+        showStatus('Player removed from season.', 'ok');
+        await viewPlayers(seasonId, $('players-card-title').textContent.replace('👥 Players — ', ''));
+      }
+    );
+  }
 
+  // ── Search ──
   $('search-btn').addEventListener('click', async () => {
     const email = $('search-email').value.trim();
     if (!email) return;
@@ -577,101 +351,59 @@
     try {
       const data = await adminCall('search', { email });
       if (!data.entry) {
-        result.innerHTML = '<span style="color:var(--text-muted)">No player found with that email.</span>';
+        result.innerHTML = '<span style="color:var(--muted)">No player found.</span>';
         return;
       }
       const e = data.entry;
       result.innerHTML = `
         <div class="card" style="margin:0">
-          <div><strong>${esc(e.name)}</strong> &nbsp;·&nbsp; <span class="email-val">${esc(e.emailDisplay)}</span></div>
-          <div style="margin-top:6px;color:var(--text-muted);font-size:12px">
+          <strong>${esc(e.name)}</strong> &nbsp;·&nbsp; <span class="email-val">${esc(e.emailDisplay)}</span>
+          <div style="margin-top:6px;color:var(--muted);font-size:12px">
             Score: <span class="score-val">${Number(e.score).toLocaleString()}</span>
-            &nbsp;·&nbsp; Lv.${e.bestLevel}
-            &nbsp;·&nbsp; Played ${e.timesPlayed}×
-            &nbsp;·&nbsp; Consent: ${e.consentedAt ? new Date(Number(e.consentedAt)).toLocaleString() : 'n/a'}
+            &nbsp;·&nbsp; Lv.${e.bestLevel} &nbsp;·&nbsp; Played ${e.timesPlayed}×
           </div>
-          <button class="btn btn-danger" style="margin-top:12px;font-size:12px;padding:6px 14px"
-            id="search-delete-btn">Delete this player</button>
         </div>`;
-      $('search-delete-btn').addEventListener('click', () => {
-        openConfirm(
-          'Delete Player',
-          `Re-type the censored email to confirm deletion of <code>${esc(e.emailDisplay)}</code>:`,
-          e.emailDisplay,
-          async () => { await adminCall('delete', { email }); result.innerHTML = '<span style="color:var(--success)">Player deleted.</span>'; },
-        );
-      });
-    } catch (err) {
-      showStatus('Search error: ' + err.message, 'error');
-    }
+    } catch (err) { showStatus('Search error: ' + err.message, 'error'); }
   });
 
-  // ── Export JSON ───────────────────────────────────────────────────────────
+  // ── Export ──
   $('btn-export').addEventListener('click', async () => {
     try {
       const data = await adminCall('export');
       const blob = new Blob([JSON.stringify(data.entries, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `empeoland-export-${new Date().toISOString().slice(0,10)}.json`;
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), { href: url, download: `export-${new Date().toISOString().slice(0,10)}.json` });
       a.click(); URL.revokeObjectURL(url);
-      showStatus(`Exported ${data.entries.length} entries.`, 'ok');
-    } catch (e) {
-      showStatus('Export error: ' + e.message, 'error');
-    }
+      showStatus(`Exported ${data.entries.length} entries.`);
+    } catch (e) { showStatus('Export error: ' + e.message, 'error'); }
   });
 
-  // ── Reset board ───────────────────────────────────────────────────────────
-  $('btn-reset-open').addEventListener('click', () => {
-    openConfirm(
-      '⚠ Reset Entire Leaderboard',
-      'This will DELETE all scores permanently. Type <code>RESET</code> to confirm:',
-      'RESET',
-      async () => {
-        const data = await adminCall('reset');
-        showStatus(`Leaderboard reset — ${data.deleted} entries deleted.`, 'warning');
-        $('stat-total').textContent = '0';
-        $('top100-body').innerHTML = '';
-      },
-    );
-  });
-
-  // ── Confirm modal ─────────────────────────────────────────────────────────
-  let _confirmCallback = null;
-  let _confirmExpected = '';
-
-  function openConfirm(title, desc, expected, callback) {
+  // ── Confirm modal ──
+  let _confirmCb = null, _confirmExp = '';
+  function openConfirm(title, desc, expected, cb) {
     $('confirm-title').textContent = title;
-    $('confirm-desc').innerHTML = desc;
-    $('confirm-input').value = '';
+    $('confirm-desc').innerHTML    = desc;
+    $('confirm-input').value       = '';
     $('confirm-input').placeholder = expected;
-    _confirmExpected = expected;
-    _confirmCallback = callback;
-    confirmModal.classList.add('open');
+    _confirmExp = expected; _confirmCb = cb;
+    $('confirm-modal').classList.add('open');
     setTimeout(() => $('confirm-input').focus(), 50);
   }
-
   $('confirm-ok').addEventListener('click', async () => {
-    if ($('confirm-input').value.trim() !== _confirmExpected) {
+    if ($('confirm-input').value.trim() !== _confirmExp) {
       $('confirm-input').style.borderColor = 'var(--danger)';
       setTimeout(() => $('confirm-input').style.borderColor = '', 800);
       return;
     }
-    confirmModal.classList.remove('open');
-    try {
-      await _confirmCallback();
-      showStatus('Action completed.', 'ok');
-    } catch (e) {
-      showStatus('Error: ' + e.message, 'error');
-    }
+    $('confirm-modal').classList.remove('open');
+    try { await _confirmCb(); showStatus('Done.'); }
+    catch (e) { showStatus('Error: ' + e.message, 'error'); }
   });
+  $('confirm-cancel').addEventListener('click', () => $('confirm-modal').classList.remove('open'));
 
-  $('confirm-cancel').addEventListener('click', () => confirmModal.classList.remove('open'));
-
-  // ── Escape HTML helper ────────────────────────────────────────────────────
+  // ── Escape HTML ──
   function esc(s) {
-    return String(s ?? '')
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 </script>
