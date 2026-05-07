@@ -2921,6 +2921,12 @@
         _elapsed:  0,
         SKY_MS:    1500,
         ELEM_MS:   2000,
+        reset() {
+          this._from = CONFIG.LEVELS[0].theme;
+          this._to   = CONFIG.LEVELS[0].theme;
+          this._progress = 1;
+          this._elapsed  = 0;
+        },
         start(fromTheme, toTheme) {
           this._from = fromTheme; this._to = toTheme;
           this._progress = 0; this._elapsed = 0;
@@ -3714,6 +3720,10 @@
           this.gameSpeed = CONFIG.SPEED_BASE;
           this.lastSpeedStage = 0;
           this._session = null;          // v0.6 — cleared; fresh session below
+
+          // Reset background to Level 1 sky (biome + clouds)
+          BiomeTransition.reset();
+          this.bg = new Background();
 
           // v0.6 — call /api/game-start to create a signed session (async, non-blocking).
           // Session is stored in memory only — never localStorage.
