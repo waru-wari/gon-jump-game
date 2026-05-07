@@ -2409,6 +2409,12 @@
           this.birds      = [];
           this.bgPlatforms = [];  // decorative background platforms
 
+          // Offscreen canvas for bg platforms — avoids see-through when they overlap
+          this._platCanvas = document.createElement('canvas');
+          this._platCanvas.width  = CONFIG.WIDTH;
+          this._platCanvas.height = CONFIG.HEIGHT;
+          this._platCtx = this._platCanvas.getContext('2d');
+
           // Foreground clouds — variants a/b/c (large fluffy pixel-art)
           for (let i = 0; i < 12; i++) {
             this.clouds.push({
@@ -2591,20 +2597,24 @@
             }
           }
 
-          // === BACKGROUND PLATFORMS (distant scenery, low opacity) ===
+          // === BACKGROUND PLATFORMS (offscreen composite — no see-through overlap) ===
+          const pc = this._platCtx;
+          pc.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
           for (const p of this.bgPlatforms) {
             const py = wrapY(p.y - camY * p.depth);
             if (py > -60 && py < CONFIG.HEIGHT + 60) {
               const img = PLAT_IMGS[p.variant];
               if (img.complete && img.naturalWidth > 0) {
                 const h = p.w * (img.naturalHeight / img.naturalWidth);
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
-                ctx.restore();
+                pc.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
               }
             }
           }
+          // Composite the whole offscreen canvas at single alpha
+          ctx.save();
+          ctx.globalAlpha = 0.22;
+          ctx.drawImage(this._platCanvas, 0, 0);
+          ctx.restore();
 
           // === FOREGROUND CLOUDS (large pixel-art — variants a/b/c) ===
           for (const c of this.clouds) {
