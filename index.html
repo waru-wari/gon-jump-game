@@ -1393,7 +1393,10 @@
         SCROLL_MAX_SPEED: 0.75,
         SCROLL_RAMP_SCORE: 6000,
         MULTIPLIER_DURATION: 8000,
-        COIN_VALUE: 50,
+        COIN_VALUE: 25,
+        DIAMOND_VALUE: 100,
+        DRAGON_STOMP: 50,
+        BIRD_STOMP: 30,
         HEIGHT_SCORE_RATIO: 0.25,
 
         // === LEVEL SYSTEM — every 2000 pts (Lv.1 = 0–2000, Lv.2 = 2001–4000 ...) ===
@@ -2054,220 +2057,212 @@
       // 6. COLLECTIBLES
       // =========================================================
       class Coin {
-        // Now a glossy 3D golden STAR (like the one on the platform in the reference)
-        // Sized proportional to player (~46% of player width)
-        constructor(x, y) { this.x = x; this.y = y; this.w = 24; this.h = 24; this.collected = false; this.t = 0; }
+        // Round empeo-orange coin (+25 score)
+        constructor(x, y) { this.x = x; this.y = y; this.w = 22; this.h = 22; this.collected = false; this.t = 0; }
         rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
           if (this.collected) return;
           const cx = this.x + this.w / 2;
           const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.005) * 3;
-
-          ctx.save();
-          // Glow halo
-          const halo = ctx.createRadialGradient(cx, cy, 2, cx, cy, this.w);
-          halo.addColorStop(0, 'rgba(255, 240, 130, 0.45)');
-          halo.addColorStop(0.5, 'rgba(255, 215, 90, 0.15)');
-          halo.addColorStop(1, 'rgba(255, 215, 90, 0)');
-          ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(cx, cy, this.w, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Star body — drawn with rotation wobble
-          ctx.translate(cx, cy);
-          ctx.rotate(Math.sin(this.t * 0.004) * 0.15);
           const r = this.w * 0.5;
-          drawStarShape(ctx, 0, 0, r, r * 0.45, 5);
-
-          // Gold gradient fill
-          const grad = ctx.createRadialGradient(-r * 0.25, -r * 0.30, 1, 0, 0, r);
-          grad.addColorStop(0, '#FFFDE7');
-          grad.addColorStop(0.3, '#FFE082');
-          grad.addColorStop(0.7, '#FFC107');
-          grad.addColorStop(1, '#F57C00');
-          ctx.fillStyle = grad;
-          ctx.fill();
-          ctx.strokeStyle = '#7A4500'; ctx.lineWidth = 1.8; ctx.stroke();
-
-          // Inner highlight (specular sheen)
           ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          // Orange glow
+          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2);
+          glow.addColorStop(0, 'rgba(255,140,42,0.45)');
+          glow.addColorStop(1, 'rgba(255,140,42,0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath(); ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2); ctx.fill();
+          // Coin body
+          const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx, cy, r);
+          grad.addColorStop(0, '#FFD580');
+          grad.addColorStop(0.4, '#FF8C2A');
+          grad.addColorStop(1, '#C25000');
+          ctx.fillStyle = grad;
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#7A2E00'; ctx.lineWidth = 1.5; ctx.stroke();
+          // Highlight
+          ctx.fillStyle = 'rgba(255,255,255,0.42)';
           ctx.beginPath();
-          ctx.ellipse(-r * 0.20, -r * 0.30, r * 0.30, r * 0.18, -0.3, 0, Math.PI * 2);
+          ctx.ellipse(cx - r * 0.25, cy - r * 0.28, r * 0.28, r * 0.16, -0.4, 0, Math.PI * 2);
           ctx.fill();
-          // tiny shine dot
-          ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          ctx.beginPath();
-          ctx.arc(-r * 0.30, -r * 0.40, r * 0.10, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          // Sparkles around the star (twinkling)
-          const tw = (Math.sin(this.t * 0.006) + 1) / 2;
-          ctx.globalAlpha = tw * 0.9;
-          ctx.fillStyle = '#fff';
-          ctx.beginPath(); ctx.arc(r * 1.0, -r * 0.7, 1.2, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(-r * 0.9, r * 0.7, 1.0, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(r * 0.8, r * 1.0, 0.8, 0, Math.PI * 2); ctx.fill();
-
           ctx.restore();
         }
       }
 
-      // ---- Star shape helper (n-point star) ----
-      function drawStarShape(ctx, cx, cy, outerR, innerR, points) {
-        ctx.beginPath();
-        for (let i = 0; i < points * 2; i++) {
-          const r = (i % 2 === 0) ? outerR : innerR;
-          const ang = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
-          const x = cx + Math.cos(ang) * r;
-          const y = cy + Math.sin(ang) * r;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-      }
-
-      class MysteryBox {
-        // Glossy magical wooden chest with golden trim — proportional to player
-        constructor(x, y) { this.x = x; this.y = y; this.w = 32; this.h = 28; this.collected = false; this.t = 0; }
+      class Diamond {
+        // Cyan faceted diamond gem (+100 score)
+        constructor(x, y) { this.x = x; this.y = y; this.w = 26; this.h = 26; this.collected = false; this.t = 0; }
         rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
           if (this.collected) return;
           const cx = this.x + this.w / 2;
           const cy = this.y - camY + this.h / 2 + Math.sin(this.t * 0.004) * 2;
-          const w = this.w, h = this.h;
-
+          const rw = this.w * 0.5, rh = this.h * 0.5;
           ctx.save();
-
-          // Magical pulsing glow halo
-          const pulseHalo = 1 + Math.sin(this.t * 0.005) * 0.18;
-          const haloR = w * 1.05 * pulseHalo;
-          const halo = ctx.createRadialGradient(cx, cy, 2, cx, cy, haloR);
-          halo.addColorStop(0, 'rgba(255, 240, 160, 0.55)');
-          halo.addColorStop(0.35, 'rgba(255, 200, 100, 0.30)');
-          halo.addColorStop(0.7, 'rgba(255, 180, 80, 0.10)');
-          halo.addColorStop(1, 'rgba(255, 180, 80, 0)');
-          ctx.fillStyle = halo;
-          ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, Math.PI * 2); ctx.fill();
-
-          ctx.translate(cx, cy);
-          ctx.rotate(Math.sin(this.t * 0.003) * 0.10);
-
-          // === Chest base (wooden body) ===
-          const woodGrad = ctx.createLinearGradient(0, -h * 0.05, 0, h * 0.50);
-          woodGrad.addColorStop(0, '#A1714F');
-          woodGrad.addColorStop(0.5, '#7A4D2E');
-          woodGrad.addColorStop(1, '#3E2723');
-          ctx.fillStyle = woodGrad;
-          roundRect(ctx, -w / 2, -h * 0.05, w, h * 0.55, 4); ctx.fill();
-          ctx.strokeStyle = '#1B0E07'; ctx.lineWidth = 2; ctx.stroke();
-          // Wood plank lines
-          ctx.strokeStyle = 'rgba(0,0,0,0.30)'; ctx.lineWidth = 1;
+          // Cyan glow
+          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, rw * 2.2);
+          glow.addColorStop(0, 'rgba(0,229,255,0.38)');
+          glow.addColorStop(1, 'rgba(0,229,255,0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath(); ctx.arc(cx, cy, rw * 2.2, 0, Math.PI * 2); ctx.fill();
+          // Diamond facet shape
           ctx.beginPath();
-          ctx.moveTo(-w * 0.20, -h * 0.05); ctx.lineTo(-w * 0.20, h * 0.50);
-          ctx.moveTo(w * 0.10, -h * 0.05); ctx.lineTo(w * 0.10, h * 0.50);
-          ctx.stroke();
-
-          // === Chest lid (rounded top) ===
-          const lidGrad = ctx.createLinearGradient(0, -h * 0.50, 0, -h * 0.05);
-          lidGrad.addColorStop(0, '#C99E73');
-          lidGrad.addColorStop(0.5, '#8E5F38');
-          lidGrad.addColorStop(1, '#5D3A1F');
-          ctx.fillStyle = lidGrad;
-          ctx.beginPath();
-          ctx.moveTo(-w / 2, -h * 0.05);
-          ctx.lineTo(-w / 2, -h * 0.30);
-          ctx.bezierCurveTo(-w / 2, -h * 0.55, w / 2, -h * 0.55, w / 2, -h * 0.30);
-          ctx.lineTo(w / 2, -h * 0.05);
+          ctx.moveTo(cx, cy - rh);
+          ctx.lineTo(cx + rw, cy - rh * 0.15);
+          ctx.lineTo(cx + rw * 0.6, cy + rh);
+          ctx.lineTo(cx - rw * 0.6, cy + rh);
+          ctx.lineTo(cx - rw, cy - rh * 0.15);
           ctx.closePath();
-          ctx.fill();
-          ctx.strokeStyle = '#1B0E07'; ctx.lineWidth = 2; ctx.stroke();
-          // Lid highlight
-          ctx.fillStyle = 'rgba(255,255,255,0.30)';
+          const grad = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
+          grad.addColorStop(0, '#E0FFFF');
+          grad.addColorStop(0.3, '#00E5FF');
+          grad.addColorStop(0.7, '#0097A7');
+          grad.addColorStop(1, '#004D5C');
+          ctx.fillStyle = grad; ctx.fill();
+          ctx.strokeStyle = '#00BCD4'; ctx.lineWidth = 1.5; ctx.stroke();
+          // Facet lines
+          ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 0.8;
           ctx.beginPath();
-          ctx.ellipse(-w * 0.10, -h * 0.40, w * 0.20, h * 0.06, -0.2, 0, Math.PI * 2);
-          ctx.fill();
-
-          // === Golden trim bands (top/bottom + center vertical) ===
-          const goldGrad = ctx.createLinearGradient(0, 0, 0, h * 0.04);
-          goldGrad.addColorStop(0, '#FFE082');
-          goldGrad.addColorStop(0.5, '#FFC107');
-          goldGrad.addColorStop(1, '#B07700');
-          ctx.fillStyle = goldGrad;
-          // top trim (curved over lid)
-          ctx.fillRect(-w / 2, -h * 0.10, w, h * 0.06);
-          // bottom trim
-          ctx.fillRect(-w / 2, h * 0.42, w, h * 0.06);
-          // center vertical
-          ctx.fillRect(-w * 0.06, -h * 0.45, w * 0.12, h * 0.95);
-          ctx.strokeStyle = '#7A4500'; ctx.lineWidth = 0.8;
-          ctx.strokeRect(-w / 2, -h * 0.10, w, h * 0.06);
-          ctx.strokeRect(-w / 2, h * 0.42, w, h * 0.06);
-          ctx.strokeRect(-w * 0.06, -h * 0.45, w * 0.12, h * 0.95);
-
-          // === Lock plate (with specular shine) ===
-          const lockGrad = ctx.createRadialGradient(-w * 0.04, h * 0.02, 1, 0, h * 0.05, w * 0.18);
-          lockGrad.addColorStop(0, '#FFFDE7');
-          lockGrad.addColorStop(0.3, '#FFEB3B');
-          lockGrad.addColorStop(0.7, '#FFC107');
-          lockGrad.addColorStop(1, '#7A4500');
-          ctx.fillStyle = lockGrad;
-          roundRect(ctx, -w * 0.10, h * 0.00, w * 0.20, h * 0.18, 3); ctx.fill();
-          ctx.strokeStyle = '#3E2723'; ctx.lineWidth = 1.5; ctx.stroke();
-          // shine highlight on top of lock
-          ctx.fillStyle = 'rgba(255,255,255,0.65)';
-          ctx.fillRect(-w * 0.08, h * 0.012, w * 0.07, h * 0.012);
-          // keyhole
-          ctx.fillStyle = '#1B0E07';
-          ctx.beginPath();
-          ctx.arc(0, h * 0.07, w * 0.04, 0, Math.PI * 2); ctx.fill();
-          ctx.fillRect(-w * 0.012, h * 0.07, w * 0.024, h * 0.06);
-
-          const pulse = (Math.sin(this.t * 0.008) + 1) / 2;
-
-          // === ✨ symbol on top to hint magical ===
-          ctx.save();
-          ctx.globalAlpha = 0.55 + pulse * 0.4;
-          ctx.fillStyle = '#FFEB3B';
-          ctx.font = 'bold 14px sans-serif';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText('?', 0, h * 0.07);
-          ctx.restore();
-
-          // Sparkles
-          ctx.globalAlpha = 0.7 + pulse * 0.3;
+          ctx.moveTo(cx, cy - rh); ctx.lineTo(cx, cy + rh * 0.55);
+          ctx.moveTo(cx + rw, cy - rh * 0.15); ctx.lineTo(cx, cy + rh * 0.55);
+          ctx.moveTo(cx - rw, cy - rh * 0.15); ctx.lineTo(cx, cy + rh * 0.55);
+          ctx.stroke();
+          // Glint
+          const glint = (Math.sin(this.t * 0.007) + 1) / 2;
+          ctx.globalAlpha = glint * 0.9;
           ctx.fillStyle = '#fff';
-          drawSparkle(ctx, w * 0.55, -h * 0.45, 3);
-          drawSparkle(ctx, -w * 0.55, h * 0.10, 2.5);
-          drawSparkle(ctx, w * 0.55, h * 0.40, 2);
-
+          ctx.beginPath(); ctx.arc(cx - rw * 0.2, cy - rh * 0.5, 2.5, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
       }
 
-      // 4-point sparkle helper
+      // 4-point sparkle helper (kept for particle effects)
       function drawSparkle(ctx, x, y, size) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.fillStyle = '#fff';
+        ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.moveTo(0, -size);
-        ctx.lineTo(size * 0.3, -size * 0.3);
-        ctx.lineTo(size, 0);
-        ctx.lineTo(size * 0.3, size * 0.3);
-        ctx.lineTo(0, size);
-        ctx.lineTo(-size * 0.3, size * 0.3);
-        ctx.lineTo(-size, 0);
-        ctx.lineTo(-size * 0.3, -size * 0.3);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(0, -size); ctx.lineTo(size * 0.3, -size * 0.3); ctx.lineTo(size, 0);
+        ctx.lineTo(size * 0.3, size * 0.3); ctx.lineTo(0, size);
+        ctx.lineTo(-size * 0.3, size * 0.3); ctx.lineTo(-size, 0);
+        ctx.lineTo(-size * 0.3, -size * 0.3); ctx.closePath(); ctx.fill();
         ctx.restore();
       }
+
+      // =========================================================
+      // 7. OBSTACLES — Dragon, ObstacleBird (instant-kill; stompable from above)
+      // =========================================================
+      class Dragon {
+        constructor(x, y) {
+          this.x = x; this.baseX = x; this.y = y;
+          this.w = 64; this.h = 44;
+          this.t = Math.random() * Math.PI * 2;
+          this.dir = Math.random() > 0.5 ? 1 : -1;
+          this.dying = false; this.dyingTimer = 0;
+        }
+        // Hit-box (body, shrunk slightly from edges)
+        rect() { return { x: this.x + this.w * 0.12, y: this.y + this.h * 0.15, w: this.w * 0.76, h: this.h * 0.75 }; }
+        // Stompable top-quarter hit-zone
+        topRect() { return { x: this.x + this.w * 0.12, y: this.y, w: this.w * 0.76, h: this.h * 0.28 }; }
+        stomp() { this.dying = true; this.dyingTimer = 0; }
+        update(dt) {
+          if (this.dying) { this.dyingTimer += dt; return; }
+          this.t += dt * 0.002;
+          this.x = this.baseX + Math.sin(this.t) * 72;
+        }
+        draw(ctx, camY) {
+          const alpha = this.dying ? Math.max(0, 1 - this.dyingTimer / 300) : 1;
+          if (alpha <= 0) return;
+          ctx.globalAlpha = alpha;
+          const sx = this.x, sy = this.y - camY;
+          ctx.save();
+          // Body
+          const bg = ctx.createRadialGradient(sx + this.w * 0.4, sy + this.h * 0.52, 2, sx + this.w * 0.44, sy + this.h * 0.5, this.w * 0.44);
+          bg.addColorStop(0, '#EF5350'); bg.addColorStop(1, '#B71C1C');
+          ctx.fillStyle = bg;
+          ctx.beginPath();
+          ctx.ellipse(sx + this.w * 0.42, sy + this.h * 0.58, this.w * 0.36, this.h * 0.33, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Head
+          const hx = this.dir > 0 ? sx + this.w * 0.78 : sx + this.w * 0.22;
+          ctx.fillStyle = '#EF5350';
+          ctx.beginPath();
+          ctx.ellipse(hx, sy + this.h * 0.35, this.w * 0.22, this.h * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Eye
+          ctx.fillStyle = '#FFF9C4'; ctx.beginPath(); ctx.arc(hx + this.dir * 4, sy + this.h * 0.27, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#B71C1C'; ctx.beginPath(); ctx.arc(hx + this.dir * 5, sy + this.h * 0.28, 2.5, 0, Math.PI * 2); ctx.fill();
+          // Wing
+          ctx.fillStyle = 'rgba(183,28,28,0.72)';
+          ctx.beginPath();
+          ctx.moveTo(sx + this.w * 0.38, sy + this.h * 0.20);
+          ctx.quadraticCurveTo(sx + this.w * 0.08, sy - this.h * 0.20, sx, sy + this.h * 0.42);
+          ctx.quadraticCurveTo(sx + this.w * 0.20, sy + this.h * 0.30, sx + this.w * 0.38, sy + this.h * 0.44);
+          ctx.closePath(); ctx.fill();
+          // Tail
+          ctx.strokeStyle = '#C62828'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(sx + this.w * 0.10, sy + this.h * 0.68);
+          ctx.quadraticCurveTo(sx - this.w * 0.08, sy + this.h * 0.90, sx + this.w * 0.04, sy + this.h * 1.05);
+          ctx.stroke();
+          ctx.restore(); ctx.globalAlpha = 1;
+        }
+      }
+
+      class ObstacleBird {
+        constructor(x, y) {
+          this.x = x; this.y = y;
+          this.w = 42; this.h = 32;
+          this.dir = x < CONFIG.WIDTH / 2 ? 1 : -1;
+          this.vx = this.dir * 2.4;
+          this.t = Math.random() * Math.PI * 2;
+          this.dying = false; this.dyingTimer = 0;
+        }
+        rect() { return { x: this.x + this.w * 0.1, y: this.y + this.h * 0.2, w: this.w * 0.8, h: this.h * 0.65 }; }
+        topRect() { return { x: this.x + this.w * 0.1, y: this.y, w: this.w * 0.8, h: this.h * 0.28 }; }
+        stomp() { this.dying = true; this.dyingTimer = 0; }
+        offScreen() { return this.x > CONFIG.WIDTH + 80 || this.x < -80; }
+        update(dt, gameSpeed) {
+          if (this.dying) { this.dyingTimer += dt; return; }
+          this.t += dt * 0.01;
+          this.x += this.vx * gameSpeed * (dt / 16.667);
+          this.y += Math.sin(this.t) * 0.5;
+        }
+        draw(ctx, camY) {
+          const alpha = this.dying ? Math.max(0, 1 - this.dyingTimer / 300) : 1;
+          if (alpha <= 0) return;
+          ctx.globalAlpha = alpha;
+          const sx = this.x, sy = this.y - camY;
+          const flap = Math.sin(this.t * 3) * 0.38;
+          ctx.save();
+          // Body
+          ctx.fillStyle = '#FF7043';
+          ctx.beginPath();
+          ctx.ellipse(sx + this.w * 0.5, sy + this.h * 0.62, this.w * 0.30, this.h * 0.24, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Head
+          const hx = this.dir > 0 ? sx + this.w * 0.76 : sx + this.w * 0.24;
+          ctx.fillStyle = '#FF8A65';
+          ctx.beginPath(); ctx.arc(hx, sy + this.h * 0.40, this.h * 0.24, 0, Math.PI * 2); ctx.fill();
+          // Eye
+          ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(hx + this.dir * 3, sy + this.h * 0.33, 2.5, 0, Math.PI * 2); ctx.fill();
+          // Beak
+          ctx.fillStyle = '#FFA726'; ctx.beginPath();
+          ctx.moveTo(hx + this.dir * 7, sy + this.h * 0.41);
+          ctx.lineTo(hx + this.dir * 14, sy + this.h * 0.44);
+          ctx.lineTo(hx + this.dir * 7, sy + this.h * 0.49);
+          ctx.closePath(); ctx.fill();
+          // Wing
+          ctx.fillStyle = 'rgba(230,74,25,0.82)';
+          ctx.save(); ctx.translate(sx + this.w * 0.5, sy + this.h * 0.48); ctx.rotate(-flap);
+          ctx.beginPath();
+          ctx.ellipse(0, -this.h * 0.36, this.w * 0.26, this.h * 0.17, 0, 0, Math.PI * 2);
+          ctx.fill(); ctx.restore();
+          ctx.restore(); ctx.globalAlpha = 1;
+        }
+      }
+
+
 
       class Spring {
         constructor(platform) {
@@ -3462,7 +3457,7 @@
         state: 'menu',     // menu | playing | paused | gameover
         player: null,
         platforms: [],
-        coins: [], boxes: [], springs: [], particles: [],
+        coins: [], diamonds: [], dragons: [], obstacleBirds: [], springs: [], particles: [],
         bg: null,
         camY: 0,            // top of camera in world space
         highestY: 0,        // tracking max climbed
@@ -3514,7 +3509,7 @@
           Input.requestTiltPermission();
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
-          this.coins = []; this.boxes = []; this.springs = []; this.particles = [];
+          this.coins = []; this.diamonds = []; this.dragons = []; this.obstacleBirds = []; this.springs = []; this.particles = [];
           this.camY = 0;
           this.highestY = this.player.y;
           this.score = 0;
@@ -3627,16 +3622,29 @@
           p.w = lvl.platWidth;   // override width per level
           this.platforms.push(p);
 
-          // Spawn collectibles
+          // Spawn collectibles & obstacles
           const r = Math.random();
+          const lvlIdx = this.getLevelDef().idx ?? 0;
           if (type !== 'breakable') {
             if (r < 0.10) {
               this.springs.push(new Spring(p));
-            } else if (r < 0.18) {
-              this.boxes.push(new MysteryBox(p.x + p.w / 2 - 16, p.y - 52));
-            } else if (r < 0.50) {
-              this.coins.push(new Coin(p.x + p.w / 2 - 12, p.y - 32));
+            } else if (r < 0.16 && lvlIdx >= 1) {
+              // Diamond — rare, Lv.2+
+              this.diamonds.push(new Diamond(p.x + p.w / 2 - 13, p.y - 38));
+            } else if (r < 0.52) {
+              // Coin — common
+              this.coins.push(new Coin(p.x + p.w / 2 - 11, p.y - 30));
             }
+          }
+          // Spawn Dragon (Lv.2+ = idx>=1)
+          if (lvlIdx >= 1 && Math.random() < 0.04) {
+            const dx = Math.random() * (CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN - 64) + CONFIG.SAFE_X_MIN;
+            this.dragons.push(new Dragon(dx, y - 60));
+          }
+          // Spawn ObstacleBird (Lv.2+)
+          if (lvlIdx >= 1 && Math.random() < 0.05) {
+            const bx = Math.random() < 0.5 ? -42 : CONFIG.WIDTH;
+            this.obstacleBirds.push(new ObstacleBird(bx, y - 40));
           }
         },
 
@@ -3697,13 +3705,17 @@
           for (const p of this.platforms) p.update(dt, this.gameSpeed);
           this.platforms = this.platforms.filter(p => p.y < this.camY + CONFIG.HEIGHT + 200 && !p.broken);
 
-          // Springs / boxes / coins update + cull
+          // Collectibles + obstacles update & cull
           for (const s of this.springs) s.update(dt);
-          for (const b of this.boxes) b.update(dt);
-          for (const c of this.coins) c.update(dt);
-          this.springs = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
-          this.boxes = this.boxes.filter(b => !b.collected && b.y < this.camY + CONFIG.HEIGHT + 200);
-          this.coins = this.coins.filter(c => !c.collected && c.y < this.camY + CONFIG.HEIGHT + 200);
+          for (const c of this.coins)   c.update(dt);
+          for (const d of this.diamonds) d.update(dt);
+          for (const d of this.dragons)  d.update(dt);
+          for (const b of this.obstacleBirds) b.update(dt, this.gameSpeed);
+          this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.coins         = this.coins.filter(c => !c.collected && c.y < this.camY + CONFIG.HEIGHT + 200);
+          this.diamonds      = this.diamonds.filter(d => !d.collected && d.y < this.camY + CONFIG.HEIGHT + 200);
+          this.dragons       = this.dragons.filter(d => !(d.dying && d.dyingTimer > 350));
+          this.obstacleBirds = this.obstacleBirds.filter(b => !(b.dying && b.dyingTimer > 350) && !b.offScreen());
 
           // Particles
           for (const pt of this.particles) pt.update(dt);
@@ -3750,18 +3762,41 @@
             if (Utils.rectsOverlap(pr, c.rect())) {
               c.collected = true;
               this.score += CONFIG.COIN_VALUE * this.multiplier;
-              Game.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FFC93C', 8);
+              Game.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FF8C2A', 8);
             }
           }
-          // Mystery box
-          for (const b of this.boxes) {
-            if (b.collected) continue;
-            if (Utils.rectsOverlap(pr, b.rect())) {
-              b.collected = true;
-              this.multiplier = 2;
-              this.multiplierEnd = performance.now() + CONFIG.MULTIPLIER_DURATION;
-              // x2 multiplier active — no toast
-              Game.spawnParticles(b.x + b.w / 2, b.y + b.h / 2, '#FF66CC', 18);
+          // Diamonds
+          for (const d of this.diamonds) {
+            if (d.collected) continue;
+            if (Utils.rectsOverlap(pr, d.rect())) {
+              d.collected = true;
+              this.score += CONFIG.DIAMOND_VALUE * this.multiplier;
+              Game.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 14);
+            }
+          }
+          // Obstacles — stomp (from above, vy>0) or kill (side/belly)
+          if (!this._dead) {
+            const allObstacles = [...this.dragons, ...this.obstacleBirds];
+            for (const ob of allObstacles) {
+              if (ob.dying) continue;
+              const playerBottom = this.player.y + this.player.h;
+              const topZone = ob.topRect();
+              const bodyZone = ob.rect();
+              if (this.player.vy > 0 && Utils.rectsOverlap(
+                { x: this.player.x + 4, y: playerBottom - 8, w: this.player.w - 8, h: 10 },
+                topZone
+              )) {
+                // Stomp!
+                ob.stomp();
+                const bonus = ob instanceof Dragon ? CONFIG.DRAGON_STOMP : CONFIG.BIRD_STOMP;
+                this.score += bonus * this.multiplier;
+                this.player.vy = -8;  // bounce up
+                Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 10);
+              } else if (Utils.rectsOverlap(pr, bodyZone)) {
+                // Side/belly hit — instant kill
+                this.gameOver();
+                return;
+              }
             }
           }
 
@@ -3896,10 +3931,12 @@
           // World offset for elements
           const camY = this.camY;
 
-          for (const p of this.platforms) p.draw(ctx, camY);
-          for (const s of this.springs) s.draw(ctx, camY);
-          for (const b of this.boxes) b.draw(ctx, camY);
-          for (const c of this.coins) c.draw(ctx, camY);
+          for (const p of this.platforms)     p.draw(ctx, camY);
+          for (const s of this.springs)        s.draw(ctx, camY);
+          for (const c of this.coins)          c.draw(ctx, camY);
+          for (const d of this.diamonds)       d.draw(ctx, camY);
+          for (const d of this.dragons)        d.draw(ctx, camY);
+          for (const b of this.obstacleBirds)  b.draw(ctx, camY);
           if (this.player) this.player.draw(ctx, camY);
           for (const p of this.particles) p.draw(ctx, camY);
           this._drawScrollWarning(ctx);
