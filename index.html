@@ -2215,9 +2215,12 @@
       // =========================================================
 
       // Preload sprites
-      const IMG_COIN    = new Image(); IMG_COIN.src    = '/sprite-coin.png';
-      const IMG_DIAMOND = new Image(); IMG_DIAMOND.src = '/sprite-diamond.png';
-      const IMG_DRAGON  = new Image(); IMG_DRAGON.src  = '/sprite-dragon.png';
+      const IMG_COIN       = new Image(); IMG_COIN.src       = '/sprite-coin.png';
+      const IMG_DIAMOND    = new Image(); IMG_DIAMOND.src    = '/sprite-diamond.png';
+      const IMG_DRAGON     = new Image(); IMG_DRAGON.src     = '/sprite-dragon.png';
+      const IMG_ISLE_CASTLE = new Image(); IMG_ISLE_CASTLE.src = '/island-castle.png';
+      const IMG_ISLE_BUSH   = new Image(); IMG_ISLE_BUSH.src   = '/island-bush.png';
+      const IMG_ISLE_TREE   = new Image(); IMG_ISLE_TREE.src   = '/island-tree.png';
 
       class Dragon {
         constructor(x, y) {
@@ -2429,24 +2432,24 @@
               flapPhase: Math.random() * Math.PI * 2,
             });
           }
-          // Mid-distance islands (with waterfalls)
-          for (let i = 0; i < 5; i++) {
+          // === FLOATING ISLANDS ===
+          // 1 rare castle island (draws infrequently, large)
+          this.castleIslands = [{
+            x: Utils.rand(80, CONFIG.WIDTH - 80),
+            y: Utils.rand(CONFIG.HEIGHT * 0.5, CONFIG.HEIGHT * 4),
+            size: Utils.rand(130, 160),
+            depth: Utils.rand(0.12, 0.20),   // very slow parallax → far away
+          }];
+          // 6 small islands alternating bush/tree
+          this.farIslands = [];
+          for (let i = 0; i < 6; i++) {
             this.farIslands.push({
               x: Math.random() * CONFIG.WIDTH,
               y: Utils.rand(200, CONFIG.HEIGHT * 5),
-              size: Utils.rand(60, 100),
-              depth: Utils.rand(0.30, 0.50),
-              waterfall: Math.random() < 0.7,
-              wfPhase: Math.random() * Math.PI * 2,
-            });
-          }
-          // Castle islands — only 1-2, far away (slow parallax)
-          for (let i = 0; i < 2; i++) {
-            this.castleIslands.push({
-              x: Utils.rand(60, CONFIG.WIDTH - 60),
-              y: Utils.rand(CONFIG.HEIGHT * 0.2, CONFIG.HEIGHT * 5),
-              size: Utils.rand(110, 150),
-              depth: Utils.rand(0.15, 0.25),   // very slow parallax → looks far
+              size: Utils.rand(64, 90),
+              depth: Utils.rand(0.28, 0.48),
+              variant: i % 2 === 0 ? 'bush' : 'tree',   // alternate
+              bobPhase: Math.random() * Math.PI * 2,
             });
           }
           // Hot air balloons
@@ -2593,44 +2596,40 @@
             }
           }
 
-          // === CASTLE ISLANDS ===
+          // === CASTLE ISLAND (rare, 1 instance) ===
           const now = performance.now();
           for (const it of this.castleIslands) {
             const py = wrapY(it.y - camY * it.depth);
-            if (py > -200 && py < CONFIG.HEIGHT + 200) {
+            if (py > -250 && py < CONFIG.HEIGHT + 250) {
+              const bob = Math.sin(now * 0.0006 + it.x) * 6;
+              const drawW = it.size * 1.6;
+              const drawH = it.size * 1.6;
               ctx.save();
-              ctx.globalAlpha = 0.62;
-              const bob = Math.sin(now * 0.0007 + it.x) * 5;
-              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, true);
-              ctx.restore();
-            }
-          }
-
-          // === HOT AIR BALLOONS ===
-          for (const b of this.balloons) {
-            b.x += b.drift;
-            if (b.x > CONFIG.WIDTH + 50) b.x = -50;
-            b.bobPhase += 0.01;
-            const py = wrapY(b.y - camY * b.depth) + Math.sin(b.bobPhase) * 4;
-            if (py > -80 && py < CONFIG.HEIGHT + 80) {
-              drawHotAirBalloon(ctx, b.x, py, b.size, b.color);
-            }
-          }
-
-          // === MID-DISTANCE ISLANDS ===
-          for (const it of this.farIslands) {
-            const py = wrapY(it.y - camY * it.depth);
-            if (py > -200 && py < CONFIG.HEIGHT + 200) {
-              ctx.save();
-              ctx.globalAlpha = 0.82;
-              const bob = Math.sin(now * 0.0009 + it.x * 0.05) * 4;
-              drawFloatingIslandSilhouette(ctx, it.x, py + bob, it.size, false);
-              if (it.waterfall) {
-                drawBackgroundWaterfall(ctx, it.x, py + bob + it.size * 0.45, it.size * 0.5, now * 0.005 + it.wfPhase);
+              ctx.globalAlpha = 0.55;
+              if (IMG_ISLE_CASTLE.complete && IMG_ISLE_CASTLE.naturalWidth > 0) {
+                ctx.drawImage(IMG_ISLE_CASTLE, it.x - drawW / 2, py + bob - drawH * 0.55, drawW, drawH);
               }
               ctx.restore();
             }
           }
+
+          // === SMALL ISLANDS (bush + tree alternating) ===
+          for (const it of this.farIslands) {
+            const py = wrapY(it.y - camY * it.depth);
+            if (py > -200 && py < CONFIG.HEIGHT + 200) {
+              const bob = Math.sin(now * 0.0009 + it.x * 0.05) * 4;
+              const drawW = it.size * 1.5;
+              const drawH = it.size * 1.5;
+              const img = it.variant === 'bush' ? IMG_ISLE_BUSH : IMG_ISLE_TREE;
+              ctx.save();
+              ctx.globalAlpha = 0.72;
+              if (img.complete && img.naturalWidth > 0) {
+                ctx.drawImage(img, it.x - drawW / 2, py + bob - drawH * 0.5, drawW, drawH);
+              }
+              ctx.restore();
+            }
+          }
+
 
           // === FOREGROUND PIXEL CLOUDS ===
           for (const c of this.clouds) {
