@@ -2162,7 +2162,15 @@
       // =========================================================
       class Coin {
         // Crown coin sprite (+25 score)
-        constructor(x, y) { this.x = x; this.y = y; this.w = 36; this.h = 36; this.collected = false; this.t = 0; }
+        constructor(platform, ox, oy) {
+          this.platform = platform;
+          this.ox = ox;  // offset from platform.x
+          this.oy = oy;  // offset from platform.y
+          this.w = 32; this.h = 32;
+          this.collected = false; this.t = 0;
+        }
+        get x() { return this.platform.x + this.ox; }
+        get y() { return this.platform.y + this.oy; }
         rect() { return { x: this.x + 4, y: this.y + 4, w: this.w - 8, h: this.h - 8 }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
@@ -2174,13 +2182,20 @@
 
       class Diamond {
         // Blue diamond sprite (+100 score)
-        constructor(x, y) { this.x = x; this.y = y; this.w = 36; this.h = 36; this.collected = false; this.t = 0; }
+        constructor(platform, ox, oy) {
+          this.platform = platform;
+          this.ox = ox;
+          this.oy = oy;
+          this.w = 32; this.h = 32;
+          this.collected = false; this.t = 0;
+        }
+        get x() { return this.platform.x + this.ox; }
+        get y() { return this.platform.y + this.oy; }
         rect() { return { x: this.x + 4, y: this.y + 4, w: this.w - 8, h: this.h - 8 }; }
         update(dt) { this.t += dt; }
         draw(ctx, camY) {
           if (this.collected) return;
           const bob = Math.sin(this.t * 0.004) * 3;
-          // Subtle glow
           ctx.save();
           ctx.shadowColor = '#4FC3F7';
           ctx.shadowBlur = 10;
@@ -3814,11 +3829,11 @@
             if (r < 0.10) {
               this.springs.push(new Spring(p));
             } else if (r < 0.16 && lvlIdx >= 1) {
-              // Diamond — rare, Lv.2+
-              this.diamonds.push(new Diamond(p.x + p.w / 2 - 13, p.y - 38));
+              // Diamond — rare, Lv.2+: ox = half platform minus half sprite
+              this.diamonds.push(new Diamond(p, p.w / 2 - 16, -40));
             } else if (r < 0.52) {
-              // Coin — common
-              this.coins.push(new Coin(p.x + p.w / 2 - 11, p.y - 30));
+              // Coin — common: centered on platform
+              this.coins.push(new Coin(p, p.w / 2 - 16, -34));
             }
           }
           // Spawn Dragon (Lv.2+ = idx>=1)
@@ -3892,8 +3907,8 @@
           for (const d of this.diamonds)  d.update(dt);
           for (const d of this.dragons)   d.update(dt);
           this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
-          this.coins         = this.coins.filter(c => !c.collected && c.y < this.camY + CONFIG.HEIGHT + 200);
-          this.diamonds      = this.diamonds.filter(d => !d.collected && d.y < this.camY + CONFIG.HEIGHT + 200);
+          this.coins         = this.coins.filter(c => !c.collected && c.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.diamonds      = this.diamonds.filter(d => !d.collected && d.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.dragons       = this.dragons.filter(d => !(d.dying && d.dyingTimer > 350));
 
           // Particles
@@ -3921,7 +3936,6 @@
                 if (spring) {
                   spring.trigger();
                   this.player.jump(CONFIG.SPRING_VELOCITY * jumpScale);
-                  UI.showToast('🚀 BOING!');
                 } else {
                   const ok = p.onBounce();
                   if (ok) {
