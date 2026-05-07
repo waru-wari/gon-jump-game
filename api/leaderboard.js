@@ -25,18 +25,21 @@ function todayKey() {
 async function buildRows(members, startRank = 0) {
   if (!members || members.length === 0) return [];
   const rows = [];
-  // members from @upstash/redis zrange withScores: [{ member, score }, ...]
+  let rank = startRank + 1;
   for (let i = 0; i < members.length; i++) {
     const { member: hash, score } = members[i];
+    if (Number(score) <= 0) continue;          // skip ghost entries with score 0
     const profile = await kv.hgetall(`profile:${hash}`);
+    if (!profile) continue;                    // skip entries with no profile data
     rows.push({
-      rank: startRank + i + 1,
-      name: profile?.name ?? 'Anonymous',
-      emailDisplay: profile?.emailDisplay ?? '****',
+      rank,
+      name: profile.name ?? 'Anonymous',
+      emailDisplay: profile.emailDisplay ?? '****',
       score: Number(score),
-      bestLevel: profile?.bestLevel ?? 1,
-      timesPlayed: profile?.timesPlayed ?? 1,
+      bestLevel: profile.bestLevel ?? 1,
+      timesPlayed: profile.timesPlayed ?? 1,
     });
+    rank++;
   }
   return rows;
 }
