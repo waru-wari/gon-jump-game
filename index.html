@@ -1456,7 +1456,7 @@
 
         <!-- Action buttons — change per stage -->
         <div class="gameover-buttons" id="go-buttons-stage1">
-          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 Submit Score</button>
+          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 Submit</button>
           <button id="skip-btn" class="btn btn-secondary">Skip →</button>
         </div>
         <div class="gameover-buttons" id="go-buttons-stage2" style="display:none">
@@ -3330,7 +3330,7 @@
           } catch (err) {
             this.showToast('Submit failed: ' + err.message);
             this.el.submitScoreBtn.disabled = false;
-            this.el.submitScoreBtn.textContent = '📤 Submit Score';
+            this.el.submitScoreBtn.textContent = '📤 Submit';
           }
         },
 
