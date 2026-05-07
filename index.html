@@ -2218,9 +2218,6 @@
       const IMG_COIN        = new Image(); IMG_COIN.src        = '/sprite-coin.png';
       const IMG_DIAMOND     = new Image(); IMG_DIAMOND.src     = '/sprite-diamond.png';
       const IMG_DRAGON      = new Image(); IMG_DRAGON.src      = '/sprite-dragon.png';
-      const IMG_ISLE_CASTLE = new Image(); IMG_ISLE_CASTLE.src = '/island-castle.png';
-      const IMG_ISLE_BUSH   = new Image(); IMG_ISLE_BUSH.src   = '/island-bush.png';
-      const IMG_ISLE_TREE   = new Image(); IMG_ISLE_TREE.src   = '/island-tree.png';
       // Cloud sprites (5 variants from user artwork)
       const CLOUD_IMGS = { a: new Image(), b: new Image(), c: new Image(), d: new Image(), e: new Image() };
       CLOUD_IMGS.a.src = '/cloud-a.png';
@@ -2406,7 +2403,7 @@
         constructor() {
           this.clouds     = [];
           this.farClouds  = [];
-          this.farIslands = [];
+          this.farIslands    = [];
           this.castleIslands = [];
           this.balloons   = [];
           this.birds      = [];
@@ -2443,26 +2440,6 @@
               depth: Utils.rand(0.10, 0.25),
               speed: Utils.rand(0.15, 0.35),
               flapPhase: Math.random() * Math.PI * 2,
-            });
-          }
-          // === FLOATING ISLANDS ===
-          // 1 rare castle island (draws infrequently, large)
-          this.castleIslands = [{
-            x: Utils.rand(80, CONFIG.WIDTH - 80),
-            y: Utils.rand(CONFIG.HEIGHT * 0.5, CONFIG.HEIGHT * 4),
-            size: Utils.rand(130, 160),
-            depth: Utils.rand(0.12, 0.20),   // very slow parallax → far away
-          }];
-          // 6 small islands alternating bush/tree
-          this.farIslands = [];
-          for (let i = 0; i < 6; i++) {
-            this.farIslands.push({
-              x: Math.random() * CONFIG.WIDTH,
-              y: Utils.rand(200, CONFIG.HEIGHT * 5),
-              size: Utils.rand(64, 90),
-              depth: Utils.rand(0.28, 0.48),
-              variant: i % 2 === 0 ? 'bush' : 'tree',   // alternate
-              bobPhase: Math.random() * Math.PI * 2,
             });
           }
           // Background platforms — decorative, distant, low opacity
@@ -2614,39 +2591,6 @@
             }
           }
 
-          // === CASTLE ISLAND (rare, 1 instance) ===
-          const now = performance.now();
-          for (const it of this.castleIslands) {
-            const py = wrapY(it.y - camY * it.depth);
-            if (py > -250 && py < CONFIG.HEIGHT + 250) {
-              const bob = Math.sin(now * 0.0006 + it.x) * 6;
-              const drawW = it.size * 1.6;
-              const drawH = it.size * 1.6;
-              ctx.save();
-              ctx.globalAlpha = 0.55;
-              if (IMG_ISLE_CASTLE.complete && IMG_ISLE_CASTLE.naturalWidth > 0) {
-                ctx.drawImage(IMG_ISLE_CASTLE, it.x - drawW / 2, py + bob - drawH * 0.55, drawW, drawH);
-              }
-              ctx.restore();
-            }
-          }
-
-          // === SMALL ISLANDS (bush + tree alternating) ===
-          for (const it of this.farIslands) {
-            const py = wrapY(it.y - camY * it.depth);
-            if (py > -200 && py < CONFIG.HEIGHT + 200) {
-              const bob = Math.sin(now * 0.0009 + it.x * 0.05) * 4;
-              const drawW = it.size * 1.5;
-              const drawH = it.size * 1.5;
-              const img = it.variant === 'bush' ? IMG_ISLE_BUSH : IMG_ISLE_TREE;
-              ctx.save();
-              ctx.globalAlpha = 0.72;
-              if (img.complete && img.naturalWidth > 0) {
-                ctx.drawImage(img, it.x - drawW / 2, py + bob - drawH * 0.5, drawW, drawH);
-              }
-              ctx.restore();
-            }
-          }
           // === BACKGROUND PLATFORMS (distant scenery, low opacity) ===
           for (const p of this.bgPlatforms) {
             const py = wrapY(p.y - camY * p.depth);
