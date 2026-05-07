@@ -1246,6 +1246,55 @@
 
     .mig-submit { background: #FFC93C; color: #5D3A00; }
     .mig-dismiss { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3) !important; }
+
+    /* === v0.8 BIOME BANNER === */
+    .biome-banner {
+      position: absolute;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-30px);
+      background: linear-gradient(135deg, rgba(0,0,0,.55), rgba(0,0,0,.30));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 1px;
+      padding: 8px 22px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.30);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      white-space: nowrap;
+      text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    }
+    .biome-banner.show {
+      animation: biome-slide 2.4s ease forwards;
+    }
+    @keyframes biome-slide {
+      0%   { opacity:0; transform:translateX(-50%) translateY(-30px); }
+      15%  { opacity:1; transform:translateX(-50%) translateY(0);     }
+      75%  { opacity:1; transform:translateX(-50%) translateY(0);     }
+      100% { opacity:0; transform:translateX(-50%) translateY(-15px); }
+    }
+
+    /* === v0.8 SCREEN FLASH === */
+    .screen-flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 49;
+    }
+    .screen-flash.flash {
+      animation: flash-out .45s ease forwards;
+    }
+    @keyframes flash-out {
+      0%   { opacity: .6; }
+      100% { opacity: 0;  }
+    }
   </style>
 </head>
 
@@ -1267,6 +1316,10 @@
       <video id="menu-video" src="video-background.mp4" autoplay loop muted playsinline></video>
 
       <canvas id="game-canvas"></canvas>
+
+      <!-- v0.8 — biome transition overlays -->
+      <div id="biome-banner" class="biome-banner" aria-live="polite"></div>
+      <div id="screen-flash" class="screen-flash"></div>
 
     <!-- MAIN MENU -->
     <div id="main-menu" class="overlay active">
@@ -1452,12 +1505,11 @@
 
         // === LEVEL SYSTEM — every 2000 pts (Lv.1 = 0–2000, Lv.2 = 2001–4000 ...) ===
         LEVELS: [
-          { minScore:  0,    gapMin:  90, gapMax: 118, platWidth: 82, movingChance: 0.03, breakableChance: 0.03, label: '🌿 Lv.1 Meadow', color: '#2E7D32', theme: { sky: ['#1565C0','#42A5F5','#81D4FA','#B3E5FC'], hasMoon: false, stars: false, overlay: null,                    cloudTint: null,                     sunColor: 'rgba(255,250,200,0.70)', sunCore: 'rgba(255,255,230,0.95)' } },
-          { minScore:  2000, gapMin: 100, gapMax: 135, platWidth: 74, movingChance: 0.10, breakableChance: 0.07, label: '⛅ Lv.2 Hills',   color: '#388E3C', theme: { sky: ['#1B5E20','#388E3C','#66BB6A','#A5D6A7'], hasMoon: false, stars: false, overlay: 'rgba(200,255,200,0.06)',    cloudTint: 'rgba(220,255,220,0.15)',  sunColor: 'rgba(255,255,180,0.55)', sunCore: 'rgba(255,255,220,0.90)' } },
-          { minScore:  4000, gapMin: 110, gapMax: 150, platWidth: 66, movingChance: 0.18, breakableChance: 0.13, label: '🌤️ Lv.3 Cliffs',  color: '#E65100', theme: { sky: ['#BF360C','#E64A19','#FF7043','#FFAB91'], hasMoon: false, stars: false, overlay: 'rgba(255,100,0,0.07)',     cloudTint: 'rgba(255,180,120,0.20)', sunColor: 'rgba(255,200,100,0.65)', sunCore: 'rgba(255,220,150,0.90)' } },
-          { minScore:  6000, gapMin: 122, gapMax: 165, platWidth: 58, movingChance: 0.28, breakableChance: 0.21, label: '⚡ Lv.4 Peaks',   color: '#6A1B9A', theme: { sky: ['#1A0033','#4A148C','#7B1FA2','#CE93D8'], hasMoon: true,  stars: true,  overlay: 'rgba(100,0,200,0.08)',     cloudTint: 'rgba(180,130,255,0.20)', sunColor: 'rgba(200,150,255,0.50)', sunCore: 'rgba(220,180,255,0.85)' } },
-          { minScore:  8000, gapMin: 135, gapMax: 180, platWidth: 50, movingChance: 0.37, breakableChance: 0.29, label: '✨ Lv.5 Heaven',  color: '#C62828', theme: { sky: ['#B71C1C','#E53935','#FF5252','#FF8A80'], hasMoon: false, stars: false, overlay: 'rgba(255,50,50,0.08)',     cloudTint: 'rgba(255,150,150,0.25)', sunColor: 'rgba(255,150,150,0.60)', sunCore: 'rgba(255,200,200,0.90)' } },
-          { minScore: 10000, gapMin: 148, gapMax: 200, platWidth: 42, movingChance: 0.47, breakableChance: 0.37, label: '🌌 Lv.6 Space',   color: '#01579B', theme: { sky: ['#000000','#0D0D2B','#0A0A40','#0D1B4A'], hasMoon: true,  stars: true,  overlay: 'rgba(0,100,255,0.05)',     cloudTint: 'rgba(100,150,255,0.20)', sunColor: 'rgba(150,200,255,0.40)', sunCore: 'rgba(200,230,255,0.80)' } },
+          { minScore:     0, gapMin:  90, gapMax: 118, platWidth: 82, movingChance: 0.03, breakableChance: 0.03, label: '🌤 Sky Day',  color: '#1565C0', theme: { sky: ['#1565C0','#42A5F5','#81D4FA','#B3E5FC'], hasMoon: false, stars: false, aurora: false, overlay: null,                    cloudColor: '#E8F4FF', flashColor: 'rgba(180,220,255,0.5)', sunColor: 'rgba(255,250,200,0.70)', sunCore: 'rgba(255,255,230,0.95)' } },
+          { minScore:  2000, gapMin: 100, gapMax: 135, platWidth: 74, movingChance: 0.10, breakableChance: 0.07, label: '🌅 Sunset',   color: '#E65100', theme: { sky: ['#7B1900','#D84315','#FF6D00','#FFAB40'], hasMoon: false, stars: false, aurora: false, overlay: 'rgba(255,80,0,0.06)',     cloudColor: '#FFD0A0', flashColor: 'rgba(255,140,60,0.5)',  sunColor: 'rgba(255,200,100,0.70)', sunCore: 'rgba(255,230,160,0.95)' } },
+          { minScore:  4000, gapMin: 110, gapMax: 150, platWidth: 66, movingChance: 0.18, breakableChance: 0.13, label: '🌙 Night',    color: '#4527A0', theme: { sky: ['#0D0221','#1A0550','#2D1B69','#512888'], hasMoon: true,  stars: true,  aurora: false, overlay: 'rgba(80,0,180,0.07)',     cloudColor: '#C3A8FF', flashColor: 'rgba(140,80,255,0.5)',  sunColor: 'rgba(200,150,255,0.50)', sunCore: 'rgba(220,180,255,0.85)' } },
+          { minScore:  6000, gapMin: 122, gapMax: 165, platWidth: 58, movingChance: 0.28, breakableChance: 0.21, label: '🌌 Aurora',   color: '#00695C', theme: { sky: ['#00251A','#00695C','#1DE9B6','#A7FFEB'], hasMoon: false, stars: true,  aurora: true,  overlay: 'rgba(0,200,150,0.06)',    cloudColor: '#80FFDB', flashColor: 'rgba(0,255,180,0.4)',   sunColor: 'rgba(150,255,220,0.50)', sunCore: 'rgba(200,255,240,0.85)' } },
+          { minScore:  8000, gapMin: 135, gapMax: 185, platWidth: 50, movingChance: 0.37, breakableChance: 0.29, label: '🚀 Space',    color: '#01579B', theme: { sky: ['#000000','#0A0A20','#0D0D2B','#0A1540'], hasMoon: true,  stars: true,  aurora: false, overlay: 'rgba(0,50,150,0.06)',     cloudColor: '#8CB8FF', flashColor: 'rgba(100,150,255,0.4)', sunColor: 'rgba(150,200,255,0.40)', sunCore: 'rgba(200,230,255,0.80)' } },
         ],
 
         LEADERBOARD_KEY: 'empeoLand_leaderboard_v1',
@@ -2401,20 +2453,22 @@
           }
         }
 
-        draw(ctx, camY, theme) {
-          const T = theme || CONFIG.LEVELS[0].theme;
+        draw(ctx, camY) {
+          // Use interpolated sky from BiomeTransition
+          const skyColors = BiomeTransition.getSky();
+          const T  = BiomeTransition.isDone() ? BiomeTransition.toTheme : BiomeTransition.theme;
+          const T2 = BiomeTransition.toTheme;
 
-          // === SKY GRADIENT — dynamic per theme ===
+          // === SKY GRADIENT (crossfade) ===
           const sky = ctx.createLinearGradient(0, 0, 0, CONFIG.HEIGHT);
-          sky.addColorStop(0,    T.sky[0]);
-          sky.addColorStop(0.35, T.sky[1]);
-          sky.addColorStop(0.7,  T.sky[2]);
-          sky.addColorStop(1,    T.sky[3]);
+          sky.addColorStop(0,    skyColors[0]);
+          sky.addColorStop(0.35, skyColors[1]);
+          sky.addColorStop(0.70, skyColors[2]);
+          sky.addColorStop(1,    skyColors[3]);
           ctx.fillStyle = sky;
           ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
 
-          // === STARS (Peaks & Space) ===
-          if (T.stars) {
+          if (T2.stars) {
             ctx.save();
             const nt = performance.now();
             for (let i = 0; i < 60; i++) {
@@ -2431,7 +2485,31 @@
           }
 
           // === MOON (Peaks & Space) or SUN (all others) ===
-          if (T.hasMoon) {
+          // === AURORA BANDS (Aurora biome) ===
+          const auroraAlpha = (T2.aurora ? BiomeTransition.toAlpha() : 0) +
+                              (T.aurora && !BiomeTransition.isDone() ? BiomeTransition.fromAlpha() : 0);
+          if (auroraAlpha > 0) {
+            ctx.save();
+            const now2 = performance.now();
+            const aBands = [
+              { y: 0.15, col: 'rgba(0,255,150,0.09)', w: 0.70 },
+              { y: 0.30, col: 'rgba(0,200,255,0.07)', w: 0.85 },
+              { y: 0.46, col: 'rgba(100,50,255,0.06)', w: 0.60 },
+            ];
+            ctx.globalAlpha = auroraAlpha;
+            for (const bd of aBands) {
+              const wave = Math.sin(now2 * 0.0008 + bd.y * 10) * 22;
+              const ag = ctx.createLinearGradient(wave, 0, CONFIG.WIDTH * bd.w + wave, 0);
+              ag.addColorStop(0, 'rgba(0,0,0,0)');
+              ag.addColorStop(0.5, bd.col);
+              ag.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.fillStyle = ag;
+              ctx.fillRect(0, CONFIG.HEIGHT * bd.y, CONFIG.WIDTH, CONFIG.HEIGHT * 0.14);
+            }
+            ctx.restore();
+          }
+
+          if (T2.hasMoon) {
             const mx = CONFIG.WIDTH * 0.80, my = CONFIG.HEIGHT * 0.12;
             ctx.save();
             const moonGlow = ctx.createRadialGradient(mx, my, 0, mx, my, 90);
@@ -2471,8 +2549,7 @@
             ctx.fill();
           }
 
-          // === THEME TINT OVERLAY ===
-          if (T.overlay) { ctx.fillStyle = T.overlay; ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT); }
+          if (T2.overlay) { ctx.fillStyle = T2.overlay; ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT); }
 
           // === ATMOSPHERIC HAZE BAND ===
           const haze = ctx.createLinearGradient(0, CONFIG.HEIGHT * 0.30, 0, CONFIG.HEIGHT * 0.70);
@@ -2482,18 +2559,20 @@
           ctx.fillStyle = haze;
           ctx.fillRect(0, CONFIG.HEIGHT * 0.30, CONFIG.WIDTH, CONFIG.HEIGHT * 0.40);
 
-          // === SUPER-FAR HAZY CLOUDS ===
+          // === FAR CLOUDS (pixel-art, small) ===
+          const cloudColor = BiomeTransition.getCloudColor();
           for (const c of this.farClouds) {
             c.x += c.speed;
-            if (c.x > CONFIG.WIDTH + 60) c.x = -60;
+            if (c.x > CONFIG.WIDTH + 80) c.x = -80;
             const py = wrapY(c.y - camY * c.depth);
-            if (py > -50 && py < CONFIG.HEIGHT + 50) {
-              drawFluffyCloud(ctx, c.x, py, c.size, 0.30 + c.depth * 0.4, c.seed, T.cloudTint);
+            if (py > -30 && py < CONFIG.HEIGHT + 30) {
+              const v = (c.seed % 2 === 0) ? 'wisp' : 'fluffy';
+              drawPixelCloud(ctx, c.x, py, v, 3, cloudColor, 0.28 + c.depth * 0.35);
             }
           }
 
           // === DISTANT BIRDS — hidden in dark/space themes ===
-          if (!T.stars) {
+          if (!T2.stars) {
             for (const b of this.birds) {
               b.x += b.speed;
               if (b.x > CONFIG.WIDTH + 30) b.x = -30;
@@ -2543,13 +2622,14 @@
             }
           }
 
-          // === FOREGROUND FLUFFY 3D CLOUDS ===
+          // === FOREGROUND PIXEL CLOUDS ===
           for (const c of this.clouds) {
             c.x += c.speed;
-            if (c.x > CONFIG.WIDTH + 150) c.x = -150;
+            if (c.x > CONFIG.WIDTH + 200) c.x = -200;
             const py = wrapY(c.y - camY * c.depth);
-            if (py > -120 && py < CONFIG.HEIGHT + 120) {
-              drawFluffyCloud(ctx, c.x, py, c.size, 0.65 + c.depth * 0.35, c.seed, T.cloudTint);
+            if (py > -60 && py < CONFIG.HEIGHT + 60) {
+              const v = (c.seed % 3 === 0) ? 'wide' : (c.seed % 3 === 1) ? 'cumulus' : 'fluffy';
+              drawPixelCloud(ctx, c.x, py, v, 5, cloudColor, 0.60 + c.depth * 0.35);
             }
           }
         }
@@ -2561,81 +2641,62 @@
         return ((y % period) + period) % period;
       }
 
-      function drawFluffyCloud(ctx, x, y, size, alpha, seed, cloudTint) {
+      // =========================================================
+      // PIXEL-ART CLOUD RENDERER (v0.8 — no external images)
+      // =========================================================
+      const CLOUD_PIXELS = {
+        fluffy: [
+          '00011110000000',
+          '00111111100000',
+          '01111111111000',
+          '11111111111100',
+          '01111111111000',
+          '00000000000000',
+        ],
+        wide: [
+          '000011111111000000',
+          '001111111111110000',
+          '011111111111111100',
+          '001111111111110000',
+          '000000000000000000',
+        ],
+        cumulus: [
+          '0001111000',
+          '0011111100',
+          '0111111110',
+          '1111111111',
+          '1111111111',
+          '0111111110',
+          '0011111100',
+          '0000000000',
+        ],
+        wisp: [
+          '001111110000',
+          '011111111100',
+          '001111110000',
+        ],
+      };
+
+      function _hexToRgb(hex) {
+        const h = hex.replace('#','');
+        return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+      }
+
+      function drawPixelCloud(ctx, x, y, variant, pixelSize, colorHex, alpha) {
+        const grid = CLOUD_PIXELS[variant] || CLOUD_PIXELS.fluffy;
+        const [r,g,b] = _hexToRgb(colorHex || '#E8F4FF');
         ctx.save();
         ctx.globalAlpha = alpha;
-
-        // Deterministic puff offsets from seed (more puffs = denser cotton)
-        const s = seed || 0;
-        const puffs = [
-          { dx: 0, dy: 0, r: size * 0.50 },
-          { dx: size * 0.38, dy: -size * 0.08, r: size * 0.42 },
-          { dx: -size * 0.40, dy: -size * 0.05 + Math.sin(s) * size * 0.02, r: size * 0.38 },
-          { dx: size * 0.68, dy: size * 0.06, r: size * 0.30 },
-          { dx: -size * 0.62, dy: size * 0.08 + Math.cos(s) * size * 0.02, r: size * 0.28 },
-          { dx: size * 0.12, dy: -size * 0.22, r: size * 0.34 },
-          { dx: size * 0.50, dy: -size * 0.18, r: size * 0.26 },
-          { dx: -size * 0.20, dy: -size * 0.20 + Math.sin(s * 2) * size * 0.02, r: size * 0.30 },
-        ];
-
-        // 1) DEEP UNDERSIDE SHADOW (blue/gray ambient occlusion)
-        ctx.save();
-        ctx.translate(x, y);
-        const shadowGrad = ctx.createLinearGradient(0, -size * 0.15, 0, size * 0.55);
-        shadowGrad.addColorStop(0, 'rgba(160, 185, 215, 0)');
-        shadowGrad.addColorStop(0.5, 'rgba(120, 150, 190, 0.35)');
-        shadowGrad.addColorStop(1, 'rgba(80, 110, 160, 0.7)');
-        ctx.fillStyle = shadowGrad;
-        ctx.beginPath();
-        for (const p of puffs) ctx.arc(p.dx, p.dy + 6, p.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // 2) MAIN CLOUD BODY — voluminous radial gradient (each puff = 3D sphere)
-        ctx.save();
-        ctx.translate(x, y);
-        for (const p of puffs) {
-          const g = ctx.createRadialGradient(
-            p.dx - p.r * 0.35, p.dy - p.r * 0.45, p.r * 0.05,
-            p.dx + p.r * 0.15, p.dy + p.r * 0.25, p.r * 1.05
-          );
-          g.addColorStop(0, '#FFFFFF');
-          g.addColorStop(0.45, '#FAFCFF');
-          g.addColorStop(0.75, '#DEE7F0');
-          g.addColorStop(1, '#A8BCD4');     // deeper bottom shadow
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(p.dx, p.dy, p.r, 0, Math.PI * 2);
-          ctx.fill();
+        const rows = grid.length, cols = grid[0].length;
+        for (let row = 0; row < rows; row++) {
+          const bright = 1 - (row / rows) * 0.40;   // top = bright, bottom = darker
+          ctx.fillStyle = `rgb(${Math.round(r*bright)},${Math.round(g*bright)},${Math.round(b*bright)})`;
+          for (let col = 0; col < cols; col++) {
+            if (grid[row][col] === '1') {
+              ctx.fillRect(x + col * pixelSize, y + row * pixelSize, pixelSize - 0.5, pixelSize - 0.5);
+            }
+          }
         }
-
-        // 3) BRIGHT TOP HIGHLIGHTS — sun-lit upper edge
-        ctx.globalCompositeOperation = 'source-atop';
-        ctx.globalAlpha = 0.85 * alpha;
-        for (const p of puffs.slice(0, 4)) {
-          const hg = ctx.createRadialGradient(
-            p.dx - p.r * 0.30, p.dy - p.r * 0.45, 0,
-            p.dx - p.r * 0.20, p.dy - p.r * 0.35, p.r * 0.55
-          );
-          hg.addColorStop(0, 'rgba(255,255,250,1)');
-          hg.addColorStop(0.6, 'rgba(255,253,240,0.55)');
-          hg.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.fillStyle = hg;
-          ctx.beginPath();
-          ctx.ellipse(p.dx - p.r * 0.22, p.dy - p.r * 0.40, p.r * 0.50, p.r * 0.22, -0.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // 4) SOFT RIM LIGHT (golden tint — sun lighting from top-right)
-        ctx.globalAlpha = 0.30 * alpha;
-        ctx.fillStyle = 'rgba(255, 230, 170, 0.6)';
-        for (const p of puffs.slice(0, 3)) {
-          ctx.beginPath();
-          ctx.ellipse(p.dx + p.r * 0.25, p.dy - p.r * 0.35, p.r * 0.30, p.r * 0.10, 0.3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.restore();
         ctx.restore();
       }
 
@@ -2843,8 +2904,47 @@
       }
 
       // =========================================================
-      // 9. LEADERBOARD (localStorage)
+      // v0.8 — BIOME TRANSITION (sky crossfade + element fade)
       // =========================================================
+      function lerpColor(a, b, t) {
+        const [ar,ag,ab] = _hexToRgb(a), [br,bg,bb] = _hexToRgb(b);
+        const h = n => Math.round(n).toString(16).padStart(2,'0');
+        return '#'+h(ar+(br-ar)*t)+h(ag+(bg-ag)*t)+h(ab+(bb-ab)*t);
+      }
+      function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+      const BiomeTransition = {
+        _from:     CONFIG.LEVELS[0].theme,
+        _to:       CONFIG.LEVELS[0].theme,
+        _progress: 1,
+        _elapsed:  0,
+        SKY_MS:    1500,
+        ELEM_MS:   2000,
+        start(fromTheme, toTheme) {
+          this._from = fromTheme; this._to = toTheme;
+          this._progress = 0; this._elapsed = 0;
+        },
+        update(dt) {
+          if (this._progress >= 1) return;
+          this._elapsed += dt;
+          this._progress = Math.min(this._elapsed / this.SKY_MS, 1);
+        },
+        getSky() {
+          if (this._progress >= 1) return this._to.sky;
+          const p = easeInOut(this._progress);
+          return this._from.sky.map((c, i) => lerpColor(c, this._to.sky[i], p));
+        },
+        getCloudColor() {
+          if (this._progress >= 1) return this._to.cloudColor || '#E8F4FF';
+          return lerpColor(this._from.cloudColor||'#E8F4FF', this._to.cloudColor||'#E8F4FF', easeInOut(this._progress));
+        },
+        fromAlpha() { return Math.max(0, 1 - this._elapsed / this.ELEM_MS); },
+        toAlpha()   { return Math.min(1, this._elapsed / this.ELEM_MS); },
+        get theme()  { return this._to; },
+        get toTheme(){ return this._to; },
+        isDone()    { return this._progress >= 1; },
+      };
+
       const Leaderboard = {
         load() {
           try {
@@ -3371,7 +3471,27 @@
           }
         },
 
-        updateScore(score, multiplier) {
+          showBiomeBanner(label) {
+            const el = document.getElementById('biome-banner');
+            if (!el) return;
+            el.textContent = label;
+            el.classList.remove('show');
+            void el.offsetWidth;
+            el.classList.add('show');
+            clearTimeout(this._bannerTimer);
+            this._bannerTimer = setTimeout(() => el.classList.remove('show'), 2500);
+          },
+
+          flashScreen(color) {
+            const el = document.getElementById('screen-flash');
+            if (!el) return;
+            el.style.background = color;
+            el.classList.remove('flash');
+            void el.offsetWidth;
+            el.classList.add('flash');
+          },
+
+          updateScore(score, multiplier) {
           this.el.score.textContent = score.toLocaleString();
           if (multiplier > 1) this.el.mult.classList.add('active');
           else this.el.mult.classList.remove('active');
@@ -3718,6 +3838,7 @@
 
         update(dt) {
           if (this.state !== 'playing') return;
+          BiomeTransition.update(dt);
 
           // === GAME SPEED: เพิ่มทุก 2000 แต้ม ===
           const speedStage = Math.floor(this.score / CONFIG.SPEED_STAGE_INTERVAL);
@@ -3867,17 +3988,20 @@
           // Level-up check
           const lvlDef = this.getLevelDef();
           if (lvlDef.idx !== this.currentLevelIdx) {
+            const prevTheme = CONFIG.LEVELS[this.currentLevelIdx].theme;
             this.currentLevelIdx = lvlDef.idx;
+            BiomeTransition.start(prevTheme, lvlDef.theme);
             Sound.play('level-up');
+            UI.showBiomeBanner(lvlDef.label);
+            UI.flashScreen(lvlDef.theme.flashColor || 'rgba(255,255,255,0.4)');
             const badge = document.getElementById('level-badge');
             if (badge) {
               badge.textContent = lvlDef.label;
               badge.style.background = `linear-gradient(180deg, ${lvlDef.color}cc 0%, ${lvlDef.color} 100%)`;
               badge.classList.remove('bump');
-              void badge.offsetWidth;  // reflow to restart animation
+              void badge.offsetWidth;
               badge.classList.add('bump');
             }
-            // level changed — no toast
           }
 
           // GAME OVER condition: fell below camera (including scroll)
@@ -3984,8 +4108,7 @@
         render() {
           const ctx = this.ctx;
           ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-          const theme = this.getLevelDef().theme;
-          this.bg.draw(ctx, this.camY, theme);
+          this.bg.draw(ctx, this.camY);  // BiomeTransition drives sky internally
 
           // World offset for elements
           const camY = this.camY;
