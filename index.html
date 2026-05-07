@@ -2215,12 +2215,19 @@
       // =========================================================
 
       // Preload sprites
-      const IMG_COIN       = new Image(); IMG_COIN.src       = '/sprite-coin.png';
-      const IMG_DIAMOND    = new Image(); IMG_DIAMOND.src    = '/sprite-diamond.png';
-      const IMG_DRAGON     = new Image(); IMG_DRAGON.src     = '/sprite-dragon.png';
+      const IMG_COIN        = new Image(); IMG_COIN.src        = '/sprite-coin.png';
+      const IMG_DIAMOND     = new Image(); IMG_DIAMOND.src     = '/sprite-diamond.png';
+      const IMG_DRAGON      = new Image(); IMG_DRAGON.src      = '/sprite-dragon.png';
       const IMG_ISLE_CASTLE = new Image(); IMG_ISLE_CASTLE.src = '/island-castle.png';
       const IMG_ISLE_BUSH   = new Image(); IMG_ISLE_BUSH.src   = '/island-bush.png';
       const IMG_ISLE_TREE   = new Image(); IMG_ISLE_TREE.src   = '/island-tree.png';
+      // Cloud sprites (5 variants from user artwork)
+      const CLOUD_IMGS = { a: new Image(), b: new Image(), c: new Image(), d: new Image(), e: new Image() };
+      CLOUD_IMGS.a.src = '/cloud-a.png';
+      CLOUD_IMGS.b.src = '/cloud-b.png';
+      CLOUD_IMGS.c.src = '/cloud-c.png';
+      CLOUD_IMGS.d.src = '/cloud-d.png';
+      CLOUD_IMGS.e.src = '/cloud-e.png';
 
       class Dragon {
         constructor(x, y) {
@@ -2399,26 +2406,26 @@
           this.balloons = [];
           this.birds = [];
 
-          // Foreground fluffy 3D clouds — multiple layers, varied sizes
-          for (let i = 0; i < 14; i++) {
+          // Foreground clouds — variants a/b/c (large fluffy pixel-art)
+          for (let i = 0; i < 12; i++) {
             this.clouds.push({
               x: Math.random() * CONFIG.WIDTH,
               y: Math.random() * CONFIG.HEIGHT * 5,
-              size: Utils.rand(60, 150),
-              speed: Utils.rand(0.04, 0.18),
-              depth: Utils.rand(0.30, 0.70),
-              seed: Math.random() * 100,
+              size: Utils.rand(90, 200),     // draw width in px
+              speed: Utils.rand(0.04, 0.16),
+              depth: Utils.rand(0.30, 0.65),
+              variant: ['a', 'b', 'c'][i % 3],
             });
           }
-          // SUPER-FAR clouds (tiny, hazy, very slow parallax — fake atmospheric depth)
-          for (let i = 0; i < 18; i++) {
+          // Far clouds — variants d/e (small, flat, slow parallax)
+          for (let i = 0; i < 14; i++) {
             this.farClouds.push({
               x: Math.random() * CONFIG.WIDTH,
               y: Math.random() * CONFIG.HEIGHT * 5,
-              size: Utils.rand(20, 50),
+              size: Utils.rand(55, 100),
               speed: Utils.rand(0.01, 0.04),
               depth: Utils.rand(0.06, 0.18),
-              seed: Math.random() * 100,
+              variant: i % 2 === 0 ? 'd' : 'e',
             });
           }
           // Distant bird silhouettes (V-shape) for life
@@ -2572,15 +2579,21 @@
           ctx.fillStyle = haze;
           ctx.fillRect(0, CONFIG.HEIGHT * 0.30, CONFIG.WIDTH, CONFIG.HEIGHT * 0.40);
 
-          // === FAR CLOUDS (pixel-art, small) ===
-          const cloudColor = BiomeTransition.getCloudColor();
+          // === FAR CLOUDS (small pixel-art — variants d/e) ===
           for (const c of this.farClouds) {
             c.x += c.speed;
-            if (c.x > CONFIG.WIDTH + 80) c.x = -80;
+            if (c.x > CONFIG.WIDTH + 120) c.x = -120;
             const py = wrapY(c.y - camY * c.depth);
-            if (py > -30 && py < CONFIG.HEIGHT + 30) {
-              const v = (c.seed % 2 === 0) ? 'wisp' : 'fluffy';
-              drawPixelCloud(ctx, c.x, py, v, 3, cloudColor, 0.28 + c.depth * 0.35);
+            if (py > -40 && py < CONFIG.HEIGHT + 40) {
+              const img = CLOUD_IMGS[c.variant];
+              if (img.complete && img.naturalWidth > 0) {
+                const w = c.size;
+                const h = w * (img.naturalHeight / img.naturalWidth);
+                ctx.save();
+                ctx.globalAlpha = (0.22 + c.depth * 0.30);
+                ctx.drawImage(img, c.x - w / 2, py - h / 2, w, h);
+                ctx.restore();
+              }
             }
           }
 
@@ -2631,14 +2644,21 @@
           }
 
 
-          // === FOREGROUND PIXEL CLOUDS ===
+          // === FOREGROUND CLOUDS (large pixel-art — variants a/b/c) ===
           for (const c of this.clouds) {
             c.x += c.speed;
-            if (c.x > CONFIG.WIDTH + 200) c.x = -200;
+            if (c.x > CONFIG.WIDTH + 250) c.x = -250;
             const py = wrapY(c.y - camY * c.depth);
-            if (py > -60 && py < CONFIG.HEIGHT + 60) {
-              const v = (c.seed % 3 === 0) ? 'wide' : (c.seed % 3 === 1) ? 'cumulus' : 'fluffy';
-              drawPixelCloud(ctx, c.x, py, v, 5, cloudColor, 0.60 + c.depth * 0.35);
+            if (py > -80 && py < CONFIG.HEIGHT + 80) {
+              const img = CLOUD_IMGS[c.variant];
+              if (img.complete && img.naturalWidth > 0) {
+                const w = c.size;
+                const h = w * (img.naturalHeight / img.naturalWidth);
+                ctx.save();
+                ctx.globalAlpha = (0.55 + c.depth * 0.30);
+                ctx.drawImage(img, c.x - w / 2, py - h / 2, w, h);
+                ctx.restore();
+              }
             }
           }
         }
