@@ -6,6 +6,7 @@
   <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#5BC0EB">
+  <meta name="description" content="Jump, collect, survive! Play Super empeo Land — a sky-high adventure platformer.">
   <title>Super empeo Land</title>
 
   <!-- Favicon -->
@@ -248,16 +249,6 @@
         0 12px 22px rgba(0,30,80,.25);
     }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .18), inset 0 8px 0 rgba(255, 255, 255, .35), 0 8px 0 #802A00, 0 16px 26px rgba(0, 30, 80, .35);
-    }
-
-    .btn-primary:active {
-      transform: translateY(4px);
-      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .18), inset 0 4px 0 rgba(255, 255, 255, .35), 0 2px 0 #802A00, 0 4px 10px rgba(0, 30, 80, .30);
-    }
-
     /* === SECONDARY (blue) === */
     .btn-secondary {
       background: linear-gradient(180deg, #64B5F6 0%, #1E88E5 100%);
@@ -481,10 +472,6 @@
       font-size: 14px;
     }
 
-    #share-btn {
-      padding: 12px 32px;
-      font-size: 16px;
-    }
 
     /* Green leaderboard button */
     .btn-green {
@@ -505,10 +492,7 @@
       /* Only accessible from main menu state — game hud sits below */
     }
     #leaderboard-screen.active { display: flex; pointer-events: auto; }
-    /* Hide leaderboard when game is actively playing */
-    body.state-playing #leaderboard-screen,
-    body.state-paused  #leaderboard-screen,
-    body.state-gameover #leaderboard-screen { display: none !important; }
+
 
     /* === COUNTDOWN OVERLAY === */
     #countdown-overlay {
@@ -752,13 +736,7 @@
       letter-spacing: 2px;
     }
 
-    .pause-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      width: 200px;
-    }
+
 
     .pause-actions .btn {
       width: 100%;
@@ -903,34 +881,7 @@
       touch-action: manipulation;
     }
 
-    /* === CONTROL MODE TOGGLE BUTTON === */
-    .ctrl-toggle-btn {
-      position: absolute;
-      bottom: max(22px, env(safe-area-inset-bottom, 0px) + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 20, 50, 0.55);
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-radius: 999px;
-      color: #fff;
-      font-family: 'Nunito', system-ui, sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      padding: 5px 12px;
-      cursor: pointer;
-      pointer-events: auto;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 101;
-      touch-action: manipulation;
-      white-space: nowrap;
-      opacity: 0.75;
-      transition: opacity 0.2s, background 0.2s;
-      display: none; /* hidden until game starts */
-    }
-    .ctrl-toggle-btn.visible { display: inline-flex; align-items: center; gap: 5px; }
-    .ctrl-toggle-btn:hover, .ctrl-toggle-btn:active { opacity: 1; background: rgba(0,30,80,0.75); }
+
 
     .lead-input::placeholder {
       color: #C8A85B;
@@ -943,44 +894,7 @@
       box-shadow: 0 0 0 3px rgba(255, 201, 60, .30);
     }
 
-    /* === STAR RATING === */
-    .rating-section {
-      text-align: center;
-      margin: 12px 0 8px;
-    }
 
-    .rating-label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #666;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
-    }
-
-    .star-rating {
-      display: inline-flex;
-      gap: 6px;
-      user-select: none;
-    }
-
-    .star {
-      font-size: 32px;
-      color: #DDD;
-      cursor: pointer;
-      transition: color .15s, transform .15s;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, .08);
-      line-height: 1;
-    }
-
-    .star:hover {
-      transform: scale(1.18);
-    }
-
-    .star.filled,
-    .star.hover {
-      color: #FFC93C;
-      text-shadow: 0 0 10px rgba(255, 193, 7, .55), 0 2px 4px rgba(255, 140, 0, .40);
-    }
 
     /* === MINI LEADERBOARD inside Game Over (Top 10, scrollable) === */
     .mini-leaderboard {
@@ -2245,16 +2159,6 @@
         }
       }
 
-      // 4-point sparkle helper (kept for particle effects)
-      function drawSparkle(ctx, x, y, size) {
-        ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.moveTo(0, -size); ctx.lineTo(size * 0.3, -size * 0.3); ctx.lineTo(size, 0);
-        ctx.lineTo(size * 0.3, size * 0.3); ctx.lineTo(0, size);
-        ctx.lineTo(-size * 0.3, size * 0.3); ctx.lineTo(-size, 0);
-        ctx.lineTo(-size * 0.3, -size * 0.3); ctx.closePath(); ctx.fill();
-        ctx.restore();
-      }
 
       // =========================================================
       // 7. OBSTACLES — Dragon (fly-in + idle life, stompable from above)
@@ -2724,64 +2628,6 @@
         return ((y % period) + period) % period;
       }
 
-      // =========================================================
-      // PIXEL-ART CLOUD RENDERER (v0.8 — no external images)
-      // =========================================================
-      const CLOUD_PIXELS = {
-        fluffy: [
-          '00011110000000',
-          '00111111100000',
-          '01111111111000',
-          '11111111111100',
-          '01111111111000',
-          '00000000000000',
-        ],
-        wide: [
-          '000011111111000000',
-          '001111111111110000',
-          '011111111111111100',
-          '001111111111110000',
-          '000000000000000000',
-        ],
-        cumulus: [
-          '0001111000',
-          '0011111100',
-          '0111111110',
-          '1111111111',
-          '1111111111',
-          '0111111110',
-          '0011111100',
-          '0000000000',
-        ],
-        wisp: [
-          '001111110000',
-          '011111111100',
-          '001111110000',
-        ],
-      };
-
-      function _hexToRgb(hex) {
-        const h = hex.replace('#','');
-        return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
-      }
-
-      function drawPixelCloud(ctx, x, y, variant, pixelSize, colorHex, alpha) {
-        const grid = CLOUD_PIXELS[variant] || CLOUD_PIXELS.fluffy;
-        const [r,g,b] = _hexToRgb(colorHex || '#E8F4FF');
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        const rows = grid.length, cols = grid[0].length;
-        for (let row = 0; row < rows; row++) {
-          const bright = 1 - (row / rows) * 0.40;   // top = bright, bottom = darker
-          ctx.fillStyle = `rgb(${Math.round(r*bright)},${Math.round(g*bright)},${Math.round(b*bright)})`;
-          for (let col = 0; col < cols; col++) {
-            if (grid[row][col] === '1') {
-              ctx.fillRect(x + col * pixelSize, y + row * pixelSize, pixelSize - 0.5, pixelSize - 0.5);
-            }
-          }
-        }
-        ctx.restore();
-      }
 
       // V-shape distant bird silhouette
       function drawBird(ctx, x, y, size, flap) {
@@ -2799,136 +2645,7 @@
         ctx.restore();
       }
 
-      function drawFloatingIslandSilhouette(ctx, x, y, size, hasCastle) {
-        // Grass top (lush green oval)
-        const grassGrad = ctx.createLinearGradient(x, y - size * 0.18, x, y + size * 0.10);
-        grassGrad.addColorStop(0, '#A8E063');
-        grassGrad.addColorStop(0.6, '#7CB342');
-        grassGrad.addColorStop(1, '#558B2F');
-        ctx.fillStyle = grassGrad;
-        ctx.beginPath();
-        ctx.ellipse(x, y, size * 0.55, size * 0.18, 0, 0, Math.PI * 2);
-        ctx.fill();
 
-        // Dirt/rock cone underneath (jagged downward)
-        const dirtGrad = ctx.createLinearGradient(x, y, x, y + size * 0.55);
-        dirtGrad.addColorStop(0, '#8D6E63');
-        dirtGrad.addColorStop(0.5, '#6D4C41');
-        dirtGrad.addColorStop(1, '#3E2723');
-        ctx.fillStyle = dirtGrad;
-        ctx.beginPath();
-        ctx.moveTo(x - size * 0.50, y);
-        ctx.lineTo(x - size * 0.42, y + size * 0.18);
-        ctx.lineTo(x - size * 0.30, y + size * 0.34);
-        ctx.lineTo(x - size * 0.12, y + size * 0.50);
-        ctx.lineTo(x + size * 0.06, y + size * 0.55);
-        ctx.lineTo(x + size * 0.24, y + size * 0.42);
-        ctx.lineTo(x + size * 0.40, y + size * 0.22);
-        ctx.lineTo(x + size * 0.50, y);
-        ctx.closePath();
-        ctx.fill();
-
-        // Rock highlights
-        ctx.fillStyle = 'rgba(255,255,255,0.10)';
-        ctx.beginPath();
-        ctx.moveTo(x - size * 0.40, y + size * 0.05);
-        ctx.lineTo(x - size * 0.20, y + size * 0.30);
-        ctx.lineTo(x - size * 0.30, y + size * 0.10);
-        ctx.closePath();
-        ctx.fill();
-
-        if (hasCastle) {
-          drawCastle(ctx, x, y - size * 0.05, size * 0.55);
-        }
-      }
-
-      function drawCastle(ctx, x, baseY, size) {
-        // Castle body — light beige with shadow
-        const bodyGrad = ctx.createLinearGradient(x, baseY - size, x, baseY);
-        bodyGrad.addColorStop(0, '#FAFAFA');
-        bodyGrad.addColorStop(1, '#BDBDBD');
-        ctx.fillStyle = bodyGrad;
-
-        // Main wall
-        ctx.fillRect(x - size * 0.35, baseY - size * 0.7, size * 0.7, size * 0.7);
-        // Battlements (top crenellations)
-        for (let i = 0; i < 5; i++) {
-          ctx.fillRect(x - size * 0.35 + i * size * 0.16, baseY - size * 0.78, size * 0.10, size * 0.08);
-        }
-        // Side towers (taller)
-        ctx.fillRect(x - size * 0.50, baseY - size * 0.95, size * 0.20, size * 0.95);
-        ctx.fillRect(x + size * 0.30, baseY - size * 0.95, size * 0.20, size * 0.95);
-        // Center tower (tallest)
-        ctx.fillRect(x - size * 0.10, baseY - size * 1.10, size * 0.20, size * 1.10);
-
-        // Pointy blue roofs
-        const drawRoof = (cx, top, w, h) => {
-          const g = ctx.createLinearGradient(cx, top, cx, top + h);
-          g.addColorStop(0, '#42A5F5');
-          g.addColorStop(0.5, '#1976D2');
-          g.addColorStop(1, '#0D47A1');
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.moveTo(cx, top - h * 0.4);
-          ctx.lineTo(cx + w / 2, top);
-          ctx.lineTo(cx - w / 2, top);
-          ctx.closePath();
-          ctx.fill();
-          // Flag pole
-          ctx.fillStyle = '#666';
-          ctx.fillRect(cx - 0.5, top - h * 0.6, 1, h * 0.25);
-          // Flag
-          ctx.fillStyle = '#FFC93C';
-          ctx.beginPath();
-          ctx.moveTo(cx + 0.5, top - h * 0.55);
-          ctx.lineTo(cx + 5, top - h * 0.50);
-          ctx.lineTo(cx + 0.5, top - h * 0.45);
-          ctx.closePath();
-          ctx.fill();
-        };
-        drawRoof(x - size * 0.40, baseY - size * 0.95, size * 0.24, size * 0.20);
-        drawRoof(x + size * 0.40, baseY - size * 0.95, size * 0.24, size * 0.20);
-        drawRoof(x, baseY - size * 1.10, size * 0.28, size * 0.24);
-
-        // Door
-        ctx.fillStyle = '#5D4037';
-        ctx.fillRect(x - size * 0.08, baseY - size * 0.30, size * 0.16, size * 0.30);
-        // Windows
-        ctx.fillStyle = '#1976D2';
-        ctx.fillRect(x - size * 0.46, baseY - size * 0.55, size * 0.10, size * 0.14);
-        ctx.fillRect(x + size * 0.36, baseY - size * 0.55, size * 0.10, size * 0.14);
-        ctx.fillRect(x - size * 0.06, baseY - size * 0.75, size * 0.12, size * 0.16);
-      }
-
-      function drawHotAirBalloon(ctx, x, y, size, color) {
-        // Balloon
-        const grad = ctx.createRadialGradient(x - size * 0.2, y - size * 0.3, size * 0.05, x, y, size);
-        grad.addColorStop(0, '#fff');
-        grad.addColorStop(0.4, color);
-        grad.addColorStop(1, shadeColor(color, -30));
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.ellipse(x, y, size * 0.55, size * 0.65, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Vertical stripes (subtle)
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.moveTo(x, y - size * 0.6); ctx.lineTo(x, y + size * 0.5); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x - size * 0.3, y - size * 0.55); ctx.lineTo(x - size * 0.3, y + size * 0.45); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x + size * 0.3, y - size * 0.55); ctx.lineTo(x + size * 0.3, y + size * 0.45); ctx.stroke();
-        // Strings
-        ctx.strokeStyle = '#7A5A3A'; ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x - size * 0.4, y + size * 0.45); ctx.lineTo(x - size * 0.18, y + size * 0.85);
-        ctx.moveTo(x + size * 0.4, y + size * 0.45); ctx.lineTo(x + size * 0.18, y + size * 0.85);
-        ctx.stroke();
-        // Basket
-        const bgrad = ctx.createLinearGradient(x, y + size * 0.78, x, y + size * 1.05);
-        bgrad.addColorStop(0, '#A1714F');
-        bgrad.addColorStop(1, '#5D3A1F');
-        ctx.fillStyle = bgrad;
-        roundRect(ctx, x - size * 0.22, y + size * 0.78, size * 0.44, size * 0.25, 3); ctx.fill();
-      }
 
       function shadeColor(hex, percent) {
         const h = hex.replace('#', '');
@@ -2937,58 +2654,15 @@
         return `rgb(${f(r)},${f(g)},${f(b)})`;
       }
 
-      function drawRainbow(ctx, x, y, radius) {
-        if (y < -radius - 100 || y > CONFIG.HEIGHT + radius) return;
-        ctx.save();
-        ctx.globalAlpha = 0.55;
-        ctx.lineWidth = 6;
-        const colors = ['#E94B4B', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
-        for (let i = 0; i < colors.length; i++) {
-          ctx.strokeStyle = colors[i];
-          ctx.beginPath();
-          ctx.arc(x, y, radius - i * 7, Math.PI, Math.PI * 1.6);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
 
-      function drawBackgroundWaterfall(ctx, x, topY, length, t) {
-        ctx.save();
-        // body of waterfall
-        const grad = ctx.createLinearGradient(x, topY, x, topY + length);
-        grad.addColorStop(0, 'rgba(255,255,255,0.85)');
-        grad.addColorStop(0.5, 'rgba(180,224,255,0.55)');
-        grad.addColorStop(1, 'rgba(180,224,255,0)');
-        ctx.fillStyle = grad;
-        // slight zig-zag waterfall shape
-        ctx.beginPath();
-        ctx.moveTo(x - 8, topY);
-        ctx.lineTo(x + 8, topY);
-        ctx.lineTo(x + 14 + Math.sin(t) * 1.2, topY + length);
-        ctx.lineTo(x - 14 + Math.sin(t) * 1.2, topY + length);
-        ctx.closePath();
-        ctx.fill();
-        // sparkle lines
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-          const fy = (Math.sin(t + i) * 0.5 + 0.5) * length;
-          ctx.beginPath();
-          ctx.moveTo(x - 6 + i * 4, topY + fy);
-          ctx.lineTo(x - 6 + i * 4, topY + fy + 8);
-          ctx.stroke();
-        }
-        // mist at bottom
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath();
-        ctx.ellipse(x, topY + length, 18, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
 
       // =========================================================
       // v0.8 — BIOME TRANSITION (sky crossfade + element fade)
       // =========================================================
+      function _hexToRgb(hex) {
+        const h = hex.replace('#','');
+        return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+      }
       function lerpColor(a, b, t) {
         const [ar,ag,ab] = _hexToRgb(a), [br,bg,bb] = _hexToRgb(b);
         const h = n => Math.round(n).toString(16).padStart(2,'0');
@@ -3247,19 +2921,15 @@
           this.el.toast = document.getElementById('toast');
           this.el.menuVideo = document.getElementById('menu-video');
 
-          // Game Over — new lead capture + rating + mini leaderboard refs
+          // Game Over — lead capture + mini leaderboard refs
           this.el.leadName = document.getElementById('lead-name');
           this.el.leadEmail = document.getElementById('lead-email');
-          this.el.starRating = document.getElementById('star-rating');
           this.el.miniLbList = document.getElementById('mini-lb-list');
           this.el.gameoverClose = document.getElementById('gameover-close');
 
           // v0.6 — new button refs
           this.el.submitScoreBtn = document.getElementById('submit-score-btn');
           this.el.skipBtn        = document.getElementById('skip-btn');
-          this.el.consentCheck   = document.getElementById('consent-check');
-          this.el.goRank         = document.getElementById('go-rank');
-          this.el.goTotal        = document.getElementById('go-total');
           this.el.goEmailDisplay = document.getElementById('go-email-display');
           this.el.goStage1       = document.getElementById('go-stage1');
           this.el.goStage2       = document.getElementById('go-stage2');
@@ -3289,8 +2959,7 @@
           this.el.submitScoreBtn.addEventListener('click', () => this._submitScore());
           this.el.skipBtn.addEventListener('click', () => this._skipScore());
 
-          // Wire up star rating
-          this.setupStarRating();
+
           // v0.6 consent + email gating
           this.setupGameOverInputs();
           // v0.51 migration banner
@@ -3372,7 +3041,7 @@
 
           // Reset form & stage
           this._goToStage(1);
-          this.setStarRating(0);
+
 
           // Pre-fill email/name from localStorage (convenience, not auto-consent)
           const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
@@ -3508,7 +3177,7 @@
               this.el.tally.textContent = best.score.toLocaleString();
               this.el.leadEmail.value = best.email || '';
               this.el.leadName.value  = best.name  || '';
-              this.el.consentCheck.checked = false;
+
               this._updateSubmitBtn();
               // Temporarily set Game.score so submit uses correct value
               Game.score = best.score;
@@ -3517,31 +3186,7 @@
           });
         },
 
-        setupStarRating() {
-          if (!this.el.starRating) return;   // star rating removed in v0.6.1
-          const stars = Array.from(this.el.starRating.querySelectorAll('.star'));
-          this.el.stars = stars;
-          stars.forEach((star, i) => {
-            star.addEventListener('click', () => this.setStarRating(i + 1));
-            star.addEventListener('mouseenter', () => {
-              stars.forEach((s, j) => s.classList.toggle('hover', j <= i));
-            });
-            star.addEventListener('mouseleave', () => {
-              stars.forEach(s => s.classList.remove('hover'));
-            });
-          });
-        },
 
-        setStarRating(value) {
-          this._currentRating = value;
-          if (this.el.stars) {
-            this.el.stars.forEach((s, i) => s.classList.toggle('filled', i < value));
-          }
-          // Persist to leaderboard if we have an active session
-          if (this._currentSession) {
-            Leaderboard.update(this._currentSession.ts, { rating: value });
-          }
-        },
 
         // v0.6 renderLeaderboard: fetch online, fall back to localStorage if offline
         async renderLeaderboard() {
@@ -4113,32 +3758,30 @@
           // Obstacles — stomp (from above, vy>0) or kill (side/belly)
           // Spring invincibility: player is invincible while springAnim is active
           const isInvincible = this.player.springAnim > 0;
-          if (!this._dead) {
-            for (const ob of this.dragons) {
-              if (ob.dying) continue;
-              const playerBottom = this.player.y + this.player.h;
-              const topZone = ob.topRect();
-              const bodyZone = ob.rect();
-              if (this.player.vy > 0 && Utils.rectsOverlap(
-                { x: this.player.x + 4, y: playerBottom - 8, w: this.player.w - 8, h: 10 },
-                topZone
-              )) {
+          for (const ob of this.dragons) {
+            if (ob.dying) continue;
+            const playerBottom = this.player.y + this.player.h;
+            const topZone = ob.topRect();
+            const bodyZone = ob.rect();
+            if (this.player.vy > 0 && Utils.rectsOverlap(
+              { x: this.player.x + 4, y: playerBottom - 8, w: this.player.w - 8, h: 10 },
+              topZone
+            )) {
+              ob.stomp();
+              Sound.play('stomp');
+              this.score += CONFIG.DRAGON_STOMP * this.multiplier;
+              this.player.vy = -8;
+              Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 10);
+            } else if (Utils.rectsOverlap(pr, bodyZone)) {
+              if (isInvincible) {
+                // Spring invincibility — smash the dragon instead!
                 ob.stomp();
                 Sound.play('stomp');
                 this.score += CONFIG.DRAGON_STOMP * this.multiplier;
-                this.player.vy = -8;
-                Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 10);
-              } else if (Utils.rectsOverlap(pr, bodyZone)) {
-                if (isInvincible) {
-                  // Spring invincibility — smash the dragon instead!
-                  ob.stomp();
-                  Sound.play('stomp');
-                  this.score += CONFIG.DRAGON_STOMP * this.multiplier;
-                  Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 12);
-                } else {
-                  this.gameOver();
-                  return;
-                }
+                Game.spawnParticles(ob.x + ob.w / 2, ob.y, '#FFD700', 12);
+              } else {
+                this.gameOver();
+                return;
               }
             }
           }
