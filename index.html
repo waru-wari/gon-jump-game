@@ -350,11 +350,27 @@
       font-weight: 800;
     }
 
-    .leaderboard-row .name {
+    .leaderboard-row .player-info {
       flex: 1;
       padding-left: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .leaderboard-row .name {
       color: #333;
       font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leaderboard-row .email-secondary {
+      font-size: 11px;
+      font-weight: 400;
+      color: #999;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -363,6 +379,7 @@
     .leaderboard-row .score {
       color: #FF6A1A;
       font-weight: 800;
+      flex-shrink: 0;
     }
 
     /* === Crown rank tint (top 3) === */
@@ -3003,10 +3020,10 @@
           this.setupV6Migration();
 
           this.el.lbToggle.addEventListener('click', () => {
-            this.showingTop20 = !this.showingTop20;
+            this.showingTop50 = !this.showingTop50;
             this.renderLeaderboard();
-            this.el.lbToggle.textContent = this.showingTop20 ? 'Show Top 5 ▴' : 'Show Top 20 ▾';
-            this.el.lbList.classList.toggle('expanded', this.showingTop20);
+            this.el.lbToggle.textContent = this.showingTop50 ? 'แสดงน้อยลง ▴' : 'ดูเพิ่มเติม (50) ▾';
+            this.el.lbList.classList.toggle('expanded', this.showingTop50);
           });
 
           // Detect touch device → show virtual D-pad
@@ -3161,20 +3178,9 @@
             const res  = await fetch('/api/leaderboard?limit=10');
             const data = await res.json();
             const top  = (data.global ?? []).slice(0, 10);
-            const CROWN_TIER = ['gold', 'silver', 'bronze'];
             this.el.miniLbList.innerHTML = top.length === 0
               ? '<li class="leaderboard-empty">No scores yet — you\'re first! 🚀</li>'
-              : top.map((e, i) => {
-                  const tier = CROWN_TIER[i] || '';
-                  const rankIcon = i < 3
-                    ? `<span class="crown crown-${tier}">👑</span>${e.rank}`
-                    : `#${e.rank}`;
-                  return `<li class="leaderboard-row ${tier}">
-                    <span class="rank">${rankIcon}</span>
-                    <span class="name">${escapeHtml(e.name)}</span>
-                    <span class="score">${Number(e.score).toLocaleString()}</span>
-                  </li>`;
-                }).join('');
+              : top.map((e, i) => lbRowHtml(e, i)).join('');
           } catch (_) { /* offline — silently skip */ }
         },
 
@@ -3250,71 +3256,33 @@
           }
         },
 
-        renderMiniLeaderboard() {
-          const list = Leaderboard.load();
-          const top10 = list.slice(0, 10);
-          if (top10.length === 0) {
-            this.el.miniLbList.innerHTML =
-              '<li class="leaderboard-empty">No scores yet — you can be first! 🚀</li>';
-            return;
-          }
-          const myTs = this._currentSession && this._currentSession.ts;
-          const CROWN_TIER = ['gold', 'silver', 'bronze'];
-          this.el.miniLbList.innerHTML = top10.map((e, i) => {
-            const tier = CROWN_TIER[i] || '';
-            const youClass = (myTs && e.ts === myTs) ? 'you' : '';
-            const rankIcon = i < 3
-              ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
-              : `#${i + 1}`;
-            return `<li class="leaderboard-row ${tier} ${youClass}">
-        <span class="rank">${rankIcon}</span>
-        <span class="name">${escapeHtml(e.name)}</span>
-        <span class="score">${e.score.toLocaleString()}</span>
-      </li>`;
-          }).join('');
-        },
-
-        // v0.6 renderLeaderboard: fetch from API, fall back to localStorage if offline
+        // v0.6 renderLeaderboard: fetch online, fall back to localStorage if offline
         async renderLeaderboard() {
+          const limit = this.showingTop50 ? 50 : 10;
           try {
-            const res  = await fetch('/api/leaderboard?limit=20');
+            const res  = await fetch(`/api/leaderboard?limit=${limit}`);
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
-            const list = data.global ?? [];
-            const CROWN_TIER = ['gold', 'silver', 'bronze'];
+            const list = (data.global ?? []).slice(0, limit);
             if (list.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';
               return;
             }
-            this.el.lbList.innerHTML = list.slice(0, this.showingTop20 ? 20 : 5).map((e, i) => {
-              const tier = CROWN_TIER[i] || '';
-              const rankIcon = i < 3
-                ? `<span class="crown crown-${tier}">👑</span>${e.rank}`
-                : `#${e.rank}`;
-              return `<li class="leaderboard-row ${tier}">
-                <span class="rank">${rankIcon}</span>
-                <span class="name">${escapeHtml(e.name)}</span>
-                <span class="score">${Number(e.score).toLocaleString()}</span>
-              </li>`;
-            }).join('');
+            this.el.lbList.innerHTML = list.map((e, i) => lbRowHtml(e, i)).join('');
           } catch (_) {
             // Fallback to localStorage leaderboard if API unreachable
-            const list = Leaderboard.load();
-            const limit = this.showingTop20 ? 20 : 5;
-            const top = list.slice(0, limit);
-            if (top.length === 0) {
+            const list = Leaderboard.load().slice(0, limit);
+            if (list.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>';
               return;
             }
-            const CROWN_TIER = ['gold', 'silver', 'bronze'];
-            this.el.lbList.innerHTML = top.map((e, i) => {
-              const tier = CROWN_TIER[i] || '';
-              const rankIcon = i < 3
-                ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
-                : `#${i + 1}`;
+            this.el.lbList.innerHTML = list.map((e, i) => {
+              const tier = ['gold','silver','bronze'][i] || '';
+              const rankIcon = i < 3 ? `<span class="crown crown-${tier}">👑</span>${i+1}` : `#${i+1}`;
+              const hasName = e.name && e.name !== 'Anonymous';
               return `<li class="leaderboard-row ${tier}">
                 <span class="rank">${rankIcon}</span>
-                <span class="name">${escapeHtml(e.name)}</span>
+                <span class="player-info"><span class="name">${escapeHtml(hasName ? e.name : (e.email || 'Anonymous'))}</span></span>
                 <span class="score">${e.score.toLocaleString()}</span>
               </li>`;
             }).join('');
@@ -3405,6 +3373,26 @@
         return String(s).replace(/[&<>"']/g, c => ({
           '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[c]));
+      }
+
+      // Shared leaderboard row template (online data)
+      // name = primary, emailDisplay = secondary (if name exists and differs from email)
+      function lbRowHtml(e, i) {
+        const TIERS  = ['gold', 'silver', 'bronze'];
+        const tier   = TIERS[i] || '';
+        const rankIcon = i < 3
+          ? `<span class="crown crown-${tier}">👑</span>${e.rank ?? i + 1}`
+          : `#${e.rank ?? i + 1}`;
+        const hasName = e.name && e.name !== 'Anonymous';
+        const playerHtml = hasName
+          ? `<span class="name">${escapeHtml(e.name)}</span>
+             <span class="email-secondary">${escapeHtml(e.emailDisplay ?? '')}</span>`
+          : `<span class="name">${escapeHtml(e.emailDisplay || 'Anonymous')}</span>`;
+        return `<li class="leaderboard-row ${tier}">
+          <span class="rank">${rankIcon}</span>
+          <span class="player-info">${playerHtml}</span>
+          <span class="score">${Number(e.score).toLocaleString()}</span>
+        </li>`;
       }
 
       // v0.6 — Client-side HMAC-SHA256 for score signing (anti-cheat).
