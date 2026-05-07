@@ -2230,6 +2230,10 @@
       PLAT_IMGS.a.src = '/platform-a.png';
       PLAT_IMGS.b.src = '/platform-b.png';
       PLAT_IMGS.c.src = '/platform-c.png';
+      // Hot-air balloon sprites (2 variants)
+      const BALLOON_IMGS = { a: new Image(), b: new Image() };
+      BALLOON_IMGS.a.src = '/hot-air-balloon-a.png';
+      BALLOON_IMGS.b.src = '/hot-air-balloon-b.png';
 
       class Dragon {
         constructor(x, y) {
@@ -2407,7 +2411,8 @@
           this.castleIslands = [];
           this.balloons   = [];
           this.birds      = [];
-          this.bgPlatforms = [];  // decorative background platforms
+          this.bgPlatforms = [];
+          this.bgBalloons  = [];  // decorative hot-air balloons
 
           // Offscreen canvas for bg platforms — avoids see-through when they overlap
           this._platCanvas = document.createElement('canvas');
@@ -2453,10 +2458,22 @@
             this.bgPlatforms.push({
               x: Math.random() * CONFIG.WIDTH,
               y: Utils.rand(150, CONFIG.HEIGHT * 5),
-              w: Utils.rand(50, 110),     // draw width
-              depth: Utils.rand(0.08, 0.22),  // very slow parallax = far away
-              alpha: Utils.rand(0.12, 0.26),  // low opacity — won't distract player
+              w: Utils.rand(50, 110),
+              depth: Utils.rand(0.08, 0.22),
+              alpha: Utils.rand(0.12, 0.26),
               variant: ['a', 'b', 'c'][i % 3],
+            });
+          }
+          // Background hot-air balloons — 4 balloons, slow drift + bob
+          for (let i = 0; i < 4; i++) {
+            this.bgBalloons.push({
+              x: Math.random() * CONFIG.WIDTH,
+              y: Utils.rand(100, CONFIG.HEIGHT * 4),
+              w: Utils.rand(55, 85),         // draw width
+              depth: Utils.rand(0.18, 0.32), // mid parallax
+              drift: Utils.rand(0.10, 0.22), // slow horizontal drift px/frame
+              bobPhase: Math.random() * Math.PI * 2,
+              variant: i % 2 === 0 ? 'a' : 'b',
             });
           }
         }
@@ -2615,6 +2632,25 @@
           ctx.globalAlpha = 0.22;
           ctx.drawImage(this._platCanvas, 0, 0);
           ctx.restore();
+
+          // === BACKGROUND HOT-AIR BALLOONS ===
+          const now = performance.now();
+          for (const b of this.bgBalloons) {
+            b.x += b.drift;
+            if (b.x > CONFIG.WIDTH + 100) b.x = -100;
+            const bob = Math.sin(now * 0.0008 + b.bobPhase) * 6;
+            const py = wrapY(b.y - camY * b.depth) + bob;
+            if (py > -120 && py < CONFIG.HEIGHT + 120) {
+              const img = BALLOON_IMGS[b.variant];
+              if (img.complete && img.naturalWidth > 0) {
+                const h = b.w * (img.naturalHeight / img.naturalWidth);
+                ctx.save();
+                ctx.globalAlpha = 0.70;
+                ctx.drawImage(img, b.x - b.w / 2, py - h / 2, b.w, h);
+                ctx.restore();
+              }
+            }
+          }
 
           // === FOREGROUND CLOUDS (large pixel-art — variants a/b/c) ===
           for (const c of this.clouds) {
