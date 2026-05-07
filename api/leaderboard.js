@@ -24,18 +24,20 @@ function todayKey() {
 // ─── Build display rows from a sorted set (zrange with scores) ───────────────
 async function buildRows(members, startRank = 0) {
   if (!members || members.length === 0) return [];
+  // Upstash returns alternating [member, score, member, score, ...]
   const rows = [];
   let rank = startRank + 1;
-  for (let i = 0; i < members.length; i++) {
-    const { member: hash, score } = members[i];
-    if (Number(score) <= 0) continue;          // skip ghost entries with score 0
+  for (let i = 0; i < members.length; i += 2) {
+    const hash  = members[i];
+    const score = Number(members[i + 1]);
+    if (!hash || score <= 0) continue;
     const profile = await kv.hgetall(`profile:${hash}`);
-    if (!profile) continue;                    // skip entries with no profile data
+    if (!profile) continue;
     rows.push({
       rank,
       name: profile.name ?? 'Anonymous',
       emailDisplay: profile.emailDisplay ?? '****',
-      score: Number(score),
+      score,
       bestLevel: profile.bestLevel ?? 1,
       timesPlayed: profile.timesPlayed ?? 1,
     });
