@@ -3083,7 +3083,7 @@
           this.el.score = document.getElementById('score-display');
           this.el.mult = document.getElementById('multiplier-badge');
           this.el.tally = document.getElementById('score-tally');
-          this.el.newHigh = document.getElementById('new-high-text');
+
           this.el.rankText = document.getElementById('rank-text');
           this.el.lbList = document.getElementById('leaderboard-list');
           this.el.lbToggle   = document.getElementById('leaderboard-toggle');
@@ -3193,7 +3193,6 @@
         showGameOver(score) {
           this.el.gameOver.classList.add('active');
           this.el.tally.textContent = '0';
-          this.el.newHigh.style.display = 'none';
 
           // Reset form & stage
           this._goToStage(1);
