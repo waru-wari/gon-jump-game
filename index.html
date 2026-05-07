@@ -3916,8 +3916,9 @@
           this.particles = this.particles.filter(p => p.life > 0);
 
           // ============== COLLISIONS ==============
-          // Platforms — only when falling (vy > 0). Continuous collision check.
-          if (this.player.vy > 0) {
+          // Platforms — only when falling (vy > 0) AND player is still on-screen.
+          // Guard prevents below-camera platforms from bouncing player back (lava bug).
+          if (this.player.vy > 0 && this.player.y <= this.camY + CONFIG.HEIGHT) {
             const foot = this.player.bottomRect();
             const footBottom = foot.y + foot.h;
             const prevFootBottom = footBottom - this.player.vy * (dt / 16.667) * this.gameSpeed;
@@ -4018,8 +4019,8 @@
             }
           }
 
-          // GAME OVER condition: fell below camera (including scroll)
-          if (this.player.y > this.camY + CONFIG.HEIGHT + 30) {
+          // GAME OVER: player's top edge crosses below camera bottom → dead
+          if (this.player.y > this.camY + CONFIG.HEIGHT) {
             this.gameOver();
           }
         },
