@@ -1043,10 +1043,134 @@
       font-size: clamp(14px, 4vw, 18px);
       padding: 14px 12px;
     }
+
+    /* ══════════════════════════════════════════════════════
+       v0.6 — Two-stage game-over submit flow styles
+       ══════════════════════════════════════════════════════ */
+
+    /* Stage panels inside gameover-body */
+    .go-stage { display: none; }
+    .go-stage.active { display: block; }
+
+    /* PDPA consent checkbox row */
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 12px 0 4px;
+      cursor: pointer;
+    }
+
+    .consent-row input[type='checkbox'] {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: #FF8A1A;
+      cursor: pointer;
+    }
+
+    .consent-label {
+      font-size: 12px;
+      color: #555;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .consent-label a { color: #1E88E5; text-decoration: none; }
+    .consent-label a:hover { text-decoration: underline; }
+
+    /* Pending / on-board badges */
+    .score-status {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .score-status.pending {
+      background: #FFF3E0;
+      color: #E65100;
+      border: 1px solid #FFB74D;
+    }
+
+    .score-status.submitted {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #81C784;
+    }
+
+    /* Rank display after submit */
+    .online-rank {
+      font-size: 32px;
+      font-weight: 900;
+      color: #1565C0;
+      text-shadow: 0 3px 0 #0D47A1;
+      letter-spacing: 1px;
+      margin: 8px 0 4px;
+    }
+
+    .online-email-display {
+      font-size: 13px;
+      color: #546778;
+      font-weight: 600;
+      margin-bottom: 14px;
+      word-break: break-all;
+    }
+
+    /* v0.51 migration banner */
+    #migration-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+      color: #fff;
+      padding: 14px 20px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.35);
+      font-family: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+      font-size: 15px;
+    }
+
+    #migration-banner.show { display: flex; }
+
+    #migration-banner .mig-text { flex: 1; }
+    #migration-banner .mig-text strong { display: block; font-size: 16px; }
+    #migration-banner .mig-text span { font-size: 13px; opacity: .85; }
+
+    #migration-banner .mig-btn {
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: 'Fredoka', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 18px;
+      white-space: nowrap;
+    }
+
+    .mig-submit { background: #FFC93C; color: #5D3A00; }
+    .mig-dismiss { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3) !important; }
   </style>
 </head>
 
 <body>
+  <!-- v0.6 — v0.51 localStorage migration banner (one-time) -->
+  <div id="migration-banner">
+    <div class="mig-text">
+      <strong>🏆 ลีดเดอร์บอร์ดออนไลน์พร้อมแล้ว!</strong>
+      <span>อยากส่งคะแนนสูงสุดของคุณขึ้นบอร์ดโลกไหม?</span>
+    </div>
+    <button class="mig-btn mig-submit" id="mig-submit-btn">ส่งคะแนน →</button>
+    <button class="mig-btn mig-dismiss" id="mig-dismiss-btn">ไว้คราวหน้า</button>
+  </div>
+
   <div id="game-container">
     <!-- FIX #1: canvas-wrap enforces 400:700 aspect ratio — eliminates blue side bars -->
     <div id="canvas-wrap">
@@ -1112,7 +1236,7 @@
       </div>
     </div>
 
-    <!-- GAME OVER -->
+    <!-- GAME OVER (v0.6 two-stage submit) -->
     <div id="game-over" class="overlay">
       <div class="gameover-card">
         <!-- Close (×) returns to main menu -->
@@ -1124,42 +1248,72 @@
           <div class="gameover-subtitle">Nong Gon fell from the sky!</div>
           <div id="score-tally" class="score-tally">0</div>
           <div id="new-high-text" class="new-high" style="display:none">🌟 NEW HIGH SCORE! 🌟</div>
-          <div id="rank-text" class="gameover-rank"></div>
         </div>
 
-        <!-- Scrollable body — only this part scrolls if content is tall -->
+        <!-- Scrollable body -->
         <div class="gameover-body">
-          <!-- Lead capture (always visible) -->
-          <div class="lead-form">
-            <input id="lead-name" class="lead-input" type="text" placeholder="Your Name" maxlength="14"
-              autocomplete="off">
-            <input id="lead-email" class="lead-input" type="email" placeholder="Email (optional)" autocomplete="off">
-          </div>
 
-          <!-- 5-star rating -->
-          <div class="rating-section">
-            <div class="rating-label">How was your adventure?</div>
-            <div id="star-rating" class="star-rating" role="radiogroup" aria-label="Rate your experience">
-              <span class="star" data-value="1" role="radio" aria-label="1 star">★</span>
-              <span class="star" data-value="2" role="radio" aria-label="2 stars">★</span>
-              <span class="star" data-value="3" role="radio" aria-label="3 stars">★</span>
-              <span class="star" data-value="4" role="radio" aria-label="4 stars">★</span>
-              <span class="star" data-value="5" role="radio" aria-label="5 stars">★</span>
+          <!-- ══ STAGE 1: Score pending ══ -->
+          <div class="go-stage active" id="go-stage1">
+            <div class="score-status pending">⏳ SCORE PENDING</div>
+            <p style="font-size:13px;color:#666;margin-bottom:10px">ส่งคะแนนขึ้นบอร์ดโลกเพื่อแข่งกับผู้เล่นทุกคน</p>
+
+            <div class="lead-form">
+              <input id="lead-email" class="lead-input" type="email"
+                placeholder="อีเมล (จำเป็น)" autocomplete="off" required>
+              <input id="lead-name" class="lead-input" type="text"
+                placeholder="ชื่อที่แสดง (ไม่บังคับ)" maxlength="20" autocomplete="off">
+            </div>
+
+            <!-- PDPA consent —  must tick every session, never persisted -->
+            <label class="consent-row" id="consent-row">
+              <input type="checkbox" id="consent-check">
+              <span class="consent-label">
+                ฉันยินยอมให้เก็บอีเมล (ในรูปแฮชที่ปลอดภัย) และคะแนนเพื่อแสดงในลีดเดอร์บอร์ด
+                (<a href="/privacy.html" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>)
+              </span>
+            </label>
+
+            <!-- 5-star rating -->
+            <div class="rating-section" style="margin-top:10px">
+              <div class="rating-label">How was your adventure?</div>
+              <div id="star-rating" class="star-rating" role="radiogroup" aria-label="Rate your experience">
+                <span class="star" data-value="1" role="radio" aria-label="1 star">★</span>
+                <span class="star" data-value="2" role="radio" aria-label="2 stars">★</span>
+                <span class="star" data-value="3" role="radio" aria-label="3 stars">★</span>
+                <span class="star" data-value="4" role="radio" aria-label="4 stars">★</span>
+                <span class="star" data-value="5" role="radio" aria-label="5 stars">★</span>
+              </div>
             </div>
           </div>
 
-          <!-- Compact Top 10 leaderboard with crown logic -->
-          <div class="mini-leaderboard">
-            <div class="mini-lb-title">🏆 TOP 10 PLAYERS</div>
-            <ol id="mini-lb-list" class="mini-lb-list"></ol>
-          </div>
-        </div>
+          <!-- ══ STAGE 2: On the board ══ -->
+          <div class="go-stage" id="go-stage2">
+            <div class="score-status submitted">✅ ON THE BOARD</div>
+            <div class="online-email-display" id="go-email-display"></div>
+            <div style="font-size:13px;color:#666;margin-bottom:4px">Global Rank</div>
+            <div class="online-rank" id="go-rank">—</div>
+            <div style="font-size:12px;color:#888;margin-bottom:14px" id="go-total"></div>
 
-        <!-- Action buttons — pinned at the bottom, ALWAYS visible -->
-        <div class="gameover-buttons">
+            <!-- Mini online leaderboard -->
+            <div class="mini-leaderboard">
+              <div class="mini-lb-title">🏆 TOP 10 ONLINE</div>
+              <ol id="mini-lb-list" class="mini-lb-list"></ol>
+            </div>
+          </div>
+
+        </div><!-- /gameover-body -->
+
+        <!-- Action buttons — change per stage -->
+        <div class="gameover-buttons" id="go-buttons-stage1">
+          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 ส่งคะแนน</button>
+          <button id="skip-btn" class="btn btn-secondary">ข้าม →</button>
+        </div>
+        <div class="gameover-buttons" id="go-buttons-stage2" style="display:none">
           <button id="play-again-btn" class="btn btn-primary">▶ Play Again</button>
           <button id="gameover-share-btn" class="btn btn-fb">📣 Share</button>
         </div>
+
       </div>
     </div>
 
@@ -2831,6 +2985,18 @@
           this.el.miniLbList = document.getElementById('mini-lb-list');
           this.el.gameoverClose = document.getElementById('gameover-close');
 
+          // v0.6 — new button refs
+          this.el.submitScoreBtn = document.getElementById('submit-score-btn');
+          this.el.skipBtn        = document.getElementById('skip-btn');
+          this.el.consentCheck   = document.getElementById('consent-check');
+          this.el.goRank         = document.getElementById('go-rank');
+          this.el.goTotal        = document.getElementById('go-total');
+          this.el.goEmailDisplay = document.getElementById('go-email-display');
+          this.el.goStage1       = document.getElementById('go-stage1');
+          this.el.goStage2       = document.getElementById('go-stage2');
+          this.el.goBtns1        = document.getElementById('go-buttons-stage1');
+          this.el.goBtns2        = document.getElementById('go-buttons-stage2');
+
           document.getElementById('start-btn').addEventListener('click', () => Game.start());
           document.getElementById('pause-btn').addEventListener('click', () => Game.pause());
           document.getElementById('resume-btn').addEventListener('click', () => Game.resume());
@@ -2838,12 +3004,18 @@
           document.getElementById('play-again-btn').addEventListener('click', () => Game.start());
           document.getElementById('share-btn').addEventListener('click', () => UI.share(0));
           document.getElementById('gameover-share-btn').addEventListener('click', () => UI.share(Game.score));
-          // Close (×) on Game Over → back to Main Menu
           this.el.gameoverClose.addEventListener('click', () => Game.quitToMenu());
 
-          // Wire up star rating + lead form (one-time setup)
+          // v0.6 submit / skip
+          this.el.submitScoreBtn.addEventListener('click', () => this._submitScore());
+          this.el.skipBtn.addEventListener('click', () => this._skipScore());
+
+          // Wire up star rating
           this.setupStarRating();
+          // v0.6 consent + email gating
           this.setupGameOverInputs();
+          // v0.51 migration banner
+          this.setupV6Migration();
 
           this.el.lbToggle.addEventListener('click', () => {
             this.showingTop20 = !this.showingTop20;
@@ -2859,13 +3031,13 @@
         },
 
         showMenu() {
+          // v0.6 — fetch online leaderboard for main menu display
           this.renderLeaderboard();
           this.el.menu.classList.add('active');
           this.el.menu.classList.remove('hidden');
           this.el.hud.classList.remove('active');
           this.el.gameOver.classList.remove('active');
           this.el.pause.classList.remove('active');
-          // Play video background on menu
           if (this.el.menuVideo) {
             this.el.menuVideo.classList.add('active');
             this.el.menuVideo.play().catch(() => {});
@@ -2885,107 +3057,190 @@
         showPause() { this.el.pause.classList.add('active'); },
         hidePause() { this.el.pause.classList.remove('active'); },
 
-        // === Game Over flow ===
-        // 1) Animate score tally
-        // 2) Pre-fill lead form from last session (localStorage)
-        // 3) After tally → silently add entry to leaderboard, capture ts for live updates
-        // 4) Render mini Top-10 leaderboard (with crown logic)
-        // 5) Live edits to name/email/rating update the SAME entry via Leaderboard.update(ts, ...)
+        // =========================================================
+        // v0.6 — Game Over (two-stage online submit)
+        // =========================================================
         showGameOver(score) {
           this.el.gameOver.classList.add('active');
-          this.el.gameOver.scrollTop = 0;        // reset scroll on each open
           this.el.tally.textContent = '0';
           this.el.newHigh.style.display = 'none';
-          this.el.rankText.textContent = '';
 
-          // Reset session tracking + UI state
-          this._currentSession = null;
-          this._currentScore = score;
+          // Reset form & stage
+          this._goToStage(1);
+          this.el.consentCheck.checked = false;    // consent NEVER persisted
+          this._updateSubmitBtn();
+          this.setStarRating(0);
 
-          // Pre-fill form from last session
-          const lastName = localStorage.getItem(CONFIG.PLAYER_NAME_KEY) || '';
+          // Pre-fill email/name from localStorage (convenience, not auto-consent)
           const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
-          this.el.leadName.value = lastName;
+          const lastName  = localStorage.getItem(CONFIG.PLAYER_NAME_KEY)  || '';
           this.el.leadEmail.value = lastEmail;
-          this.setStarRating(0);                  // clear stars
-
-          // Show mini leaderboard immediately (current state, before save)
-          this.renderMiniLeaderboard();
+          this.el.leadName.value  = lastName;
 
           // Animate score tally
           const start = performance.now();
-          const dur = Math.min(1500, 400 + score * 1.0);
+          const dur   = Math.min(1500, 400 + score);
           const animate = (t) => {
             const p = Utils.clamp((t - start) / dur, 0, 1);
             const eased = 1 - Math.pow(1 - p, 3);
             this.el.tally.textContent = Math.floor(score * eased).toLocaleString();
             if (p < 1) requestAnimationFrame(animate);
-            else {
-              this.el.tally.textContent = score.toLocaleString();
-              this._saveInitialEntry(score);      // silent save after tally finishes
-            }
+            else this.el.tally.textContent = score.toLocaleString();
           };
           requestAnimationFrame(animate);
         },
 
-        _saveInitialEntry(score) {
-          if (score <= 0) return;                 // don't save zero scores
-          const name = (this.el.leadName.value || 'Anonymous').slice(0, 14);
-          const email = (this.el.leadEmail.value || '').trim();   // trimmed for dedupe matching
-
-          // Personal-best detection BEFORE add() — needed to know if score actually
-          // improved over the user's existing email entry (Leaderboard dedupes by email).
-          let prevBest = -1;
-          if (email) {
-            const lowerEmail = email.toLowerCase();
-            const existing = Leaderboard.load().find(e =>
-              typeof e.email === 'string' && e.email.trim().toLowerCase() === lowerEmail
-            );
-            if (existing) prevBest = existing.score;
-          }
-          const isPersonalBest = score > prevBest;
-
-          // Pass email explicitly so Leaderboard.add can dedupe by email
-          const result = Leaderboard.add(name, score, { email, rating: 0 });
-          this._currentSession = { ts: result.ts, score };
-
-          // Persist defaults for next session
-          try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name); } catch (_) { }
-          try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) { }
-
-          // Show "NEW HIGH SCORE" badge only when (a) it actually beat their previous best
-          // AND (b) the score is good enough for the global Top N
-          if (isPersonalBest && Leaderboard.isHighScore(score)) {
-            this.el.newHigh.style.display = 'block';
-          }
-          this.el.rankText.textContent = `You ranked #${result.rank}`;
-
-          // Re-render mini leaderboard to highlight player's row
-          this.renderMiniLeaderboard();
+        _goToStage(n) {
+          this.el.goStage1.classList.toggle('active', n === 1);
+          this.el.goStage2.classList.toggle('active', n === 2);
+          this.el.goBtns1.style.display = n === 1 ? '' : 'none';
+          this.el.goBtns2.style.display = n === 2 ? '' : 'none';
         },
 
-        // Wire up debounced live updates on name/email inputs.
-        // Called once on init — listeners persist across game sessions.
+        _updateSubmitBtn() {
+          const email   = (this.el.leadEmail?.value || '').trim();
+          const consent = this.el.consentCheck?.checked;
+          const valid   = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && consent;
+          if (this.el.submitScoreBtn) this.el.submitScoreBtn.disabled = !valid;
+        },
+
+        async _submitScore() {
+          const email   = (this.el.leadEmail.value || '').trim();
+          const name    = (this.el.leadName.value  || 'Anonymous').slice(0, 20);
+          const score   = Game.score;
+          const level   = Game.currentLevelIdx + 1;
+          const session = Game._session;       // { sessionToken, sessionSecret }
+
+          if (!session) { this.showToast('Session expired — please play again'); return; }
+
+          this.el.submitScoreBtn.disabled = true;
+          this.el.submitScoreBtn.textContent = '⏳ ส่ง...';
+
+          try {
+            // Client-side HMAC signature for anti-cheat
+            const data    = `${score}|${level}|${session.sessionToken}`;
+            const scoreSig = await hmacSignClient(data, session.sessionSecret);
+
+            const res = await fetch('/api/leaderboard', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionToken: session.sessionToken,
+                scoreSig,
+                score,
+                level,
+                coinsEarned: Game.totalCoins ?? 0,
+                email,
+                name,
+                consentedAt: Date.now(),
+              }),
+            });
+
+            const data2 = await res.json();
+            if (!res.ok) throw new Error(data2.error ?? `HTTP ${res.status}`);
+
+            // Save name/email for prefill next time (email saved as convenience only)
+            try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) {}
+            try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name);   } catch (_) {}
+
+            // Move to Stage 2
+            this.el.goEmailDisplay.textContent = `${data2.emailDisplay}  —  ${data2.name}`;
+            this.el.goRank.textContent = `#${data2.rank ?? '?'}`;
+            this.el.goTotal.textContent = data2.totalEntries ? `of ${data2.totalEntries.toLocaleString()} players` : '';
+
+            if (Leaderboard.isHighScore(score)) this.el.newHigh.style.display = 'block';
+
+            await this._fetchAndRenderMiniLb();
+            this._goToStage(2);
+
+          } catch (err) {
+            this.showToast('ส่งไม่สำเร็จ: ' + err.message);
+            this.el.submitScoreBtn.disabled = false;
+            this.el.submitScoreBtn.textContent = '📤 ส่งคะแนน';
+          }
+        },
+
+        async _skipScore() {
+          const session = Game._session;
+          if (session) {
+            // Fire-and-forget — don't block UX
+            fetch('/api/leaderboard/skip', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionToken: session.sessionToken }),
+            }).catch(() => {});
+          }
+          Game.quitToMenu();
+        },
+
+        async _fetchAndRenderMiniLb() {
+          try {
+            const res  = await fetch('/api/leaderboard?limit=10');
+            const data = await res.json();
+            const top  = (data.global ?? []).slice(0, 10);
+            const CROWN_TIER = ['gold', 'silver', 'bronze'];
+            this.el.miniLbList.innerHTML = top.length === 0
+              ? '<li class="leaderboard-empty">No scores yet — you\'re first! 🚀</li>'
+              : top.map((e, i) => {
+                  const tier = CROWN_TIER[i] || '';
+                  const rankIcon = i < 3
+                    ? `<span class="crown crown-${tier}">👑</span>${e.rank}`
+                    : `#${e.rank}`;
+                  return `<li class="leaderboard-row ${tier}">
+                    <span class="rank">${rankIcon}</span>
+                    <span class="name">${escapeHtml(e.name)}</span>
+                    <span class="score">${Number(e.score).toLocaleString()}</span>
+                  </li>`;
+                }).join('');
+          } catch (_) { /* offline — silently skip */ }
+        },
+
+        // Wire consent checkbox + email input to enable/disable submit button
         setupGameOverInputs() {
-          let timer;
-          const update = () => {
-            const name = (this.el.leadName.value || 'Anonymous').slice(0, 14);
-            const email = this.el.leadEmail.value;
-            // Persist defaults
-            try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name); } catch (_) { }
-            try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) { }
-            // Live-update the current leaderboard entry (same ts) — no duplicates
-            if (this._currentSession) {
-              Leaderboard.update(this._currentSession.ts, { name, email });
-              this.renderMiniLeaderboard();
+          const check = () => this._updateSubmitBtn();
+          this.el.consentCheck?.addEventListener('change', check);
+          this.el.leadEmail?.addEventListener('input', check);
+        },
+
+        // One-time v0.51 localStorage migration banner
+        setupV6Migration() {
+          const MIGRATED_KEY = 'empeoLand_migrated_v6';
+          if (localStorage.getItem(MIGRATED_KEY)) return;  // already shown
+
+          // Check if user has any old localStorage scores
+          const old = Leaderboard.load();
+          if (!old || old.length === 0) {
+            localStorage.setItem(MIGRATED_KEY, '1');  // nothing to migrate
+            return;
+          }
+
+          const banner = document.getElementById('migration-banner');
+          if (!banner) return;
+          banner.classList.add('show');
+
+          document.getElementById('mig-dismiss-btn')?.addEventListener('click', () => {
+            banner.classList.remove('show');
+            localStorage.setItem(MIGRATED_KEY, '1');
+          });
+
+          document.getElementById('mig-submit-btn')?.addEventListener('click', () => {
+            banner.classList.remove('show');
+            localStorage.setItem(MIGRATED_KEY, '1');
+            // Open game over panel with best score pre-filled
+            const best = old[0];
+            if (best) {
+              this.el.gameOver.classList.add('active');
+              this._goToStage(1);
+              this.el.tally.textContent = best.score.toLocaleString();
+              this.el.leadEmail.value = best.email || '';
+              this.el.leadName.value  = best.name  || '';
+              this.el.consentCheck.checked = false;
+              this._updateSubmitBtn();
+              // Temporarily set Game.score so submit uses correct value
+              Game.score = best.score;
+              Game.currentLevelIdx = 0;
             }
-          };
-          const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 250); };
-          this.el.leadName.addEventListener('input', debounced);
-          this.el.leadEmail.addEventListener('input', debounced);
-          // Save immediately on blur (in case user closes before debounce fires)
-          this.el.leadName.addEventListener('blur', update);
-          this.el.leadEmail.addEventListener('blur', update);
+          });
         },
 
         setupStarRating() {
@@ -3037,30 +3292,51 @@
           }).join('');
         },
 
-        renderLeaderboard() {
-          const list = Leaderboard.load();
-          const limit = this.showingTop20 ? 20 : 5;
-          const top = list.slice(0, limit);
-          const myName = localStorage.getItem(CONFIG.PLAYER_NAME_KEY);
-          if (top.length === 0) {
-            this.el.lbList.innerHTML = `<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>`;
-            return;
+        // v0.6 renderLeaderboard: fetch from API, fall back to localStorage if offline
+        async renderLeaderboard() {
+          try {
+            const res  = await fetch('/api/leaderboard?limit=20');
+            if (!res.ok) throw new Error('offline');
+            const data = await res.json();
+            const list = data.global ?? [];
+            const CROWN_TIER = ['gold', 'silver', 'bronze'];
+            if (list.length === 0) {
+              this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';
+              return;
+            }
+            this.el.lbList.innerHTML = list.slice(0, this.showingTop20 ? 20 : 5).map((e, i) => {
+              const tier = CROWN_TIER[i] || '';
+              const rankIcon = i < 3
+                ? `<span class="crown crown-${tier}">👑</span>${e.rank}`
+                : `#${e.rank}`;
+              return `<li class="leaderboard-row ${tier}">
+                <span class="rank">${rankIcon}</span>
+                <span class="name">${escapeHtml(e.name)}</span>
+                <span class="score">${Number(e.score).toLocaleString()}</span>
+              </li>`;
+            }).join('');
+          } catch (_) {
+            // Fallback to localStorage leaderboard if API unreachable
+            const list = Leaderboard.load();
+            const limit = this.showingTop20 ? 20 : 5;
+            const top = list.slice(0, limit);
+            if (top.length === 0) {
+              this.el.lbList.innerHTML = '<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>';
+              return;
+            }
+            const CROWN_TIER = ['gold', 'silver', 'bronze'];
+            this.el.lbList.innerHTML = top.map((e, i) => {
+              const tier = CROWN_TIER[i] || '';
+              const rankIcon = i < 3
+                ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
+                : `#${i + 1}`;
+              return `<li class="leaderboard-row ${tier}">
+                <span class="rank">${rankIcon}</span>
+                <span class="name">${escapeHtml(e.name)}</span>
+                <span class="score">${e.score.toLocaleString()}</span>
+              </li>`;
+            }).join('');
           }
-          // Top 3 use crowns (gold / silver / bronze) — rest use #N
-          const CROWN_TIER = ['gold', 'silver', 'bronze'];
-          this.el.lbList.innerHTML = top.map((e, i) => {
-            const tier = CROWN_TIER[i] || '';
-            const rankClass = tier;                              // applies row tint
-            const youClass = (myName && e.name === myName) ? 'you' : '';
-            const rankIcon = i < 3
-              ? `<span class="crown crown-${tier}">👑</span>${i + 1}`
-              : `#${i + 1}`;
-            return `<li class="leaderboard-row ${rankClass} ${youClass}">
-        <span class="rank">${rankIcon}</span>
-        <span class="name">${escapeHtml(e.name)}</span>
-        <span class="score">${e.score.toLocaleString()}</span>
-      </li>`;
-          }).join('');
         },
 
         updateScore(score, multiplier) {
@@ -3149,6 +3425,21 @@
         }[c]));
       }
 
+      // v0.6 — Client-side HMAC-SHA256 for score signing (anti-cheat).
+      // Mirrors lib/crypto.js hmacSign() exactly so server can verify.
+      async function hmacSignClient(data, secret) {
+        const enc = s => new TextEncoder().encode(s);
+        const key = await crypto.subtle.importKey(
+          'raw', enc(secret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false, ['sign'],
+        );
+        const sig = await crypto.subtle.sign('HMAC', key, enc(data));
+        return Array.from(new Uint8Array(sig))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+
       // Helper: rounded rect path
       function roundRect(ctx, x, y, w, h, r) {
         if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
@@ -3229,6 +3520,7 @@
           this.camY = 0;
           this.highestY = this.player.y;
           this.score = 0;
+          this.totalCoins = 0;          // v0.6 — track coins earned this session
           this.multiplier = 1; this.multiplierEnd = 0;
           this.lastSpawnY = CONFIG.HEIGHT - 100;
           this.difficulty = 0;
@@ -3236,6 +3528,14 @@
           this.autoScrollSpeed = 0;
           this.gameSpeed = CONFIG.SPEED_BASE;
           this.lastSpeedStage = 0;
+          this._session = null;          // v0.6 — cleared; fresh session below
+
+          // v0.6 — call /api/game-start to create a signed session (async, non-blocking).
+          // Session is stored in memory only — never localStorage.
+          fetch('/api/game-start', { method: 'POST' })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) this._session = data; })
+            .catch(() => { /* offline — submit will show error if user tries */ });
 
           // Initial platforms
           this.generateInitialPlatforms();
@@ -3247,6 +3547,7 @@
           // Cancel any lingering loop before scheduling a fresh one
           if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
           this.rafId = requestAnimationFrame(this.gameLoop);
+
         },
 
         pause() {
