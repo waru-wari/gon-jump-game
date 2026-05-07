@@ -638,12 +638,14 @@
 
     /* === PAUSE SCREEN — safe-zone padding + flex gap === */
     #pause-screen {
-      background: rgba(0, 30, 60, .6);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 30, 60, .72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: none;
-      padding: 0 12.5%;
-      gap: 16px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
     }
 
     #pause-screen.active {
@@ -655,6 +657,20 @@
       font-size: 42px;
       margin: 0;
       text-shadow: 0 4px 8px rgba(0, 0, 0, .5);
+      letter-spacing: 2px;
+    }
+
+    .pause-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 200px;
+    }
+
+    .pause-actions .btn {
+      width: 100%;
+      text-align: center;
     }
 
     /* === GAME OVER === */
@@ -757,18 +773,11 @@
       transform: scale(.88);
     }
 
-    /* Hover/active states for Pause screen buttons */
-    #resume-btn:hover {
+    #resume-btn:hover, #mute-btn:hover, #quit-btn:hover {
       transform: translateY(-3px);
       filter: brightness(1.1);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #1F4209, 0 14px 22px rgba(0,0,0,.28);
     }
-    #quit-btn:hover {
-      transform: translateY(-3px);
-      filter: brightness(1.1);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #082C66, 0 14px 22px rgba(0,0,0,.28);
-    }
-    #resume-btn:active, #quit-btn:active {
+    #resume-btn:active, #mute-btn:active, #quit-btn:active {
       transform: translateY(3px);
       filter: brightness(0.94);
     }
