@@ -3774,9 +3774,17 @@
           this.state = 'playing';
           UI.showHUD();
           UI.updateScore(0, 1);
+          // Init level badge to Lv.0 label (won't trigger from level-change loop)
+          const lv0 = CONFIG.LEVELS[0];
+          const badge0 = document.getElementById('level-badge');
+          if (badge0) {
+            badge0.textContent = lv0.label;
+            badge0.style.background = `linear-gradient(180deg, ${lv0.color}cc 0%, ${lv0.color} 100%)`;
+          }
           // Sync mute button label
           const mb = document.getElementById('mute-btn');
           if (mb) mb.textContent = Sound.muted ? '🔇 Muted' : '🔊 Sound';
+
           this.lastTime = performance.now();
           if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
           this.rafId = requestAnimationFrame(this.gameLoop);
