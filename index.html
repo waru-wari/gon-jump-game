@@ -1265,26 +1265,11 @@
                 placeholder="ชื่อที่แสดง (ไม่บังคับ)" maxlength="20" autocomplete="off">
             </div>
 
-            <!-- PDPA consent —  must tick every session, never persisted -->
-            <label class="consent-row" id="consent-row">
-              <input type="checkbox" id="consent-check">
-              <span class="consent-label">
-                ฉันยินยอมให้เก็บอีเมล (ในรูปแฮชที่ปลอดภัย) และคะแนนเพื่อแสดงในลีดเดอร์บอร์ด
-                (<a href="/privacy.html" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>)
-              </span>
-            </label>
-
-            <!-- 5-star rating -->
-            <div class="rating-section" style="margin-top:10px">
-              <div class="rating-label">How was your adventure?</div>
-              <div id="star-rating" class="star-rating" role="radiogroup" aria-label="Rate your experience">
-                <span class="star" data-value="1" role="radio" aria-label="1 star">★</span>
-                <span class="star" data-value="2" role="radio" aria-label="2 stars">★</span>
-                <span class="star" data-value="3" role="radio" aria-label="3 stars">★</span>
-                <span class="star" data-value="4" role="radio" aria-label="4 stars">★</span>
-                <span class="star" data-value="5" role="radio" aria-label="5 stars">★</span>
-              </div>
-            </div>
+            <!-- PDPA notice — informational only, no consent required -->
+            <p class="consent-label" style="margin:10px 0 0;font-size:11px;color:#888;line-height:1.5">
+              🔒 อีเมลจะถูกเข้ารหัส (SHA-256) ก่อนบันทึก — ไม่มีการเก็บอีเมลต้นฉบับ
+              (<a href="/privacy.html" target="_blank" rel="noopener" style="color:#1E88E5">นโยบายความเป็นส่วนตัว</a>)
+            </p>
           </div>
 
           <!-- ══ STAGE 2: On the board ══ -->
@@ -3067,7 +3052,6 @@
 
           // Reset form & stage
           this._goToStage(1);
-          this.el.consentCheck.checked = false;    // consent NEVER persisted
           this._updateSubmitBtn();
           this.setStarRating(0);
 
@@ -3098,9 +3082,8 @@
         },
 
         _updateSubmitBtn() {
-          const email   = (this.el.leadEmail?.value || '').trim();
-          const consent = this.el.consentCheck?.checked;
-          const valid   = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && consent;
+          const email = (this.el.leadEmail?.value || '').trim();
+          const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
           if (this.el.submitScoreBtn) this.el.submitScoreBtn.disabled = !valid;
         },
 
@@ -3195,11 +3178,9 @@
           } catch (_) { /* offline — silently skip */ }
         },
 
-        // Wire consent checkbox + email input to enable/disable submit button
+        // Wire email input to enable/disable submit button
         setupGameOverInputs() {
-          const check = () => this._updateSubmitBtn();
-          this.el.consentCheck?.addEventListener('change', check);
-          this.el.leadEmail?.addEventListener('input', check);
+          this.el.leadEmail?.addEventListener('input', () => this._updateSubmitBtn());
         },
 
         // One-time v0.51 localStorage migration banner
