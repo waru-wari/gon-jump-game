@@ -3225,6 +3225,7 @@
         },
 
         setupStarRating() {
+          if (!this.el.starRating) return;   // star rating removed in v0.6.1
           const stars = Array.from(this.el.starRating.querySelectorAll('.star'));
           this.el.stars = stars;
           stars.forEach((star, i) => {
