@@ -3069,7 +3069,6 @@
 
           // Reset form & stage
           this._goToStage(1);
-          this._updateSubmitBtn();
           this.setStarRating(0);
 
           // Pre-fill email/name from localStorage (convenience, not auto-consent)
@@ -3077,6 +3076,7 @@
           const lastName  = localStorage.getItem(CONFIG.PLAYER_NAME_KEY)  || '';
           this.el.leadEmail.value = lastEmail;
           this.el.leadName.value  = lastName;
+          this._updateSubmitBtn();   // call AFTER email is set
 
           // Animate score tally
           const start = performance.now();
