@@ -521,10 +521,8 @@
     .hud-top {
       position: absolute;
       top: 18px;
-      /* clear breathing room from canvas top */
-      left: 12.5%;
-      right: 12.5%;
-      /* horizontal safe zone */
+      left: 0;
+      right: 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -588,23 +586,24 @@
       }
     }
 
-    /* === LEVEL BADGE (top-left, inside safe zone) === */
+    /* === LEVEL BADGE (top-left, flush to edge) === */
     .level-badge {
       position: absolute;
-      top: 18px;
-      left: calc(12.5% - 8px);
-      background: linear-gradient(180deg, #42A5F5 0%, #1565C0 100%);
+      top: 16px;
+      left: 16px;
+      background: linear-gradient(180deg, #2E7D32 0%, #1B5E20 100%);
       color: #fff;
       font-weight: 800;
-      padding: 5px 14px;
+      padding: 6px 14px 6px 10px;
       border-radius: 999px;
-      border: 2px solid rgba(255, 255, 255, 0.65);
+      border: 2px solid rgba(255, 255, 255, 0.55);
       font-size: 13px;
       letter-spacing: 0.5px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.30);
       pointer-events: none;
       transition: background 0.5s ease, transform 0.2s ease;
       line-height: 1.4;
+      white-space: nowrap;
     }
 
     .level-badge.bump {
