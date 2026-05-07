@@ -1238,11 +1238,11 @@
   <!-- v0.6 — v0.51 localStorage migration banner (one-time) -->
   <div id="migration-banner">
     <div class="mig-text">
-      <strong>🏆 ลีดเดอร์บอร์ดออนไลน์พร้อมแล้ว!</strong>
-      <span>อยากส่งคะแนนสูงสุดของคุณขึ้นบอร์ดโลกไหม?</span>
+      <strong>🏆 Online Leaderboard is live!</strong>
+      <span>Want to submit your best score to the global board?</span>
     </div>
-    <button class="mig-btn mig-submit" id="mig-submit-btn">ส่งคะแนน →</button>
-    <button class="mig-btn mig-dismiss" id="mig-dismiss-btn">ไว้คราวหน้า</button>
+    <button class="mig-btn mig-submit" id="mig-submit-btn">Submit Score →</button>
+    <button class="mig-btn mig-dismiss" id="mig-dismiss-btn">Maybe Later</button>
   </div>
 
   <div id="game-container">
@@ -1265,7 +1265,7 @@
           <option value="">Loading…</option>
         </select>
         <ol id="leaderboard-list" class="leaderboard-list"></ol>
-        <button id="leaderboard-toggle" class="leaderboard-toggle">ดูเพิ่มเติม (50) ▾</button>
+        <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
 
       <div class="menu-actions">
@@ -3087,7 +3087,7 @@
           this.el.lbToggle.addEventListener('click', () => {
             this.showingTop50 = !this.showingTop50;
             this.renderLeaderboard();
-            this.el.lbToggle.textContent = this.showingTop50 ? 'แสดงน้อยลง ▴' : 'ดูเพิ่มเติม (50) ▾';
+            this.el.lbToggle.textContent = this.showingTop50 ? 'Show Less ▴' : 'See More (50) ▾';
             this.el.lbList.classList.toggle('expanded', this.showingTop50);
           });
 
