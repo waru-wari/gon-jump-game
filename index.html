@@ -250,7 +250,7 @@
       box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0, 0, 0, .25);
     }
 
-    /* Hover states for game-over buttons */
+    /* Hover states for game-over and home buttons */
     #play-again-btn:hover {
       transform: translateY(-3px);
       box-shadow: inset 0 -8px 0 rgba(0,0,0,.18), inset 0 8px 0 rgba(255,255,255,.35), 0 9px 0 #802A00, 0 16px 28px rgba(0,30,80,.35);
@@ -261,7 +261,16 @@
       box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #0F1F44, 0 14px 24px rgba(0,0,0,.3);
       filter: brightness(1.12);
     }
-    #play-again-btn:active, #gameover-share-btn:active {
+    #share-btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.12);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 9px 0 #082C66, 0 14px 22px rgba(0,0,0,.28);
+    }
+    #skip-btn:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.10);
+    }
+    #play-again-btn:active, #gameover-share-btn:active, #share-btn:active, #skip-btn:active {
       transform: translateY(3px);
       filter: brightness(0.95);
     }
@@ -902,6 +911,14 @@
       text-align: center;
     }
 
+    /* Highlight current player's row */
+    .mini-lb-list .lb-me {
+      background: rgba(255, 201, 60, 0.18);
+      border-radius: 6px;
+      outline: 1.5px solid #FFC93C;
+    }
+
+
     @keyframes pop-in {
       to {
         transform: scale(1);
@@ -1294,7 +1311,6 @@
           <div class="gameover-title">GAME OVER</div>
           <div class="gameover-subtitle">Nong Gon fell from the sky!</div>
           <div id="score-tally" class="score-tally">0</div>
-          <div id="new-high-text" class="new-high" style="display:none">🌟 NEW HIGH SCORE! 🌟</div>
         </div>
 
         <!-- Scrollable body -->
@@ -1303,19 +1319,19 @@
           <!-- ══ STAGE 1: Score pending ══ -->
           <div class="go-stage active" id="go-stage1">
             <div class="score-status pending">⏳ SCORE PENDING</div>
-            <p style="font-size:13px;color:#666;margin-bottom:10px">ส่งคะแนนขึ้นบอร์ดโลกเพื่อแข่งกับผู้เล่นทุกคน</p>
+            <p style="font-size:13px;color:#666;margin-bottom:10px">Submit your score to the global leaderboard!</p>
 
             <div class="lead-form">
               <input id="lead-email" class="lead-input" type="email"
-                placeholder="อีเมล (จำเป็น)" autocomplete="off" required>
+                placeholder="Email (required)" autocomplete="off" required>
               <input id="lead-name" class="lead-input" type="text"
-                placeholder="ชื่อที่แสดง (ไม่บังคับ)" maxlength="20" autocomplete="off">
+                placeholder="Display name (optional)" maxlength="20" autocomplete="off">
             </div>
 
-            <!-- PDPA notice — informational only, no consent required -->
+            <!-- PDPA notice -->
             <p class="consent-label" style="margin:10px 0 0;font-size:11px;color:#888;line-height:1.5">
-              🔒 อีเมลจะถูกเข้ารหัส (SHA-256) ก่อนบันทึก — ไม่มีการเก็บอีเมลต้นฉบับ
-              (<a href="/privacy.html" target="_blank" rel="noopener" style="color:#1E88E5">นโยบายความเป็นส่วนตัว</a>)
+              🔒 Email is hashed (SHA-256) before storing — original email is never saved.
+              (<a href="/privacy.html" target="_blank" rel="noopener" style="color:#1E88E5">Privacy Policy</a>)
             </p>
           </div>
 
@@ -1323,13 +1339,10 @@
           <div class="go-stage" id="go-stage2">
             <div class="score-status submitted">✅ ON THE BOARD</div>
             <div class="online-email-display" id="go-email-display"></div>
-            <div style="font-size:13px;color:#666;margin-bottom:4px">Global Rank</div>
-            <div class="online-rank" id="go-rank">—</div>
-            <div style="font-size:12px;color:#888;margin-bottom:14px" id="go-total"></div>
 
             <!-- Mini online leaderboard -->
             <div class="mini-leaderboard">
-              <div class="mini-lb-title">🏆 TOP 10 ONLINE</div>
+              <div class="mini-lb-title">🏆 Hall of Fame — Top 10</div>
               <ol id="mini-lb-list" class="mini-lb-list"></ol>
             </div>
           </div>
@@ -1338,8 +1351,8 @@
 
         <!-- Action buttons — change per stage -->
         <div class="gameover-buttons" id="go-buttons-stage1">
-          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 ส่งคะแนน</button>
-          <button id="skip-btn" class="btn btn-secondary">ข้าม →</button>
+          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 Submit Score</button>
+          <button id="skip-btn" class="btn btn-secondary">Skip →</button>
         </div>
         <div class="gameover-buttons" id="go-buttons-stage2" style="display:none">
           <button id="play-again-btn" class="btn btn-primary">▶ Play Again</button>
@@ -3212,7 +3225,7 @@
           const level = Game.currentLevelIdx + 1;
 
           this.el.submitScoreBtn.disabled = true;
-          this.el.submitScoreBtn.textContent = '⏳ ส่ง...';
+          this.el.submitScoreBtn.textContent = '⏳ Submitting...';
 
           try {
             const res = await fetch('/api/leaderboard', {
@@ -3231,18 +3244,14 @@
 
             // Move to Stage 2
             this.el.goEmailDisplay.textContent = `${data2.emailDisplay}  —  ${data2.name}`;
-            this.el.goRank.textContent = `#${data2.rank ?? '?'}`;
-            this.el.goTotal.textContent = data2.totalEntries ? `of ${data2.totalEntries.toLocaleString()} players` : '';
 
-            if (Leaderboard.isHighScore(score)) this.el.newHigh.style.display = 'block';
-
-            await this._fetchAndRenderMiniLb();
+            await this._fetchAndRenderMiniLb(data2.rank);
             this._goToStage(2);
 
           } catch (err) {
-            this.showToast('ส่งไม่สำเร็จ: ' + err.message);
+            this.showToast('Submit failed: ' + err.message);
             this.el.submitScoreBtn.disabled = false;
-            this.el.submitScoreBtn.textContent = '📤 ส่งคะแนน';
+            this.el.submitScoreBtn.textContent = '📤 Submit Score';
           }
         },
 
@@ -3259,14 +3268,17 @@
           Game.quitToMenu();
         },
 
-        async _fetchAndRenderMiniLb() {
+        async _fetchAndRenderMiniLb(playerRank) {
           try {
             const res  = await fetch('/api/leaderboard?limit=10');
             const data = await res.json();
             const top  = (data.global ?? []).slice(0, 10);
             this.el.miniLbList.innerHTML = top.length === 0
               ? '<li class="leaderboard-empty">No scores yet — you\'re first! 🚀</li>'
-              : top.map((e, i) => lbRowHtml(e, i)).join('');
+              : top.map((e, i) => {
+                  const isMe = playerRank != null && (i + 1) === playerRank;
+                  return lbRowHtml(e, i, isMe);
+                }).join('');
           } catch (_) { /* offline — silently skip */ }
         },
 
@@ -3477,7 +3489,7 @@
 
       // Shared leaderboard row template (online data)
       // name = primary, emailDisplay = secondary (if name exists and differs from email)
-      function lbRowHtml(e, i) {
+      function lbRowHtml(e, i, isMe = false) {
         const TIERS  = ['gold', 'silver', 'bronze'];
         const tier   = TIERS[i] || '';
         const rankIcon = i < 3
@@ -3488,12 +3500,15 @@
           ? `<span class="name">${escapeHtml(e.name)}</span>
              <span class="email-secondary">${escapeHtml(e.emailDisplay ?? '')}</span>`
           : `<span class="name">${escapeHtml(e.emailDisplay || 'Anonymous')}</span>`;
-        return `<li class="leaderboard-row ${tier}">
+        const youBadge = isMe ? ' <span style="font-size:10px;background:#FFC93C;color:#7A2E00;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle">YOU</span>' : '';
+        const meClass = isMe ? ' lb-me' : '';
+        return `<li class="leaderboard-row ${tier}${meClass}">
           <span class="rank">${rankIcon}</span>
-          <span class="player-info">${playerHtml}</span>
+          <span class="player-info">${playerHtml}${youBadge}</span>
           <span class="score">${Number(e.score).toLocaleString()}</span>
         </li>`;
       }
+
 
       // v0.6 — Client-side HMAC-SHA256 for score signing (anti-cheat).
       // Mirrors lib/crypto.js hmacSign() exactly so server can verify.
