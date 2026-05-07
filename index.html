@@ -1269,6 +1269,7 @@
       <h2>Paused</h2>
       <div class="pause-actions">
         <button id="resume-btn" class="btn btn-success">Resume</button>
+        <button id="mute-btn" class="btn btn-secondary">🔊 Sound</button>
         <button id="quit-btn" class="btn btn-secondary">Quit</button>
       </div>
     </div>
@@ -1650,7 +1651,8 @@
 
         jump(velocity = CONFIG.JUMP_VELOCITY) {
           this.vy = velocity;
-          this.squash = 0.7;          // squash hard on bounce
+          this.squash = 0.7;
+          Sound.play('jump');
           if (velocity <= CONFIG.SPRING_VELOCITY * 0.95) {
             this.springAnim = 600;
             Game.spawnParticles(this.x + this.w / 2, this.y + this.h, '#FFC93C', 14);
@@ -2973,7 +2975,167 @@
       };
 
       // =========================================================
-      // 10. UI MANAGER
+      // =========================================================
+      // 10. SOUND — Web Audio API synthesizer (no external files)
+      // =========================================================
+      const Sound = {
+        _ctx: null,
+        _bgmGain: null,
+        _bgmTrack: null,
+        _bgmTimeout: null,
+        _muted: localStorage.getItem('sfx_muted') === 'true',
+
+        get muted() { return this._muted; },
+
+        setMute(val) {
+          this._muted = val;
+          localStorage.setItem('sfx_muted', String(val));
+          if (this._bgmGain) this._bgmGain.gain.value = val ? 0 : 0.14;
+          document.getElementById('mute-btn').textContent = val ? '🔇 Muted' : '🔊 Sound';
+        },
+
+        toggleMute() { this.setMute(!this._muted); },
+
+        _ctx_get() {
+          if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+          if (this._ctx.state === 'suspended') this._ctx.resume();
+          return this._ctx;
+        },
+
+        _tone(freq, type, dur, vol, attack) {
+          if (this._muted) return;
+          const ctx = this._ctx_get(), osc = ctx.createOscillator(), g = ctx.createGain();
+          osc.connect(g); g.connect(ctx.destination);
+          osc.type = type; osc.frequency.value = freq;
+          g.gain.setValueAtTime(0, ctx.currentTime);
+          g.gain.linearRampToValueAtTime(vol, ctx.currentTime + (attack || 0.008));
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+        },
+
+        _sweep(f0, f1, type, dur, vol) {
+          if (this._muted) return;
+          const ctx = this._ctx_get(), osc = ctx.createOscillator(), g = ctx.createGain();
+          osc.connect(g); g.connect(ctx.destination);
+          osc.type = type; osc.frequency.setValueAtTime(f0, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(f1, ctx.currentTime + dur);
+          g.gain.setValueAtTime(vol, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+        },
+
+        _noise(dur, vol, cutoff) {
+          if (this._muted) return;
+          const ctx = this._ctx_get();
+          const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = cutoff;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(vol, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+          src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+          src.start();
+        },
+
+        play(sfx) {
+          if (this._muted) return;
+          switch (sfx) {
+            case 'jump':
+              this._sweep(180, 440, 'sine', 0.10, 0.18);
+              break;
+            case 'land':
+              this._noise(0.07, 0.22, 350);
+              this._tone(90, 'sine', 0.07, 0.18);
+              break;
+            case 'coin':
+              this._tone(1200, 'sine', 0.22, 0.22, 0.005);
+              this._tone(1600, 'sine', 0.14, 0.10, 0.005);
+              break;
+            case 'diamond':
+              this._tone(1800, 'sine', 0.35, 0.26, 0.005);
+              this._tone(2400, 'sine', 0.22, 0.13, 0.008);
+              this._tone(3000, 'sine', 0.14, 0.06, 0.005);
+              break;
+            case 'stomp':
+              this._sweep(500, 120, 'sawtooth', 0.14, 0.30);
+              this._noise(0.10, 0.20, 600);
+              break;
+            case 'death':
+              this._sweep(520, 90, 'sawtooth', 0.55, 0.28);
+              this._sweep(260, 50, 'sine', 0.40, 0.16);
+              break;
+            case 'level-up': {
+              const notes = [523, 659, 784, 1047];
+              notes.forEach((f, i) => setTimeout(() => this._tone(f, 'square', 0.15, 0.14, 0.01), i * 85));
+              break;
+            }
+            case 'game-over': {
+              const sad = [440, 370, 330, 220];
+              sad.forEach((f, i) => setTimeout(() => this._tone(f, 'sawtooth', 0.28, 0.18, 0.02), i * 160));
+              break;
+            }
+          }
+        },
+
+        // ---- BGM: procedural looping melody (oscillator-based) ----
+        playBGM(track) {
+          if (track === this._bgmTrack) return;
+          this.stopBGM();
+          this._bgmTrack = track;
+          if (this._muted) return;
+          this._loopBGM(track);
+        },
+
+        _loopBGM(track) {
+          const ctx = this._ctx_get();
+          this._bgmGain = ctx.createGain();
+          this._bgmGain.gain.value = 0.14;
+          this._bgmGain.connect(ctx.destination);
+          const THEMES = {
+            'biome-1': { notes: [523, 587, 659, 698, 784, 880], tempo: 330, base: 130 },
+            'biome-2': { notes: [440, 494, 523, 587, 659, 784], tempo: 390, base: 110 },
+            'biome-3': { notes: [349, 392, 523, 659, 784, 1047], tempo: 270, base: 87 },
+          };
+          const th = THEMES[track] || THEMES['biome-1'];
+          const pat = [0, 2, 4, 2, 1, 3, 5, 3];
+          let step = 0;
+          const tick = () => {
+            if (this._bgmTrack !== track) return;
+            const note = th.notes[pat[step++ % pat.length]];
+            const t = ctx.currentTime;
+            // Melody
+            const m = ctx.createOscillator(), mg = ctx.createGain();
+            m.connect(mg); mg.connect(this._bgmGain);
+            m.type = 'square'; m.frequency.value = note;
+            mg.gain.setValueAtTime(0.32, t);
+            mg.gain.exponentialRampToValueAtTime(0.0001, t + th.tempo * 0.001 * 0.75);
+            m.start(t); m.stop(t + th.tempo * 0.001);
+            // Bass (every 2nd beat)
+            if (step % 2 === 0) {
+              const b = ctx.createOscillator(), bg = ctx.createGain();
+              b.connect(bg); bg.connect(this._bgmGain);
+              b.type = 'triangle'; b.frequency.value = th.base;
+              bg.gain.setValueAtTime(0.48, t);
+              bg.gain.exponentialRampToValueAtTime(0.0001, t + th.tempo * 0.001 * 0.55);
+              b.start(t); b.stop(t + th.tempo * 0.001);
+            }
+            this._bgmTimeout = setTimeout(tick, th.tempo);
+          };
+          tick();
+        },
+
+        stopBGM() {
+          if (this._bgmTimeout) { clearTimeout(this._bgmTimeout); this._bgmTimeout = null; }
+          if (this._bgmGain) { this._bgmGain.gain.value = 0; this._bgmGain = null; }
+          this._bgmTrack = null;
+        },
+      };
+
+      // =========================================================
+      // 11. UI MANAGER
       // =========================================================
       const UI = {
         el: {},
@@ -3020,6 +3182,14 @@
           document.getElementById('start-btn').addEventListener('click', () => Game.start());
           document.getElementById('pause-btn').addEventListener('click', () => Game.pause());
           document.getElementById('resume-btn').addEventListener('click', () => Game.resume());
+          document.getElementById('mute-btn').addEventListener('click', () => {
+            Sound.toggleMute();
+            // Restart BGM if unmuting mid-game
+            if (!Sound.muted && Game.state === 'playing') {
+              const bgmMap = ['biome-1','biome-2','biome-2','biome-3','biome-3','biome-3'];
+              Sound.playBGM(bgmMap[Game.currentLevelIdx] || 'biome-3');
+            }
+          });
           document.getElementById('quit-btn').addEventListener('click', () => Game.quitToMenu());
           document.getElementById('play-again-btn').addEventListener('click', () => Game.start());
           document.getElementById('share-btn').addEventListener('click', () => UI.share(0));
@@ -3536,8 +3706,12 @@
           this.state = 'playing';
           UI.showHUD();
           UI.updateScore(0, 1);
+          Sound.stopBGM();
+          Sound.playBGM('biome-1');
+          // Sync mute button label
+          const mb = document.getElementById('mute-btn');
+          if (mb) mb.textContent = Sound.muted ? '🔇 Muted' : '🔊 Sound';
           this.lastTime = performance.now();
-          // Cancel any lingering loop before scheduling a fresh one
           if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = null; }
           this.rafId = requestAnimationFrame(this.gameLoop);
 
@@ -3557,6 +3731,7 @@
           this.rafId = requestAnimationFrame(this.gameLoop);
         },
         quitToMenu() {
+          Sound.stopBGM();
           this.state = 'menu';
           UI.hidePause();
           UI.showMenu();
@@ -3762,6 +3937,7 @@
             if (Utils.rectsOverlap(pr, c.rect())) {
               c.collected = true;
               this.score += CONFIG.COIN_VALUE * this.multiplier;
+              Sound.play('coin');
               Game.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FF8C2A', 8);
             }
           }
@@ -3771,6 +3947,7 @@
             if (Utils.rectsOverlap(pr, d.rect())) {
               d.collected = true;
               this.score += CONFIG.DIAMOND_VALUE * this.multiplier;
+              Sound.play('diamond');
               Game.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 14);
             }
           }
@@ -3788,6 +3965,7 @@
               )) {
                 // Stomp!
                 ob.stomp();
+                Sound.play('stomp');
                 const bonus = ob instanceof Dragon ? CONFIG.DRAGON_STOMP : CONFIG.BIRD_STOMP;
                 this.score += bonus * this.multiplier;
                 this.player.vy = -8;  // bounce up
@@ -3811,6 +3989,9 @@
           const lvlDef = this.getLevelDef();
           if (lvlDef.idx !== this.currentLevelIdx) {
             this.currentLevelIdx = lvlDef.idx;
+            Sound.play('level-up');
+            const bgmMap = ['biome-1', 'biome-2', 'biome-2', 'biome-3', 'biome-3', 'biome-3'];
+            Sound.playBGM(bgmMap[lvlDef.idx] || 'biome-3');
             const badge = document.getElementById('level-badge');
             if (badge) {
               badge.textContent = lvlDef.label;
@@ -3829,6 +4010,8 @@
         },
 
         gameOver() {
+          Sound.play('death');
+          Sound.stopBGM();
           this.state = 'gameover';
           UI.el.hud.classList.remove('active');
           UI.showGameOver(this.score);
