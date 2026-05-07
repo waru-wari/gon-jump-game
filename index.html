@@ -383,9 +383,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 10px;
-      border-radius: 10px;
-      font-size: 15px;
+      padding: 9px 12px;
+      border-radius: 16px;        /* rounder */
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-size: 14px;
       color: #1F5099;
       font-weight: 700;
       gap: 8px;
@@ -396,11 +397,12 @@
     }
 
     .leaderboard-row .rank {
-      min-width: 56px;
+      min-width: 52px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-weight: 800;
+      font-weight: 900;
+      font-family: 'Nunito', system-ui, sans-serif;
     }
 
     .leaderboard-row .player-info {
@@ -413,29 +415,34 @@
     }
 
     .leaderboard-row .name {
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-weight: 700;
       color: #333;
-      font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .leaderboard-row .email-secondary {
+      font-family: 'Nunito', system-ui, sans-serif;
       font-size: 11px;
-      font-weight: 400;
-      color: #999;
+      font-weight: 500;
+      color: #aaa;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .leaderboard-row .score {
+      font-family: 'Fredoka', system-ui, sans-serif;  /* bubbly number */
+      font-size: 16px;
+      font-weight: 700;
       color: #FF6A1A;
-      font-weight: 800;
       flex-shrink: 0;
+      letter-spacing: 0.5px;
     }
 
-    /* === Crown rank tint (top 3) === */
+    /* Crown rank tint (top 3) */
     .crown {
       font-size: 18px;
       line-height: 1;
@@ -443,72 +450,43 @@
       transform: translateY(-1px);
     }
 
-    .crown-gold {
-      filter: drop-shadow(0 0 3px rgba(255, 193, 7, .55));
-    }
+    .crown-gold   { filter: drop-shadow(0 0 4px rgba(255,193,7,.70)); }
+    .crown-silver { filter: grayscale(1) brightness(1.10) drop-shadow(0 0 3px rgba(180,180,180,.50)); }
+    .crown-bronze { filter: hue-rotate(-18deg) saturate(0.78) brightness(0.78) drop-shadow(0 0 3px rgba(184,108,48,.50)); }
 
-    .crown-silver {
-      filter: grayscale(1) brightness(1.10) drop-shadow(0 0 3px rgba(180, 180, 180, .45));
-    }
-
-    .crown-bronze {
-      filter: hue-rotate(-18deg) saturate(0.78) brightness(0.78) drop-shadow(0 0 3px rgba(184, 108, 48, .45));
-    }
-
-    .leaderboard-row.gold {
-      background: linear-gradient(90deg, rgba(255, 193, 7, .22), rgba(255, 193, 7, .05)) !important;
-    }
-
-    .leaderboard-row.gold .rank {
-      color: #B8860B;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
-    }
-
-    .leaderboard-row.gold .score {
-      color: #FF8F00;
-    }
-
-    .leaderboard-row.silver {
-      background: linear-gradient(90deg, rgba(160, 160, 160, .18), rgba(160, 160, 160, .04)) !important;
-    }
-
-    .leaderboard-row.silver .rank {
-      color: #6B6B6B;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
-    }
-
-    .leaderboard-row.bronze {
-      background: linear-gradient(90deg, rgba(184, 108, 48, .18), rgba(184, 108, 48, .04)) !important;
-    }
-
-    .leaderboard-row.bronze .rank {
-      color: #A05A1F;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
-    }
-
-    .leaderboard-row.you {
-      background: rgba(255, 201, 60, .35) !important;
-      outline: 2px solid #FFC93C;
-    }
+    .leaderboard-row.gold   { background: linear-gradient(90deg, rgba(255,193,7,.25), rgba(255,193,7,.06)) !important; }
+    .leaderboard-row.gold   .rank  { color: #B8860B; }
+    .leaderboard-row.gold   .score { color: #FF8F00; }
+    .leaderboard-row.silver { background: linear-gradient(90deg, rgba(160,160,160,.20), rgba(160,160,160,.05)) !important; }
+    .leaderboard-row.silver .rank  { color: #6B6B6B; }
+    .leaderboard-row.bronze { background: linear-gradient(90deg, rgba(184,108,48,.20), rgba(184,108,48,.05)) !important; }
+    .leaderboard-row.bronze .rank  { color: #A05A1F; }
+    .leaderboard-row.you    { background: rgba(255,201,60,.35) !important; outline: 2px solid #FFC93C; border-radius: 16px; }
 
     .leaderboard-toggle {
-      background: none;
-      border: none;
+      appearance: none;
+      background: rgba(46,111,192,.08);
+      border: 2px solid rgba(46,111,192,.20);
+      border-radius: 999px;           /* pill */
       color: #2E6FC0;
+      font-family: 'Nunito', system-ui, sans-serif;
       font-weight: 800;
       font-size: 13px;
       cursor: pointer;
-      padding: 6px;
-      margin-top: 4px;
+      padding: 7px 18px;
+      margin-top: 6px;
       width: 100%;
-      border-top: 1px dashed #cfd8e8;
+      transition: background .15s;
     }
+    .leaderboard-toggle:hover { background: rgba(46,111,192,.15); }
 
     .leaderboard-empty {
       text-align: center;
-      padding: 20px;
-      color: #888;
-      font-weight: 600;
+      padding: 24px 16px;
+      font-family: 'Nunito', system-ui, sans-serif;
+      color: #aaa;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     #share-btn {
@@ -1163,7 +1141,7 @@
       opacity: 1;
     }
 
-    /* === PAUSE SCREEN BUTTONS — vertical column, centred === */
+    /* === PAUSE SCREEN BUTTONS — vertical column, centred, uniform size === */
     .pause-actions {
       display: flex;
       flex-direction: column;
@@ -1177,8 +1155,11 @@
       width: 100%;
       box-sizing: border-box;
       text-align: center;
-      font-size: clamp(15px, 4.2vw, 18px);
-      padding: 14px 12px;
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      padding: 14px 16px;
+      letter-spacing: 0.5px;
     }
 
     /* ══════════════════════════════════════════════════════
@@ -1432,9 +1413,9 @@
     <div id="pause-screen" class="overlay">
       <h2>Paused</h2>
       <div class="pause-actions">
-        <button id="resume-btn" class="btn btn-success">Resume</button>
-        <button id="mute-btn" class="btn btn-secondary">🔊 Sound</button>
-        <button id="quit-btn" class="btn btn-secondary">Quit</button>
+        <button id="resume-btn" class="btn btn-success">▶ Resume</button>
+        <button id="mute-btn"   class="btn btn-secondary">🔊 Sound</button>
+        <button id="quit-btn"   class="btn btn-secondary">🏠 Home</button>
       </div>
     </div>
 
