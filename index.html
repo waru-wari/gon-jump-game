@@ -305,30 +305,27 @@
       filter: brightness(0.95);
     }
 
-    /* Force equal width on both menu buttons via ID selectors (high specificity) */
-    #start-btn,
-    #share-btn {
+    /* All 3 menu buttons full-width */
+    #start-btn, #leaderboard-btn, #share-btn {
       margin: 0;
-      width: calc(50% - 5px);   /* half of container minus half the gap (10px/2) */
-      flex: none;                /* don't let flex override our explicit width */
+      width: 100%;
+      flex: none;
       box-sizing: border-box;
       text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
     }
 
-    /* Row that holds Start + Share side-by-side */
+    /* 3-button vertical stack */
     .menu-actions {
       display: flex;
-      flex-direction: row;
-      gap: 10px;
+      flex-direction: column;
+      gap: 12px;
       width: 100%;
-      max-width: 320px;
+      max-width: 280px;
     }
 
-    /* Shared style overrides for menu buttons */
+    /* Shared style for all 3 menu buttons */
     .menu-actions .btn {
-      font-size: clamp(14px, 4vw, 18px);
+      font-size: clamp(15px, 4.2vw, 18px);
       padding: 14px 8px;
       letter-spacing: 0.5px;
     }
@@ -518,6 +515,59 @@
       padding: 12px 32px;
       font-size: 16px;
     }
+
+    /* Green leaderboard button */
+    .btn-green {
+      background: linear-gradient(180deg, #81C784 0%, #43A047 100%);
+      border: 4px solid #1B5E20;
+      text-shadow: -1px -1px 0 #1B5E20, 1px -1px 0 #1B5E20, -1px 1px 0 #1B5E20, 1px 1px 0 #1B5E20, 0 3px 0 #0D3A0E, 0 5px 8px rgba(0,0,0,.3);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 6px 0 #0D3A0E, 0 10px 18px rgba(0,0,0,.25);
+    }
+    .btn-green:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn-green:active { transform: translateY(3px); filter: brightness(0.95); }
+
+    /* === LEADERBOARD SCREEN (separate overlay) === */
+    #leaderboard-screen {
+      z-index: 35;
+      justify-content: center;
+      padding: 0 12.5%;
+      display: none;
+    }
+    #leaderboard-screen.active { display: flex; pointer-events: auto; }
+
+    .lb-screen-card {
+      width: 100%;
+      max-width: 320px;
+      background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(245,250,255,.97) 100%);
+      border: 3px solid #FFC93C;
+      border-radius: 24px;
+      padding: 16px 18px 20px;
+      box-shadow: 0 12px 32px rgba(0,40,80,.30);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 82vh;
+    }
+
+    .lb-screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lb-back-btn {
+      appearance: none; border: none;
+      background: rgba(0,0,0,.08); border-radius: 50%;
+      width: 34px; height: 34px; font-size: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: #444; transition: background .15s; flex-shrink: 0;
+    }
+    .lb-back-btn:hover { background: rgba(0,0,0,.16); }
+    .lb-screen-list {
+      list-style: none; padding: 0; margin: 0;
+      overflow-y: auto; flex: 1;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+
 
     /* === IN-GAME HUD — Score + Pause sit inside TOP SAFE ZONE === */
     #game-hud {
@@ -1324,21 +1374,29 @@
     <!-- MAIN MENU -->
     <div id="main-menu" class="overlay active">
       <div class="logo-wrap">
-        <img src="logo.png" alt="empeo Land Adventure" class="logo-img">
-      </div>
-
-      <div class="leaderboard-card">
-        <div class="leaderboard-title">🏆 LEADERBOARD</div>
-        <select id="season-select" class="season-select" style="display:none">
-          <option value="">Loading…</option>
-        </select>
-        <ol id="leaderboard-list" class="leaderboard-list"></ol>
-        <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
+        <img src="logo.png" alt="Super empeo Land" class="logo-img">
       </div>
 
       <div class="menu-actions">
-        <button id="start-btn" class="btn btn-primary">▶ Start</button>
+        <button id="start-btn" class="btn btn-primary">▶ Play</button>
+        <button id="leaderboard-btn" class="btn btn-green">🏆 Leaderboard</button>
         <button id="share-btn" class="btn btn-secondary">📣 Share</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD SCREEN (separate overlay page) -->
+    <div id="leaderboard-screen" class="overlay">
+      <div class="lb-screen-card">
+        <div class="lb-screen-header">
+          <button class="lb-back-btn" id="lb-back-btn" aria-label="Back">←</button>
+          <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
+          <div style="width:34px"></div>
+        </div>
+        <select id="season-select" class="season-select" style="display:none">
+          <option value="">Loading…</option>
+        </select>
+        <ol id="leaderboard-list" class="lb-screen-list"></ol>
+        <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
     </div>
 
@@ -3201,6 +3259,14 @@
           document.getElementById('share-btn').addEventListener('click', () => UI.share(0));
           document.getElementById('gameover-share-btn').addEventListener('click', () => UI.share(Game.score));
           this.el.gameoverClose.addEventListener('click', () => Game.quitToMenu());
+
+          // Leaderboard screen open/close
+          document.getElementById('leaderboard-btn').addEventListener('click', () => {
+            document.getElementById('leaderboard-screen').classList.add('active');
+          });
+          document.getElementById('lb-back-btn').addEventListener('click', () => {
+            document.getElementById('leaderboard-screen').classList.remove('active');
+          });
 
           // v0.6 submit / skip
           this.el.submitScoreBtn.addEventListener('click', () => this._submitScore());
