@@ -68,34 +68,27 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: #000;
+      background: #1E88E5; /* match sky colour — no black bars visible */
     }
 
     /*
-     * Canvas wrapper — CONTAIN mode.
-     * Always preserves 400:700 aspect ratio; never stretches.
-     * Centres in viewport with pillarbox (portrait-wide) or letterbox (landscape).
+     * Canvas wrapper — FULL SCREEN mode (v1.04).
+     * Canvas fills the entire viewport exactly — no bars, no crop, no stretch.
+     * CONFIG.WIDTH/HEIGHT are set dynamically from viewport before game starts.
      */
     #canvas-wrap {
       position: relative;
-      aspect-ratio: 400 / 700;
-      /* Fit inside viewport without distorting */
-      height: 100svh;
-      height: 100dvh;
-      width: auto;           /* width derived from height + aspect-ratio */
-      max-width: 100vw;      /* never wider than viewport */
-      max-height: 100dvh;    /* never taller than viewport */
+      /* Max 480px wide (desktop), full viewport on mobile */
+      width: min(100vw, 480px);
+      height: min(100dvh, calc(min(100vw, 480px) * 700 / 400));
       overflow: hidden;
-      /* Fallback colour while assets load */
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
     }
 
-    /* Landscape: let height drive the size — width is auto from aspect-ratio */
     @media (orientation: landscape) {
       #canvas-wrap {
-        height: 100svh;
-        height: 100dvh;
-        max-width: 100vw;
+        width: min(100vw, 480px);
+        height: min(100dvh, calc(min(100vw, 480px) * 700 / 400));
       }
     }
 
@@ -185,8 +178,8 @@
       width: 100%;
       display: flex;
       justify-content: center;
-      /* Drop-shadow filter retained — gives the PNG a soft pop against the sky */
-      filter: drop-shadow(0 12px 24px rgba(0, 40, 100, .45));
+      /* Drop-shadow: small blur so it never reaches edge of overflow:hidden boundary */
+      filter: drop-shadow(0 6px 10px rgba(0, 40, 100, .40));
     }
 
     .logo-img {
@@ -345,18 +338,20 @@
 
     .leaderboard-list.expanded { max-height: 600px; }
 
-    .season-select {
-      width: 100%;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 8px;
-      color: #1F5099;
+
+
+    .season-label {
+      display: none;
+      text-align: center;
       font-size: 13px;
-      font-weight: 600;
-      padding: 6px 10px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      outline: none;
+      font-weight: 700;
+      color: #1F5099;
+      background: rgba(255, 200, 50, 0.15);
+      border: 1px solid rgba(255, 180, 0, 0.35);
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin: 0 auto 8px;
+      width: fit-content;
     }
 
     .leaderboard-row {
@@ -443,22 +438,15 @@
     .leaderboard-row.bronze .rank  { color: #A05A1F; }
     .leaderboard-row.you    { background: rgba(255,201,60,.35) !important; outline: 2px solid #FFC93C; border-radius: 16px; }
 
-    .leaderboard-toggle {
-      appearance: none;
-      background: rgba(46,111,192,.08);
-      border: 2px solid rgba(46,111,192,.20);
-      border-radius: 999px;           /* pill */
-      color: #2E6FC0;
-      font-family: 'Nunito', system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 13px;
-      cursor: pointer;
-      padding: 7px 18px;
-      margin-top: 6px;
-      width: 100%;
-      transition: background .15s;
+    /* Separator between top 10 and player's own entry */
+    .lb-me-separator {
+      text-align: center;
+      color: rgba(31, 80, 153, 0.35);
+      font-size: 18px;
+      letter-spacing: 6px;
+      list-style: none;
+      padding: 4px 0;
     }
-    .leaderboard-toggle:hover { background: rgba(46,111,192,.15); }
 
     .leaderboard-empty {
       text-align: center;
@@ -1034,46 +1022,7 @@
     }
 
     /* Touch controls (mobile virtual D-pad) — hidden until first screen touch */
-    .touch-controls {
-      position: absolute;
-      bottom: max(24px, env(safe-area-inset-bottom, 0px) + 8px);
-      left: 12.5%;
-      right: 12.5%;
-      display: flex;                     /* always in layout... */
-      justify-content: space-between;
-      padding: 0;
-      pointer-events: none;
-      opacity: 0;                        /* ...but invisible until first touch */
-      transition: opacity 0.3s ease;
-    }
 
-    .touch-controls.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .touch-btn {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .15);
-      border: 3px solid rgba(255, 255, 255, .4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 32px;
-      font-weight: 900;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, .5);
-      user-select: none;
-    }
-
-    .touch-btn:active {
-      background: rgba(255, 255, 255, .3);
-    }
 
     /* Toast */
     .toast {
@@ -1343,11 +1292,8 @@
           <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
           <div style="width:34px"></div>
         </div>
-        <select id="season-select" class="season-select" style="display:none">
-          <option value="">Loading…</option>
-        </select>
+        <div id="season-label" class="season-label"></div>
         <ol id="leaderboard-list" class="lb-screen-list"></ol>
-        <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
     </div>
 
@@ -1360,10 +1306,7 @@
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
-      <div id="touch-controls" class="touch-controls">
-        <div id="touch-left" class="touch-btn">◀</div>
-        <div id="touch-right" class="touch-btn">▶</div>
-      </div>
+
 
       <!-- Countdown overlay (shown after resume) -->
       <div id="countdown-overlay" class="countdown-overlay">
@@ -1499,6 +1442,11 @@
         COIN_VALUE: 25,
         DIAMOND_VALUE: 100,
         DRAGON_STOMP: 50,
+        DRAGON_EGG_SCORE:     0,     // no instant score (passive buff only)
+        DRAGON_FORM_DURATION: 5000,  // ms in dragon form
+        DRAGON_SURGE_VY:     -10,    // initial upward kick on collect
+        DRAGON_FLOAT_VY:      -8.0,  // sustained upward float speed during dragon form
+        DRAGON_MAGNET_RADIUS: 130,   // px radius for item magnet effect
         BIRD_STOMP: 30,
         HEIGHT_SCORE_RATIO: 0.25,
 
@@ -1568,16 +1516,7 @@
           cv.addEventListener('click',      e => e.stopPropagation());
           cv.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 
-          // Virtual D-pad (touch buttons) — still available as fallback
-          const tl = document.getElementById('touch-left');
-          const tr = document.getElementById('touch-right');
-          const setTouch = (el, key) => {
-            el.addEventListener('touchstart', e => { e.preventDefault(); this[key] = true;  }, { passive: false });
-            el.addEventListener('touchend',   e => { e.preventDefault(); this[key] = false; }, { passive: false });
-            el.addEventListener('touchcancel',e => { e.preventDefault(); this[key] = false; }, { passive: false });
-          };
-          setTouch(tl, 'left');
-          setTouch(tr, 'right');
+          // Virtual D-pad removed — tilt control is the primary mobile input
 
           // === GYROSCOPE / TILT CONTROL ===
           this._setupTiltHandler();
@@ -1671,7 +1610,9 @@
           this.state = 'idle';    // idle | jumping | falling | spring
           this.animTimer = 0;
           this.squash = 1;        // 1 = neutral; >1 = stretch up; <1 = squash down
-          this.springAnim = 0;
+          this.springAnim  = 0;
+          this.dragonTimer  = 0;    // ms remaining in dragon form (0 = normal)
+          this._wasDragon   = false; // flag to detect form expiry for revert FX
         }
 
         update(dt, gameSpeed = 1) {
@@ -1704,14 +1645,26 @@
           this.x += this.vx * dtFactor;
           this.y += this.vy * dtFactor;
 
-          // Gravity
-          this.vy += CONFIG.GRAVITY * dtFactor;
-          if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+          // Gravity — dragon form overrides gravity with sustained upward float
+          if (this.dragonTimer > 0) {
+            // Lerp vy toward DRAGON_FLOAT_VY: initial surge settles into gentle upward drift
+            this.vy += (CONFIG.DRAGON_FLOAT_VY - this.vy) * 0.12;
+          } else {
+            this.vy += CONFIG.GRAVITY * dtFactor;
+            if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+          }
 
-          // === Screen wrap at SAFE ZONE edges (body-edge-based, instant teleport) ===
-          // Teleport as soon as the player body fully exits one side → appears on the other.
-          if (this.x > CONFIG.SAFE_X_MAX) this.x -= CONFIG.SAFE_WIDTH;
-          else if (this.x + this.w < CONFIG.SAFE_X_MIN) this.x += CONFIG.SAFE_WIDTH;
+          // === Screen wrap at screen edges (Pac-Man style) ===
+          // Wrap when player CENTER exits the screen boundary (0 or CONFIG.WIDTH).
+          if (this._justWrapped > 0) this._justWrapped--;
+          const playerCenterX = this.x + this.w / 2;
+          if (playerCenterX > CONFIG.WIDTH) {
+            this.x -= CONFIG.WIDTH;
+            this._justWrapped = 4;
+          } else if (playerCenterX < 0) {
+            this.x += CONFIG.WIDTH;
+            this._justWrapped = 4;
+          }
 
           // State
           if (this.vy < -0.1) this.state = 'jumping';
@@ -1722,7 +1675,8 @@
           const targetSquash = this.state === 'jumping' ? 1.1 : (this.state === 'falling' ? 0.95 : 1);
           this.squash += (targetSquash - this.squash) * 0.15;
 
-          if (this.springAnim > 0) this.springAnim -= dt;
+          if (this.springAnim  > 0) this.springAnim  -= dt;
+          if (this.dragonTimer > 0) this.dragonTimer -= dt;
 
           this.animTimer += dt;
         }
@@ -1739,11 +1693,23 @@
 
         // Public draw — just draw the player once (no ghost copy).
         draw(ctx, camY) {
-          this._drawSelf(ctx, camY);
+          this._drawSelf(ctx, camY, 0);
+
+          // Pac-Man ghost: offset by full WIDTH so ghost appears at the OPPOSITE screen edge
+          if (!this._justWrapped) {
+            // Player's right side exits right edge → ghost at left edge
+            if (this.x + this.w > CONFIG.WIDTH) {
+              this._drawSelf(ctx, camY, -CONFIG.WIDTH);
+            }
+            // Player's left side exits left edge → ghost at right edge
+            if (this.x < 0) {
+              this._drawSelf(ctx, camY, CONFIG.WIDTH);
+            }
+          }
         }
 
-        _drawSelf(ctx, camY) {
-          const cx = this.x + this.w / 2;
+        _drawSelf(ctx, camY, xOffset = 0) {
+          const cx = this.x + xOffset + this.w / 2;
           const cy = this.y - camY + this.h / 2;
           const sq = this.squash;
           const w = this.w;
@@ -1774,9 +1740,12 @@
           ctx.scale(1 / sq, sq);
 
           // === DRAW CHARACTER SPRITE ===
-          // Use gon-shocked sprite during death animation, normal otherwise
-          const isDying = Game.state === 'dying';
-          const sprite = Game.assets && (isDying ? Game.assets.gonShocked : Game.assets.gon);
+          // Priority: dying → dragon form → normal
+          const isDying  = Game.state === 'dying';
+          const isDragon = this.dragonTimer > 0;
+          const sprite = isDying  ? Game.assets.gonShocked
+                       : isDragon ? IMG_DRAGON
+                       :            Game.assets.gon;
           if (sprite && sprite.complete && sprite.naturalWidth > 0) {
             const drawSize = Math.max(w, h) * 1.30;
             ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
@@ -2154,6 +2123,30 @@
         }
       }
 
+      class DragonEgg {
+        // Rare collectible — spawn lvl 3+. Triggers dragon transformation on collect.
+        constructor(platform, ox, oy) {
+          this.platform  = platform;
+          this.ox = ox; this.oy = oy;
+          this.w = 40; this.h = 40;
+          this.collected = false;
+          this.t = 0;
+        }
+        get x() { return this.platform.x + this.ox; }
+        get y() { return this.platform.y + this.oy; }
+        rect() { return { x: this.x + 6, y: this.y + 6, w: this.w - 12, h: this.h - 12 }; }
+        update(dt) { this.t += dt; }
+        draw(ctx, camY) {
+          if (this.collected) return;
+          const bob = Math.sin(this.t * 0.003) * 4;
+          ctx.save();
+          // Warm orange-red glow to make it visually distinct
+          ctx.shadowColor = '#FF6A00';
+          ctx.shadowBlur  = 14 + Math.sin(this.t * 0.005) * 4;
+          ctx.drawImage(IMG_DRAGON_EGG, this.x, this.y - camY + bob, this.w, this.h);
+          ctx.restore();
+        }
+      }
 
       // =========================================================
       // 7. OBSTACLES — Spike (floating above platform, damages all directions)
@@ -2162,6 +2155,8 @@
       // Preload sprites
       const IMG_COIN        = new Image(); IMG_COIN.src        = '/sprite-coin.png';
       const IMG_DIAMOND     = new Image(); IMG_DIAMOND.src     = '/sprite-diamond.png';
+      const IMG_DRAGON_EGG  = new Image(); IMG_DRAGON_EGG.src  = '/dragon-egg.png';
+      const IMG_DRAGON      = new Image(); IMG_DRAGON.src      = '/sprite-dragon.png';
       // Cloud sprites (5 variants from user artwork)
       const CLOUD_IMGS = { a: new Image(), b: new Image(), c: new Image(), d: new Image(), e: new Image() };
       CLOUD_IMGS.a.src = '/cloud-a.png';
@@ -2495,40 +2490,43 @@
             }
           }
 
-          // === BACKGROUND PLATFORMS (offscreen composite — no see-through overlap) ===
-          const pc = this._platCtx;
-          pc.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-          for (const p of this.bgPlatforms) {
-            const py = wrapY(p.y - camY * p.depth);
-            if (py > -60 && py < CONFIG.HEIGHT + 60) {
-              const img = PLAT_IMGS[p.variant];
-              if (img.complete && img.naturalWidth > 0) {
-                const h = p.w * (img.naturalHeight / img.naturalWidth);
-                pc.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
+          // === BACKGROUND PLATFORMS (floating islands) — hidden in Space ===
+          if (Game.currentLevelIdx < 4) {
+            const pc = this._platCtx;
+            pc.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+            for (const p of this.bgPlatforms) {
+              const py = wrapY(p.y - camY * p.depth);
+              if (py > -60 && py < CONFIG.HEIGHT + 60) {
+                const img = PLAT_IMGS[p.variant];
+                if (img.complete && img.naturalWidth > 0) {
+                  const h = p.w * (img.naturalHeight / img.naturalWidth);
+                  pc.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
+                }
               }
             }
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(this._platCanvas, 0, 0);
+            ctx.restore();
           }
-          // Composite the whole offscreen canvas at single alpha
-          ctx.save();
-          ctx.globalAlpha = 0.22;
-          ctx.drawImage(this._platCanvas, 0, 0);
-          ctx.restore();
 
-          // === BACKGROUND HOT-AIR BALLOONS ===
-          const now = performance.now();
-          for (const b of this.bgBalloons) {
-            b.x += b.drift;
-            if (b.x > CONFIG.WIDTH + 100) b.x = -100;
-            const bob = Math.sin(now * 0.0008 + b.bobPhase) * 6;
-            const py = wrapY(b.y - camY * b.depth) + bob;
-            if (py > -120 && py < CONFIG.HEIGHT + 120) {
-              const img = BALLOON_IMGS[b.variant];
-              if (img.complete && img.naturalWidth > 0) {
-                const h = b.w * (img.naturalHeight / img.naturalWidth);
-                ctx.save();
-                ctx.globalAlpha = 0.70;
-                ctx.drawImage(img, b.x - b.w / 2, py - h / 2, b.w, h);
-                ctx.restore();
+          // === BACKGROUND HOT-AIR BALLOONS — hidden in Space ===
+          if (Game.currentLevelIdx < 4) {
+            const now = performance.now();
+            for (const b of this.bgBalloons) {
+              b.x += b.drift;
+              if (b.x > CONFIG.WIDTH + 100) b.x = -100;
+              const bob = Math.sin(now * 0.0008 + b.bobPhase) * 6;
+              const py = wrapY(b.y - camY * b.depth) + bob;
+              if (py > -120 && py < CONFIG.HEIGHT + 120) {
+                const img = BALLOON_IMGS[b.variant];
+                if (img.complete && img.naturalWidth > 0) {
+                  const h = b.w * (img.naturalHeight / img.naturalWidth);
+                  ctx.save();
+                  ctx.globalAlpha = 0.70;
+                  ctx.drawImage(img, b.x - b.w / 2, py - h / 2, b.w, h);
+                  ctx.restore();
+                }
               }
             }
           }
@@ -2844,11 +2842,7 @@
 
           this.el.rankText = document.getElementById('rank-text');
           this.el.lbList = document.getElementById('leaderboard-list');
-          this.el.lbToggle   = document.getElementById('leaderboard-toggle');
-          this.el.seasonSelect = document.getElementById('season-select');
-          this.showingTop50    = false;
           this._currentSeasonId = null;
-          this.el.touch = document.getElementById('touch-controls');
           this.el.toast = document.getElementById('toast');
           this.el.menuVideo = document.getElementById('menu-video');
 
@@ -2896,27 +2890,7 @@
           // v0.51 migration banner
           this.setupV6Migration();
 
-          this.el.lbToggle.addEventListener('click', () => {
-            this.showingTop50 = !this.showingTop50;
-            this.renderLeaderboard();
-            this.el.lbToggle.textContent = this.showingTop50 ? 'Show Less ▴' : 'See More (50) ▾';
-            this.el.lbList.classList.toggle('expanded', this.showingTop50);
-          });
 
-          // Season dropdown
-          this.el.seasonSelect.addEventListener('change', () => {
-            this._currentSeasonId = this.el.seasonSelect.value || null;
-            this.renderLeaderboard();
-          });
-
-          // === AUTO-REVEAL TOUCH D-PAD ON FIRST SCREEN TOUCH ===
-          // Tilt is always active by default. D-pad appears when user first touches screen.
-          const canvasWrap = document.getElementById('canvas-wrap');
-          canvasWrap.addEventListener('touchstart', () => {
-            if (!this.el.touch.classList.contains('visible')) {
-              this.el.touch.classList.add('visible');
-            }
-          }, { passive: true, once: true });
         },
 
         showMenu() {
@@ -3119,36 +3093,74 @@
 
 
 
-        // v0.6 renderLeaderboard: fetch online, fall back to localStorage if offline
+        // Always show top 10 only
         async renderLeaderboard() {
-          const limit = this.showingTop50 ? 50 : 10;
-          const sid   = this._currentSeasonId ?? '';
-          const url   = `/api/leaderboard?limit=${limit}${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
+          const sid = this._currentSeasonId ?? '';
+          const url = `/api/leaderboard?limit=50${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
+
+          // Client-side censorEmail mirrors server's censorEmail()
+          function censorEmailClient(email) {
+            if (!email) return '****';
+            const parts = email.toLowerCase().trim().split('@');
+            if (parts.length !== 2) return '****';
+            const [local, domain] = parts;
+            if (local.length <= 1) return `${local}*@${domain}`;
+            if (local.length <= 2) return `${local[0]}*@${domain}`;
+            return `${local[0]}${'*'.repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
+          }
+
+          const myEmail = (localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '').toLowerCase().trim();
+          const myEmailDisplay = myEmail ? censorEmailClient(myEmail) : null;
+
           try {
             const res  = await fetch(url);
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
 
-            // Populate season dropdown (only if seasons exist)
-            if (data.seasons && data.seasons.length > 0 && this.el.seasonSelect) {
+            // Auto-use active season (no dropdown) — show season name as label
+            if (data.seasons && data.seasons.length > 0) {
               const activeSeason = data.activeSeason;
-              this.el.seasonSelect.style.display = 'block';
-              this.el.seasonSelect.innerHTML = data.seasons.map(s =>
-                `<option value="${escapeHtml(s.id)}" ${s.id === (sid || activeSeason) ? 'selected' : ''}>${escapeHtml(s.name)}${s.id === activeSeason ? ' ⭐' : ''}</option>`
-              ).join('');
-              // Sync internal state if first load
               if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
+              const activeSeasonObj = data.seasons.find(s => s.id === activeSeason);
+              const labelEl = document.getElementById('season-label');
+              if (labelEl && activeSeasonObj) {
+                labelEl.textContent = activeSeasonObj.name + ' ⭐';
+                labelEl.style.display = 'block';
+              }
             }
 
-            const list = (data.global ?? []).slice(0, limit);
-            if (list.length === 0) {
+            const fullList = data.global ?? [];
+            const top10    = fullList.slice(0, 10);
+
+            if (top10.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';
               return;
             }
-            this.el.lbList.innerHTML = list.map((e, i) => lbRowHtml(e, i)).join('');
+
+            // Check if player is in top 10
+            let myIndexInTop10 = -1;
+            if (myEmailDisplay) {
+              myIndexInTop10 = top10.findIndex(e => e.emailDisplay === myEmailDisplay);
+            }
+
+            let html = top10.map((e, i) => {
+              const isMe = myEmailDisplay && e.emailDisplay === myEmailDisplay;
+              return lbRowHtml(e, i, isMe);
+            }).join('');
+
+            // If player is NOT in top 10, find their entry in full list and show separately
+            if (myEmailDisplay && myIndexInTop10 === -1) {
+              const myEntry = fullList.find(e => e.emailDisplay === myEmailDisplay);
+              if (myEntry) {
+                html += `<li class="leaderboard-row lb-me-separator">· · ·</li>`;
+                html += lbRowHtml(myEntry, myEntry.rank - 1, true);
+              }
+            }
+
+            this.el.lbList.innerHTML = html;
           } catch (_) {
             // Fallback to localStorage leaderboard if API unreachable
-            const list = Leaderboard.load().slice(0, limit);
+            const list = Leaderboard.load().slice(0, 10);
             if (list.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>';
               return;
@@ -3222,18 +3234,19 @@
             return;
           }
 
-          // 1) Try native Web Share API first (mobile)
-          if (navigator.share) {
+          // 1) Native Web Share API — mobile only
+          // Desktop Chrome's navigator.share behaves unexpectedly (concatenates text+url as path)
+          const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+          if (navigator.share && isMobile) {
             navigator.share({ title: 'empeo Land Adventure', text, url })
               .catch(err => {
-                // Ignore user cancellation; only fallback on real failures
                 if (err && err.name !== 'AbortError') {
                   this.copyLinkToClipboard(url);
                 }
               });
             return;
           }
-          // 2) Fallback: copy URL to clipboard (so user can paste anywhere)
+          // 2) Desktop / fallback: copy URL to clipboard
           this.copyLinkToClipboard(url);
         },
 
@@ -3335,7 +3348,7 @@
         state: 'menu',     // menu | playing | paused | dying | gameover
         player: null,
         platforms: [],
-        coins: [], diamonds: [], springs: [], particles: [],
+        coins: [], diamonds: [], dragonEggs: [], springs: [], particles: [],
         bg: null,
         camY: 0,            // top of camera in world space
         highestY: 0,        // tracking max climbed
@@ -3390,7 +3403,7 @@
           Input.requestTiltPermission();
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
-          this.coins = []; this.diamonds = []; this.springs = []; this.particles = [];
+          this.coins = []; this.diamonds = []; this.dragonEggs = []; this.springs = []; this.particles = [];
           this.camY = 0;
           this.highestY = this.player.y;
           this.score = 0;
@@ -3519,18 +3532,27 @@
           p.w = lvl.platWidth;   // override width per level
           this.platforms.push(p);
 
-          // Spawn collectibles only (no obstacles)
+          // Spawn collectibles — exclusive: only one item per platform
           const r = Math.random();
           const lvlIdx = this.getLevelDef().idx ?? 0;
+          let hasCollectible = false;
           if (type !== 'breakable') {
             if (r < 0.10) {
               this.springs.push(new Spring(p));
+              hasCollectible = true;
             } else if (r < 0.16 && lvlIdx >= 1) {
               this.diamonds.push(new Diamond(p, p.w / 2 - 16, -40));
+              hasCollectible = true;
             } else if (r < 0.52) {
               this.coins.push(new Coin(p, p.w / 2 - 16, -34));
+              hasCollectible = true;
             }
           }
+          // Dragon Egg — rare (4%), level 2+ (Night, 4000pts), exclusive with all other items
+          if (!hasCollectible && lvlIdx >= 2 && type !== 'breakable' && Math.random() < 0.04) {
+            this.dragonEggs.push(new DragonEgg(p, p.w / 2 - 20, -58));
+          }
+
         },
 
         spawnParticles(x, y, color, n = 8) {
@@ -3623,9 +3645,11 @@
           for (const s of this.springs) s.update(dt);
           for (const c of this.coins)    c.update(dt);
           for (const d of this.diamonds)  d.update(dt);
+          for (const e of this.dragonEggs) e.update(dt);
           this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.coins         = this.coins.filter(c => !c.collected && c.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.diamonds      = this.diamonds.filter(d => !d.collected && d.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.dragonEggs    = this.dragonEggs.filter(e => !e.collected && e.platform.y < this.camY + CONFIG.HEIGHT + 200);
 
           // Particles
           for (const pt of this.particles) pt.update(dt);
@@ -3686,6 +3710,80 @@
               Game.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 14);
             }
           }
+          // Dragon Eggs
+          for (const egg of this.dragonEggs) {
+            if (egg.collected) continue;
+            if (Utils.rectsOverlap(pr, egg.rect())) {
+              egg.collected = true;
+              this.activateDragonForm();
+            }
+          }
+
+          // Dragon form: magnet + fire trail + revert detection
+          if (this.player) {
+            if (this.player.dragonTimer > 0) {
+              this.player._wasDragon = true;
+
+              // === MAGNET: pull nearby coins & diamonds toward player ===
+              const px = this.player.x + this.player.w / 2;
+              const py = this.player.y + this.player.h / 2;
+              const R  = CONFIG.DRAGON_MAGNET_RADIUS;
+              const PULL_SPEED = 6;   // px per frame toward player
+
+              for (const c of this.coins) {
+                if (c.collected) continue;
+                const dx = px - (c.x + c.w / 2);
+                const dy = py - (c.y + c.h / 2);
+                const dist = Math.hypot(dx, dy);
+                if (dist < R) {
+                  // Pull item offset toward player
+                  c.ox += (dx / dist) * PULL_SPEED;
+                  c.oy += (dy / dist) * PULL_SPEED;
+                  if (dist < 22) {
+                    c.collected = true;
+                    this.score += CONFIG.COIN_VALUE * this.multiplier;
+                    Sound.play('coin');
+                    this.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FF8C2A', 6);
+                  }
+                }
+              }
+              for (const d of this.diamonds) {
+                if (d.collected) continue;
+                const dx = px - (d.x + d.w / 2);
+                const dy = py - (d.y + d.h / 2);
+                const dist = Math.hypot(dx, dy);
+                if (dist < R) {
+                  d.ox += (dx / dist) * PULL_SPEED;
+                  d.oy += (dy / dist) * PULL_SPEED;
+                  if (dist < 22) {
+                    d.collected = true;
+                    this.score += CONFIG.DIAMOND_VALUE * this.multiplier;
+                    Sound.play('diamond');
+                    this.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 10);
+                  }
+                }
+              }
+
+              // Continuous fire particle trail (40% per frame)
+              if (Math.random() < 0.40) {
+                const cx = this.player.x + this.player.w / 2;
+                const cy = this.player.y + this.player.h * 0.8;
+                const fireColors = ['#FF4500','#FF8C00','#FFD700'];
+                this.particles.push(new Particle(cx, cy, fireColors[Math.floor(Math.random() * 3)]));
+              }
+            } else if (this.player._wasDragon) {
+              // Dragon form just expired — burst icy/white revert particles
+              this.player._wasDragon = false;
+              const cx = this.player.x + this.player.w / 2;
+              const cy = this.player.y + this.player.h / 2;
+              const revertColors = ['#87CEEB','#FFFFFF','#B0E0E6'];
+              for (let i = 0; i < 14; i++) {
+                this.particles.push(new Particle(cx, cy, revertColors[i % 3]));
+              }
+            }
+          }
+
+
           // Multiplier expiry
           if (this.multiplier > 1 && performance.now() > this.multiplierEnd) {
             this.multiplier = 1;
@@ -3725,6 +3823,24 @@
             }
           }
         },
+
+        activateDragonForm() {
+          if (!this.player) return;
+          // Surge upward (moderate) + start dragon timer
+          this.player.dragonTimer = CONFIG.DRAGON_FORM_DURATION;
+          this.player.vy = CONFIG.DRAGON_SURGE_VY;   // moderate upward kick
+          this.player.squash = 1.2;
+          Sound.play('spring'); // reuse spring SFX
+          // Fire burst particles on transform
+          const cx = this.player.x + this.player.w / 2;
+          const cy = this.player.y + this.player.h / 2;
+          const burstColors = ['#FF4500','#FF8C00','#FFD700','#FF6347'];
+          for (let i = 0; i < 22; i++) {
+            this.particles.push(new Particle(cx, cy, burstColors[i % 4]));
+          }
+        },
+
+
 
         gameOver() {
           if (this.state === 'dying' || this.state === 'gameover') return; // guard
@@ -3941,6 +4057,7 @@
           for (const s of this.springs)        s.draw(ctx, camY);
           for (const c of this.coins)          c.draw(ctx, camY);
           for (const d of this.diamonds)       d.draw(ctx, camY);
+          for (const e of this.dragonEggs)     e.draw(ctx, camY);
           if (this.player) this.player.draw(ctx, camY);
           for (const p of this.particles) p.draw(ctx, camY);
           this._drawScrollWarning(ctx);
@@ -3986,6 +4103,29 @@
         if (vm) {
           vm.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
         }
+        // === PREVENT PINCH-TO-ZOOM ===
+        // iOS Safari (10+) ignores viewport user-scalable=no — must block via JS
+        document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function(e){
+          if (e.touches && e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        // === DYNAMIC CANVAS RESOLUTION (v1.04) ===
+        // Cap at 480px wide for desktop; fill viewport on mobile
+        (function resizeConfig() {
+          const MAX_W = 480;
+          const W = Math.round(Math.min(window.innerWidth,  MAX_W));
+          const H = Math.round(Math.min(window.innerHeight, W * 700 / 400));
+          CONFIG.WIDTH  = W;
+          CONFIG.HEIGHT = H;
+          CONFIG.SAFE_X_MIN = W * CONFIG.SAFE_MARGIN_PCT;
+          CONFIG.SAFE_X_MAX = W * (1 - CONFIG.SAFE_MARGIN_PCT);
+          CONFIG.SAFE_WIDTH = CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN;
+          const canvas = document.getElementById('game-canvas');
+          if (canvas) { canvas.width = W; canvas.height = H; }
+        })();
+
         Game.init();
       });
 

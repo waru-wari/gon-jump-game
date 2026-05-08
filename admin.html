@@ -253,6 +253,7 @@
         </div>
         <div class="season-actions" style="margin-left:auto">
           <button class="btn btn-ghost btn-sm" onclick="viewPlayers('${s.id}','${esc(s.name)}')">👥 Players</button>
+          <button class="btn btn-ghost btn-sm" onclick="renameSeason('${s.id}','${esc(s.name)}')">✏️ Rename</button>
           ${!s.isActive ? `<button class="btn btn-success btn-sm" onclick="setActive('${s.id}')">▶ Set Active</button>` : ''}
           <button class="btn btn-danger btn-sm" onclick="resetSeason('${s.id}','${esc(s.name)}')">⚠ Reset</button>
         </div>
@@ -268,6 +269,23 @@
       const data = await adminCall('status');
       $('stat-total').textContent  = data.totalEntries ?? 0;
       $('stat-season').textContent = data.activeSeasonName ?? '(none)';
+    } catch (e) { showStatus('Error: ' + e.message, 'error'); }
+  }
+
+  async function renameSeason(seasonId, currentName) {
+    const newName = window.prompt(`Rename season "${currentName}" to:`, currentName);
+    if (!newName || newName.trim() === currentName) return;
+    try {
+      const d = await adminCall('renameSeason', { seasonId, name: newName.trim() });
+      showStatus(`Season renamed to "${d.name}".`, 'ok');
+      await loadSeasons();
+      // Update players card title if viewing this season
+      if (_viewingSeasonId === seasonId) {
+        $('players-card-title').textContent = `👥 Players — ${d.name}`;
+      }
+      // Update stat bar if this is the active season
+      const status = await adminCall('status');
+      $('stat-season').textContent = status.activeSeasonName ?? '(none)';
     } catch (e) { showStatus('Error: ' + e.message, 'error'); }
   }
 
