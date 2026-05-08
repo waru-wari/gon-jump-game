@@ -339,6 +339,20 @@
 
 
 
+    .season-label {
+      display: none;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1F5099;
+      background: rgba(255, 200, 50, 0.15);
+      border: 1px solid rgba(255, 180, 0, 0.35);
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin: 0 auto 8px;
+      width: fit-content;
+    }
+
     .leaderboard-row {
       display: flex;
       justify-content: space-between;
@@ -1284,6 +1298,7 @@
           <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
           <div style="width:34px"></div>
         </div>
+        <div id="season-label" class="season-label"></div>
         <ol id="leaderboard-list" class="lb-screen-list"></ol>
         <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
@@ -3084,10 +3099,16 @@
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
 
-            // Auto-use active season (no dropdown)
+            // Auto-use active season (no dropdown) — show season name as label
             if (data.seasons && data.seasons.length > 0) {
               const activeSeason = data.activeSeason;
               if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
+              const activeSeasonObj = data.seasons.find(s => s.id === activeSeason);
+              const labelEl = document.getElementById('season-label');
+              if (labelEl && activeSeasonObj) {
+                labelEl.textContent = activeSeasonObj.name + ' ⭐';
+                labelEl.style.display = 'block';
+              }
             }
 
             const list = (data.global ?? []).slice(0, limit);
