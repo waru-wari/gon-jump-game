@@ -3234,18 +3234,19 @@
             return;
           }
 
-          // 1) Try native Web Share API first (mobile)
-          if (navigator.share) {
+          // 1) Native Web Share API — mobile only
+          // Desktop Chrome's navigator.share behaves unexpectedly (concatenates text+url as path)
+          const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+          if (navigator.share && isMobile) {
             navigator.share({ title: 'empeo Land Adventure', text, url })
               .catch(err => {
-                // Ignore user cancellation; only fallback on real failures
                 if (err && err.name !== 'AbortError') {
                   this.copyLinkToClipboard(url);
                 }
               });
             return;
           }
-          // 2) Fallback: copy URL to clipboard (so user can paste anywhere)
+          // 2) Desktop / fallback: copy URL to clipboard
           this.copyLinkToClipboard(url);
         },
 
