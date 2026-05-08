@@ -1653,10 +1653,11 @@
             if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
           }
 
-          // === Screen wrap at SAFE ZONE edges (body-edge-based, instant teleport) ===
-          // Teleport as soon as the player body fully exits one side → appears on the other.
-          if (this.x > CONFIG.SAFE_X_MAX) this.x -= CONFIG.SAFE_WIDTH;
-          else if (this.x + this.w < CONFIG.SAFE_X_MIN) this.x += CONFIG.SAFE_WIDTH;
+          // === Screen wrap — trigger when player CENTER crosses SAFE ZONE edge ===
+          // This ensures the ghost on the other side is symmetrical at the moment of swap.
+          const playerCenterX = this.x + this.w / 2;
+          if (playerCenterX > CONFIG.SAFE_X_MAX)      this.x -= CONFIG.SAFE_WIDTH;
+          else if (playerCenterX < CONFIG.SAFE_X_MIN)  this.x += CONFIG.SAFE_WIDTH;
 
           // State
           if (this.vy < -0.1) this.state = 'jumping';
@@ -1685,11 +1686,21 @@
 
         // Public draw — just draw the player once (no ghost copy).
         draw(ctx, camY) {
-          this._drawSelf(ctx, camY);
+          this._drawSelf(ctx, camY, 0);
+
+          // === PAC-MAN WRAP: draw ghost on opposite side when overlapping edge ===
+          // Ghost appears on left when right side of player passes SAFE_X_MAX
+          if (this.x + this.w > CONFIG.SAFE_X_MAX) {
+            this._drawSelf(ctx, camY, -CONFIG.SAFE_WIDTH);
+          }
+          // Ghost appears on right when left side of player passes SAFE_X_MIN
+          if (this.x < CONFIG.SAFE_X_MIN) {
+            this._drawSelf(ctx, camY, CONFIG.SAFE_WIDTH);
+          }
         }
 
-        _drawSelf(ctx, camY) {
-          const cx = this.x + this.w / 2;
+        _drawSelf(ctx, camY, xOffset = 0) {
+          const cx = this.x + xOffset + this.w / 2;
           const cy = this.y - camY + this.h / 2;
           const sq = this.squash;
           const w = this.w;
