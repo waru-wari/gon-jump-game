@@ -73,27 +73,27 @@
 
     /*
      * Canvas wrapper — CONTAIN mode.
-     * Uses min() to pick whichever axis is the bottleneck so the canvas
-     * always fits completely inside the viewport — no cropping.
-     *   - Portrait: width = min(100vw, height_at_full_dvh)
-     *   - Landscape: height = min(100dvh, width_at_full_vw)
+     * min() picks the bottleneck axis so canvas ALWAYS fits without crop or distortion.
+     * Portrait: width = min(100vw, height_if_full_dvh) → no side-crop
+     * Landscape: same formula still works
      */
     #canvas-wrap {
       position: relative;
       aspect-ratio: 400 / 700;
-      /* Width is the min of: full viewport width OR width derived from full height */
       width: min(100vw, calc(100dvh * 400 / 700));
-      height: auto;
+      height: auto;          /* derived from width via aspect-ratio */
+      max-height: 100dvh;    /* safety clamp — shouldn't fire with min() formula */
       overflow: hidden;
       /* Fallback colour while assets load */
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
     }
 
-    /* Landscape: height drives size instead */
+    /* Landscape: same formula works — height=100dvh bottleneck applies */
     @media (orientation: landscape) {
       #canvas-wrap {
         width: min(calc(100dvh * 400 / 700), 100vw);
         height: auto;
+        max-height: 100dvh;
       }
     }
 
@@ -183,8 +183,8 @@
       width: 100%;
       display: flex;
       justify-content: center;
-      /* Drop-shadow filter retained — gives the PNG a soft pop against the sky */
-      filter: drop-shadow(0 12px 24px rgba(0, 40, 100, .45));
+      /* Drop-shadow: small blur so it never reaches edge of overflow:hidden boundary */
+      filter: drop-shadow(0 6px 10px rgba(0, 40, 100, .40));
     }
 
     .logo-img {
