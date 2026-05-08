@@ -193,6 +193,17 @@ async function actionDelete(body, res) {
   return res.status(200).json({ ok: true, removed: removed > 0 });
 }
 
+async function actionRenameSeason(body, res) {
+  const { seasonId, name } = body;
+  if (!seasonId) return res.status(400).json({ error: 'seasonId required.' });
+  const newName = (name ?? '').trim();
+  if (!newName) return res.status(400).json({ error: 'name required.' });
+  const exists = await kv.hgetall(`season:${seasonId}`);
+  if (!exists) return res.status(404).json({ error: 'Season not found.' });
+  await kv.hset(`season:${seasonId}`, { name: newName });
+  return res.status(200).json({ ok: true, seasonId, name: newName });
+}
+
 async function actionExport(body, res) {
   const entries = await getTopN(1000, body.seasonId);
   res.setHeader('Content-Disposition', 'attachment; filename="leaderboard-export.json"');
@@ -218,6 +229,7 @@ export default async function handler(req, res) {
       case 'seasons':       return await actionSeasons(res);
       case 'createSeason':  return await actionCreateSeason(body, res);
       case 'setActive':     return await actionSetActive(body, res);
+      case 'renameSeason':  return await actionRenameSeason(body, res);
       case 'resetSeason':   return await actionResetSeason(body, res);
       case 'players':       return await actionPlayers(body, res);
       case 'top100':        return await actionTop100(body, res);
