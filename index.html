@@ -72,28 +72,22 @@
     }
 
     /*
-     * Canvas wrapper — CONTAIN mode.
-     * min() picks the bottleneck axis so canvas ALWAYS fits without crop or distortion.
-     * Portrait: width = min(100vw, height_if_full_dvh) → no side-crop
-     * Landscape: same formula still works
+     * Canvas wrapper — FULL SCREEN mode (v1.04).
+     * Canvas fills the entire viewport exactly — no bars, no crop, no stretch.
+     * CONFIG.WIDTH/HEIGHT are set dynamically from viewport before game starts.
      */
     #canvas-wrap {
       position: relative;
-      aspect-ratio: 400 / 700;
-      width: min(100vw, calc(100dvh * 400 / 700));
-      height: auto;          /* derived from width via aspect-ratio */
-      max-height: 100dvh;    /* safety clamp — shouldn't fire with min() formula */
+      width: 100vw;
+      height: 100dvh;
       overflow: hidden;
-      /* Fallback colour while assets load */
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
     }
 
-    /* Landscape: same formula works — height=100dvh bottleneck applies */
     @media (orientation: landscape) {
       #canvas-wrap {
-        width: min(calc(100dvh * 400 / 700), 100vw);
-        height: auto;
-        max-height: 100dvh;
+        width: 100vw;
+        height: 100dvh;
       }
     }
 
@@ -4080,6 +4074,20 @@
         document.addEventListener('touchmove', function(e){
           if (e.touches && e.touches.length > 1) e.preventDefault();
         }, { passive: false });
+
+        // === DYNAMIC CANVAS RESOLUTION (v1.04) ===
+        // Set CONFIG.WIDTH/HEIGHT from actual viewport → full screen, no bars, no crop
+        (function resizeConfig() {
+          const W = Math.round(window.innerWidth);
+          const H = Math.round(window.innerHeight);
+          CONFIG.WIDTH  = W;
+          CONFIG.HEIGHT = H;
+          CONFIG.SAFE_X_MIN = W * CONFIG.SAFE_MARGIN_PCT;
+          CONFIG.SAFE_X_MAX = W * (1 - CONFIG.SAFE_MARGIN_PCT);
+          CONFIG.SAFE_WIDTH = CONFIG.SAFE_X_MAX - CONFIG.SAFE_X_MIN;
+          const canvas = document.getElementById('game-canvas');
+          if (canvas) { canvas.width = W; canvas.height = H; }
+        })();
 
         Game.init();
       });
