@@ -33,6 +33,13 @@ Play as Nong Gon, the empeo mascot, and jump as high as possible before the lava
 
 ## 📋 Changelog
 
+### v1.06 — 2026-05-08
+
+#### 🐛 Bug Fixes
+- **Submit button stale state after Play Again** — กด Play Again หลัง submit สำเร็จ แล้วเล่นจนถึงหน้า Game Over อีกครั้ง ปุ่มจะแสดง `⏳ Submitting...` และ disabled ค้างอยู่ แก้โดยเพิ่มการ reset ปุ่มกลับเป็น `📤 Submit Score` (disabled จนกว่า email จะ valid) ใน `showGameOver()` ก่อนที่จะ render stage 1 ทุกครั้ง
+
+---
+
 ### v1.0 — 2026-05-08
 
 #### ✨ New Features

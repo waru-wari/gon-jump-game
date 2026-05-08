@@ -2948,9 +2948,13 @@
           this.el.gameOver.classList.add('active');
           this.el.tally.textContent = '0';
 
-          // Reset form & stage
+          // Reset form & stage — also reset submit button in case it was left
+          // in a loading/disabled state from a previous successful submission.
+          if (this.el.submitScoreBtn) {
+            this.el.submitScoreBtn.textContent = '📤 Submit Score';
+            this.el.submitScoreBtn.disabled = true; // _updateSubmitBtn() below will re-enable if email valid
+          }
           this._goToStage(1);
-
 
           // Pre-fill email/name from localStorage (convenience, not auto-consent)
           const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
