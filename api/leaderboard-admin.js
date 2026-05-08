@@ -58,7 +58,7 @@ async function getTopN(n, sid) {
       rank: entries.length + 1,
       hash,
       name:         profile?.name         ?? 'Anonymous',
-      emailDisplay: profile?.emailDisplay  ?? '****',
+      emailDisplay: profile?.email ?? profile?.emailDisplay ?? '****',
       score,
       bestLevel:    profile?.bestLevel     ?? 1,
       timesPlayed:  Number(profile?.timesPlayed ?? 1),
@@ -170,7 +170,7 @@ async function actionSearch(body, res) {
     entry: {
       hash,
       name:         profile.name         ?? 'Anonymous',
-      emailDisplay: profile.emailDisplay  ?? '****',
+      emailDisplay: profile.email ?? profile.emailDisplay ?? '****',
       score:        score ? Number(score) : 0,
       bestLevel:    profile.bestLevel     ?? 1,
       timesPlayed:  Number(profile.timesPlayed ?? 1),
