@@ -73,29 +73,27 @@
 
     /*
      * Canvas wrapper — CONTAIN mode.
-     * Always preserves 400:700 aspect ratio; never stretches.
-     * Centres in viewport with pillarbox (portrait-wide) or letterbox (landscape).
+     * Uses min() to pick whichever axis is the bottleneck so the canvas
+     * always fits completely inside the viewport — no cropping.
+     *   - Portrait: width = min(100vw, height_at_full_dvh)
+     *   - Landscape: height = min(100dvh, width_at_full_vw)
      */
     #canvas-wrap {
       position: relative;
       aspect-ratio: 400 / 700;
-      /* Fit inside viewport without distorting */
-      height: 100svh;
-      height: 100dvh;
-      width: auto;           /* width derived from height + aspect-ratio */
-      max-width: 100vw;      /* never wider than viewport */
-      max-height: 100dvh;    /* never taller than viewport */
+      /* Width is the min of: full viewport width OR width derived from full height */
+      width: min(100vw, calc(100dvh * 400 / 700));
+      height: auto;
       overflow: hidden;
       /* Fallback colour while assets load */
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
     }
 
-    /* Landscape: let height drive the size — width is auto from aspect-ratio */
+    /* Landscape: height drives size instead */
     @media (orientation: landscape) {
       #canvas-wrap {
-        height: 100svh;
-        height: 100dvh;
-        max-width: 100vw;
+        width: min(calc(100dvh * 400 / 700), 100vw);
+        height: auto;
       }
     }
 
@@ -4135,6 +4133,14 @@
         if (vm) {
           vm.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
         }
+        // === PREVENT PINCH-TO-ZOOM ===
+        // iOS Safari (10+) ignores viewport user-scalable=no — must block via JS
+        document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function(e){
+          if (e.touches && e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
         Game.init();
       });
 
