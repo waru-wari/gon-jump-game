@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>นโยบายความเป็นส่วนตัว — empeo Land Adventure</title>
+  <meta name="description" content="นโยบายความเป็นส่วนตัวของ empeo Land Adventure — วิธีที่เราเก็บและใช้คะแนนของคุณ">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky: #1565C0;
+      --sky-light: #E3F2FD;
+      --gold: #FFC93C;
+      --text: #1a2a3a;
+      --text-muted: #546778;
+      --surface: #fff;
+      --border: #e0ecf8;
+    }
+
+    body {
+      background: linear-gradient(180deg, #e3f2fd 0%, #f8fbff 100%);
+      color: var(--text);
+      font-family: 'Sarabun', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .hero {
+      background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);
+      color: #fff;
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(24px, 5vw, 36px);
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 15px;
+      opacity: 0.85;
+    }
+
+    .hero .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: rgba(255,255,255,.75);
+      font-size: 14px;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      padding: 6px 16px;
+      transition: background .15s;
+    }
+
+    .hero .back-link:hover { background: rgba(255,255,255,.12); }
+
+    /* ── Content ── */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(21,101,192,.07);
+    }
+
+    h2 {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 20px;
+      color: var(--sky);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p { margin-bottom: 12px; color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      padding-left: 22px;
+      margin-bottom: 12px;
+    }
+
+    li { margin-bottom: 6px; color: var(--text); }
+
+    strong { color: var(--sky); }
+
+    .tag {
+      display: inline-block;
+      background: var(--sky-light);
+      color: var(--sky);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      border: 1px solid #90CAF9;
+    }
+
+    .highlight {
+      background: #FFF9E6;
+      border-left: 4px solid var(--gold);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 15px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: var(--text-muted);
+      background: #f0f7ff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 12px 0;
+    }
+
+    th {
+      background: var(--sky-light);
+      color: var(--sky);
+      font-weight: 700;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 2px solid #90CAF9;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    footer a { color: var(--sky); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🔒 นโยบายความเป็นส่วนตัว</h1>
+  <p>empeo Land Adventure — ฉบับปรับปรุง v0.6 · มีผล 7 พฤษภาคม 2569</p>
+  <a href="/" class="back-link">← กลับหน้าเกม</a>
+</div>
+
+<div class="content">
+
+  <!-- 1. ภาพรวม -->
+  <div class="card">
+    <h2>📋 ภาพรวม</h2>
+    <p>
+      empeo Land Adventure เป็นเกมออนไลน์ฟรีที่พัฒนาโดยทีม empeo
+      เราเก็บข้อมูลน้อยที่สุดเท่าที่จำเป็นสำหรับการแสดง <strong>ลีดเดอร์บอร์ดออนไลน์</strong>
+      เท่านั้น ไม่มีบัญชีผู้ใช้ ไม่มีการเข้าสู่ระบบ และไม่มีการขายข้อมูล
+    </p>
+  </div>
+
+  <!-- 2. ข้อมูลที่เก็บ -->
+  <div class="card">
+    <h2>📦 ข้อมูลที่เราเก็บ</h2>
+    <span class="tag">เฉพาะเมื่อคุณกด "ส่งคะแนน"</span>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ข้อมูล</th>
+          <th>รูปแบบที่เก็บ</th>
+          <th>วัตถุประสงค์</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>อีเมล</td>
+          <td>ค่าแฮช SHA-256 (เข้ารหัส ไม่สามารถย้อนกลับได้) · แสดงในรูปบลอค เช่น j**n@gofive.co.th</td>
+          <td>ระบุตัวตนในลีดเดอร์บอร์ด / อัปเดตคะแนนสูงสุด</td>
+        </tr>
+        <tr>
+          <td>ชื่อ (ชื่อเล่น)</td>
+          <td>ข้อความที่คุณพิมพ์ (ไม่เกิน 20 ตัวอักษร)</td>
+          <td>แสดงในลีดเดอร์บอร์ด</td>
+        </tr>
+        <tr>
+          <td>คะแนนสูงสุด</td>
+          <td>ตัวเลขจำนวนเต็ม</td>
+          <td>จัดอันดับ</td>
+        </tr>
+        <tr>
+          <td>เลเวลสูงสุด</td>
+          <td>ตัวเลข 1–6</td>
+          <td>แสดงในโปรไฟล์</td>
+        </tr>
+        <tr>
+          <td>เวลาที่ส่งคะแนน</td>
+          <td>Unix timestamp (UTC)</td>
+          <td>ลีดเดอร์บอร์ดรายวัน</td>
+        </tr>
+        <tr>
+          <td>การยินยอม (Consent)</td>
+          <td>Timestamp ที่กดยินยอม</td>
+          <td>หลักฐาน PDPA</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight">
+      💡 <strong>อีเมลของคุณถูกเข้ารหัสทันที</strong> ก่อนจะบันทึกลงเซิร์ฟเวอร์
+      เราไม่สามารถดู แชร์ หรือกู้คืนอีเมลต้นฉบับได้เลย
+    </div>
+  </div>
+
+  <!-- 3. ข้อมูลที่ไม่เก็บ -->
+  <div class="card">
+    <h2>🚫 ข้อมูลที่เราไม่เก็บ</h2>
+    <ul>
+      <li>อีเมลต้นฉบับ (Plaintext email)</li>
+      <li>ที่อยู่ IP อย่างถาวร (ใช้เฉพาะชั่วคราวเพื่อป้องกันการโกง — หมดอายุใน 60 วินาที)</li>
+      <li>User Agent / ข้อมูลเบราว์เซอร์</li>
+      <li>ตำแหน่งที่ตั้ง</li>
+      <li>Cookie / Tracking pixel</li>
+      <li>ข้อมูลส่วนบุคคลอื่นๆ</li>
+    </ul>
+  </div>
+
+  <!-- 4. ระยะเวลาการเก็บข้อมูล -->
+  <div class="card">
+    <h2>🕐 ระยะเวลาการเก็บข้อมูล</h2>
+    <table>
+      <thead>
+        <tr><th>ข้อมูล</th><th>ระยะเวลา</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>คะแนนในลีดเดอร์บอร์ดโกลบอล</td><td>ไม่มีกำหนด (จนกว่าจะขอลบ)</td></tr>
+        <tr><td>ลีดเดอร์บอร์ดรายวัน</td><td>8 วัน (ลบอัตโนมัติ)</td></tr>
+        <tr><td>ประวัติการเล่น (History)</td><td>200 รายการล่าสุด</td></tr>
+        <tr><td>Session token (ป้องกันโกง)</td><td>30 นาที</td></tr>
+        <tr><td>Rate-limit counter</td><td>60 วินาที</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5. สิทธิ์ของคุณ -->
+  <div class="card">
+    <h2>✅ สิทธิ์ของคุณ (PDPA)</h2>
+    <p>ภายใต้ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 คุณมีสิทธิ์:</p>
+    <ul>
+      <li><strong>ขอดูข้อมูล</strong> — รู้ว่าเราเก็บอะไรเกี่ยวกับคุณ</li>
+      <li><strong>ขอลบข้อมูล</strong> — ลบคะแนนและโปรไฟล์ทั้งหมดออกจากระบบ</li>
+      <li><strong>แก้ไขชื่อ</strong> — เปลี่ยนชื่อที่แสดงในลีดเดอร์บอร์ด</li>
+      <li><strong>ถอนความยินยอม</strong> — หากถอนยินยอม ข้อมูลของคุณจะถูกลบทันที</li>
+    </ul>
+    <div class="note">
+      📧 ส่งคำขอมาที่ <a href="mailto:empeo@gofive.co.th">empeo@gofive.co.th</a><br>
+      หัวข้ออีเมล: "PDPA Request — empeo Land"<br>
+      เราจะดำเนินการภายใน <strong>30 วัน</strong>
+    </div>
+  </div>
+
+  <!-- 6. เซิร์ฟเวอร์และการส่งข้ามพรมแดน -->
+  <div class="card">
+    <h2>🌏 เซิร์ฟเวอร์และการโอนข้อมูลข้ามพรมแดน</h2>
+    <p>
+      ข้อมูลถูกประมวลผลและเก็บบน <strong>Upstash Redis (Singapore, sin1)</strong>
+      ผ่านโครงสร้างพื้นฐานของ Vercel ซึ่งตั้งอยู่ใน Singapore AWS Region (ap-southeast-1)
+    </p>
+    <p>
+      การโอนข้อมูลไปต่างประเทศนี้เป็นไปตาม PDPA มาตรา 29 เนื่องจากประเทศสิงคโปร์มี
+      มาตรฐานคุ้มครองข้อมูลส่วนบุคคลที่เพียงพอภายใต้ PDPA Act 2012
+    </p>
+    <ul>
+      <li>ไม่มีการส่งข้อมูลไปยังประเทศอื่นนอกจากสิงคโปร์</li>
+      <li>ไม่มีการแชร์ข้อมูลกับบุคคลที่สาม</li>
+      <li>ไม่มีการขายข้อมูล</li>
+    </ul>
+  </div>
+
+  <!-- 7. การเปลี่ยนแปลงนโยบาย -->
+  <div class="card">
+    <h2>📝 การเปลี่ยนแปลงนโยบาย</h2>
+    <p>
+      หากมีการเปลี่ยนแปลงสาระสำคัญ เราจะแจ้งผ่าน banner บนหน้าเกมก่อน 30 วัน
+      ก่อนนโยบายใหม่มีผลบังคับ
+    </p>
+    <p>
+      เวอร์ชันปัจจุบัน: <strong>v0.6.0</strong> · มีผล: 7 พฤษภาคม 2569 (2026)
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2026 empeo Land Adventure &nbsp;·&nbsp; <a href="/">เล่นเกม</a> &nbsp;·&nbsp; <a href="mailto:empeo@gofive.co.th">ติดต่อเรา</a></p>
+  <p style="margin-top:6px">พัฒนาโดย ทีม empeo · GoFive Co., Ltd.</p>
+</footer>
+
+</body>
+</html>
