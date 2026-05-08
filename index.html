@@ -337,19 +337,7 @@
 
     .leaderboard-list.expanded { max-height: 600px; }
 
-    .season-select {
-      width: 100%;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 8px;
-      color: #1F5099;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 10px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      outline: none;
-    }
+
 
     .leaderboard-row {
       display: flex;
@@ -1296,9 +1284,6 @@
           <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
           <div style="width:34px"></div>
         </div>
-        <select id="season-select" class="season-select" style="display:none">
-          <option value="">Loading…</option>
-        </select>
         <ol id="leaderboard-list" class="lb-screen-list"></ol>
         <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
@@ -2831,7 +2816,6 @@
           this.el.rankText = document.getElementById('rank-text');
           this.el.lbList = document.getElementById('leaderboard-list');
           this.el.lbToggle   = document.getElementById('leaderboard-toggle');
-          this.el.seasonSelect = document.getElementById('season-select');
           this.showingTop50    = false;
           this._currentSeasonId = null;
           this.el.toast = document.getElementById('toast');
@@ -2886,12 +2870,6 @@
             this.renderLeaderboard();
             this.el.lbToggle.textContent = this.showingTop50 ? 'Show Less ▴' : 'See More (50) ▾';
             this.el.lbList.classList.toggle('expanded', this.showingTop50);
-          });
-
-          // Season dropdown
-          this.el.seasonSelect.addEventListener('change', () => {
-            this._currentSeasonId = this.el.seasonSelect.value || null;
-            this.renderLeaderboard();
           });
 
         },
@@ -3106,14 +3084,9 @@
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
 
-            // Populate season dropdown (only if seasons exist)
-            if (data.seasons && data.seasons.length > 0 && this.el.seasonSelect) {
+            // Auto-use active season (no dropdown)
+            if (data.seasons && data.seasons.length > 0) {
               const activeSeason = data.activeSeason;
-              this.el.seasonSelect.style.display = 'block';
-              this.el.seasonSelect.innerHTML = data.seasons.map(s =>
-                `<option value="${escapeHtml(s.id)}" ${s.id === (sid || activeSeason) ? 'selected' : ''}>${escapeHtml(s.name)}${s.id === activeSeason ? ' ⭐' : ''}</option>`
-              ).join('');
-              // Sync internal state if first load
               if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
             }
 
