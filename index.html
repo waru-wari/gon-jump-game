@@ -78,16 +78,17 @@
      */
     #canvas-wrap {
       position: relative;
-      width: 100vw;
-      height: 100dvh;
+      /* Max 480px wide (desktop), full viewport on mobile */
+      width: min(100vw, 480px);
+      height: min(100dvh, calc(min(100vw, 480px) * 700 / 400));
       overflow: hidden;
       background: linear-gradient(180deg, #1E88E5 0%, #42A5F5 50%, #81D4FA 100%);
     }
 
     @media (orientation: landscape) {
       #canvas-wrap {
-        width: 100vw;
-        height: 100dvh;
+        width: min(100vw, 480px);
+        height: min(100dvh, calc(min(100vw, 480px) * 700 / 400));
       }
     }
 
@@ -1654,10 +1655,17 @@
           }
 
           // === Screen wrap — trigger when player CENTER crosses SAFE ZONE edge ===
-          // This ensures the ghost on the other side is symmetrical at the moment of swap.
+          // _justWrapped suppresses ghost draw for a few frames after teleport
+          // so the opposing ghost doesn't flash on the wrong side.
+          if (this._justWrapped > 0) this._justWrapped--;
           const playerCenterX = this.x + this.w / 2;
-          if (playerCenterX > CONFIG.SAFE_X_MAX)      this.x -= CONFIG.SAFE_WIDTH;
-          else if (playerCenterX < CONFIG.SAFE_X_MIN)  this.x += CONFIG.SAFE_WIDTH;
+          if (playerCenterX > CONFIG.SAFE_X_MAX) {
+            this.x -= CONFIG.SAFE_WIDTH;
+            this._justWrapped = 4;
+          } else if (playerCenterX < CONFIG.SAFE_X_MIN) {
+            this.x += CONFIG.SAFE_WIDTH;
+            this._justWrapped = 4;
+          }
 
           // State
           if (this.vy < -0.1) this.state = 'jumping';
@@ -1688,14 +1696,14 @@
         draw(ctx, camY) {
           this._drawSelf(ctx, camY, 0);
 
-          // === PAC-MAN WRAP: draw ghost on opposite side when overlapping edge ===
-          // Ghost appears on left when right side of player passes SAFE_X_MAX
-          if (this.x + this.w > CONFIG.SAFE_X_MAX) {
-            this._drawSelf(ctx, camY, -CONFIG.SAFE_WIDTH);
-          }
-          // Ghost appears on right when left side of player passes SAFE_X_MIN
-          if (this.x < CONFIG.SAFE_X_MIN) {
-            this._drawSelf(ctx, camY, CONFIG.SAFE_WIDTH);
+          // Pac-Man ghost: only when player overlaps edge AND not just teleported
+          if (!this._justWrapped) {
+            if (this.x + this.w > CONFIG.SAFE_X_MAX) {
+              this._drawSelf(ctx, camY, -CONFIG.SAFE_WIDTH);
+            }
+            if (this.x < CONFIG.SAFE_X_MIN) {
+              this._drawSelf(ctx, camY, CONFIG.SAFE_WIDTH);
+            }
           }
         }
 
@@ -4102,10 +4110,11 @@
         }, { passive: false });
 
         // === DYNAMIC CANVAS RESOLUTION (v1.04) ===
-        // Set CONFIG.WIDTH/HEIGHT from actual viewport → full screen, no bars, no crop
+        // Cap at 480px wide for desktop; fill viewport on mobile
         (function resizeConfig() {
-          const W = Math.round(window.innerWidth);
-          const H = Math.round(window.innerHeight);
+          const MAX_W = 480;
+          const W = Math.round(Math.min(window.innerWidth,  MAX_W));
+          const H = Math.round(Math.min(window.innerHeight, W * 700 / 400));
           CONFIG.WIDTH  = W;
           CONFIG.HEIGHT = H;
           CONFIG.SAFE_X_MIN = W * CONFIG.SAFE_MARGIN_PCT;
