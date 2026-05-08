@@ -437,22 +437,15 @@
     .leaderboard-row.bronze .rank  { color: #A05A1F; }
     .leaderboard-row.you    { background: rgba(255,201,60,.35) !important; outline: 2px solid #FFC93C; border-radius: 16px; }
 
-    .leaderboard-toggle {
-      appearance: none;
-      background: rgba(46,111,192,.08);
-      border: 2px solid rgba(46,111,192,.20);
-      border-radius: 999px;           /* pill */
-      color: #2E6FC0;
-      font-family: 'Nunito', system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 13px;
-      cursor: pointer;
-      padding: 7px 18px;
-      margin-top: 6px;
-      width: 100%;
-      transition: background .15s;
+    /* Separator between top 10 and player's own entry */
+    .lb-me-separator {
+      text-align: center;
+      color: rgba(31, 80, 153, 0.35);
+      font-size: 18px;
+      letter-spacing: 6px;
+      list-style: none;
+      padding: 4px 0;
     }
-    .leaderboard-toggle:hover { background: rgba(46,111,192,.15); }
 
     .leaderboard-empty {
       text-align: center;
@@ -1300,7 +1293,6 @@
         </div>
         <div id="season-label" class="season-label"></div>
         <ol id="leaderboard-list" class="lb-screen-list"></ol>
-        <button id="leaderboard-toggle" class="leaderboard-toggle">See More (50) ▾</button>
       </div>
     </div>
 
@@ -2830,8 +2822,6 @@
 
           this.el.rankText = document.getElementById('rank-text');
           this.el.lbList = document.getElementById('leaderboard-list');
-          this.el.lbToggle   = document.getElementById('leaderboard-toggle');
-          this.showingTop50    = false;
           this._currentSeasonId = null;
           this.el.toast = document.getElementById('toast');
           this.el.menuVideo = document.getElementById('menu-video');
@@ -2880,12 +2870,6 @@
           // v0.51 migration banner
           this.setupV6Migration();
 
-          this.el.lbToggle.addEventListener('click', () => {
-            this.showingTop50 = !this.showingTop50;
-            this.renderLeaderboard();
-            this.el.lbToggle.textContent = this.showingTop50 ? 'Show Less ▴' : 'See More (50) ▾';
-            this.el.lbList.classList.toggle('expanded', this.showingTop50);
-          });
 
         },
 
@@ -3089,11 +3073,25 @@
 
 
 
-        // v0.6 renderLeaderboard: fetch online, fall back to localStorage if offline
+        // Always show top 10 only
         async renderLeaderboard() {
-          const limit = this.showingTop50 ? 50 : 10;
-          const sid   = this._currentSeasonId ?? '';
-          const url   = `/api/leaderboard?limit=${limit}${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
+          const sid = this._currentSeasonId ?? '';
+          const url = `/api/leaderboard?limit=50${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
+
+          // Client-side censorEmail mirrors server's censorEmail()
+          function censorEmailClient(email) {
+            if (!email) return '****';
+            const parts = email.toLowerCase().trim().split('@');
+            if (parts.length !== 2) return '****';
+            const [local, domain] = parts;
+            if (local.length <= 1) return `${local}*@${domain}`;
+            if (local.length <= 2) return `${local[0]}*@${domain}`;
+            return `${local[0]}${'*'.repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
+          }
+
+          const myEmail = (localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '').toLowerCase().trim();
+          const myEmailDisplay = myEmail ? censorEmailClient(myEmail) : null;
+
           try {
             const res  = await fetch(url);
             if (!res.ok) throw new Error('offline');
@@ -3111,15 +3109,38 @@
               }
             }
 
-            const list = (data.global ?? []).slice(0, limit);
-            if (list.length === 0) {
+            const fullList = data.global ?? [];
+            const top10    = fullList.slice(0, 10);
+
+            if (top10.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';
               return;
             }
-            this.el.lbList.innerHTML = list.map((e, i) => lbRowHtml(e, i)).join('');
+
+            // Check if player is in top 10
+            let myIndexInTop10 = -1;
+            if (myEmailDisplay) {
+              myIndexInTop10 = top10.findIndex(e => e.emailDisplay === myEmailDisplay);
+            }
+
+            let html = top10.map((e, i) => {
+              const isMe = myEmailDisplay && e.emailDisplay === myEmailDisplay;
+              return lbRowHtml(e, i, isMe);
+            }).join('');
+
+            // If player is NOT in top 10, find their entry in full list and show separately
+            if (myEmailDisplay && myIndexInTop10 === -1) {
+              const myEntry = fullList.find(e => e.emailDisplay === myEmailDisplay);
+              if (myEntry) {
+                html += `<li class="leaderboard-row lb-me-separator">· · ·</li>`;
+                html += lbRowHtml(myEntry, myEntry.rank - 1, true);
+              }
+            }
+
+            this.el.lbList.innerHTML = html;
           } catch (_) {
             // Fallback to localStorage leaderboard if API unreachable
-            const list = Leaderboard.load().slice(0, limit);
+            const list = Leaderboard.load().slice(0, 10);
             if (list.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No scores yet — be the first! 🚀</li>';
               return;
