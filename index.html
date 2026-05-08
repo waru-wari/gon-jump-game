@@ -1654,16 +1654,15 @@
             if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
           }
 
-          // === Screen wrap — trigger when player CENTER crosses SAFE ZONE edge ===
-          // _justWrapped suppresses ghost draw for a few frames after teleport
-          // so the opposing ghost doesn't flash on the wrong side.
+          // === Screen wrap at screen edges (Pac-Man style) ===
+          // Wrap when player CENTER exits the screen boundary (0 or CONFIG.WIDTH).
           if (this._justWrapped > 0) this._justWrapped--;
           const playerCenterX = this.x + this.w / 2;
-          if (playerCenterX > CONFIG.SAFE_X_MAX) {
-            this.x -= CONFIG.SAFE_WIDTH;
+          if (playerCenterX > CONFIG.WIDTH) {
+            this.x -= CONFIG.WIDTH;
             this._justWrapped = 4;
-          } else if (playerCenterX < CONFIG.SAFE_X_MIN) {
-            this.x += CONFIG.SAFE_WIDTH;
+          } else if (playerCenterX < 0) {
+            this.x += CONFIG.WIDTH;
             this._justWrapped = 4;
           }
 
@@ -1696,13 +1695,15 @@
         draw(ctx, camY) {
           this._drawSelf(ctx, camY, 0);
 
-          // Pac-Man ghost: only when player overlaps edge AND not just teleported
+          // Pac-Man ghost: offset by full WIDTH so ghost appears at the OPPOSITE screen edge
           if (!this._justWrapped) {
-            if (this.x + this.w > CONFIG.SAFE_X_MAX) {
-              this._drawSelf(ctx, camY, -CONFIG.SAFE_WIDTH);
+            // Player's right side exits right edge → ghost at left edge
+            if (this.x + this.w > CONFIG.WIDTH) {
+              this._drawSelf(ctx, camY, -CONFIG.WIDTH);
             }
-            if (this.x < CONFIG.SAFE_X_MIN) {
-              this._drawSelf(ctx, camY, CONFIG.SAFE_WIDTH);
+            // Player's left side exits left edge → ghost at right edge
+            if (this.x < 0) {
+              this._drawSelf(ctx, camY, CONFIG.WIDTH);
             }
           }
         }
