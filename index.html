@@ -3432,6 +3432,7 @@
           this.generateInitialPlatforms();
 
           this.state = 'playing';
+          WakeLock.acquire();
           UI.showHUD();
           UI.updateScore(0, 1);
           // Init level badge to Lv.0 label (won't trigger from level-change loop)
@@ -3468,6 +3469,7 @@
         },
         quitToMenu() {
           this.state = 'menu';
+          WakeLock.release();
           UI.hidePause();
           UI.showMenu();
           this.showcaseLoop();
@@ -4094,8 +4096,29 @@
       };
 
       // =========================================================
-      // 12. BOOT
+      // 12. WAKE LOCK — keep screen on during gameplay
       // =========================================================
+      const WakeLock = {
+        _lock: null,
+        async acquire() {
+          if (!('wakeLock' in navigator)) return;
+          try {
+            this._lock = await navigator.wakeLock.request('screen');
+          } catch (_) { /* permission denied or unsupported — silently ignore */ }
+        },
+        release() {
+          if (this._lock) { this._lock.release(); this._lock = null; }
+        },
+      };
+
+      // Re-acquire wake lock when tab becomes visible again
+      // (browsers automatically release it when tab is hidden)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && Game.state === 'playing') {
+          WakeLock.acquire();
+        }
+      });
+
       window.addEventListener('load', () => {
         // Fix: reset viewport scale on load to undo any browser-retained zoom
         // (happens when the email card double-tap caused a zoom before user-scalable=no took effect)
