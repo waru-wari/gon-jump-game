@@ -1499,6 +1499,11 @@
         COIN_VALUE: 25,
         DIAMOND_VALUE: 100,
         DRAGON_STOMP: 50,
+        DRAGON_EGG_SCORE:     0,     // no instant score (passive buff only)
+        DRAGON_FORM_DURATION: 5000,  // ms in dragon form
+        DRAGON_SURGE_VY:     -10,    // initial upward kick on collect
+        DRAGON_FLOAT_VY:      -8.0,  // sustained upward float speed during dragon form
+        DRAGON_MAGNET_RADIUS: 130,   // px radius for item magnet effect
         BIRD_STOMP: 30,
         HEIGHT_SCORE_RATIO: 0.25,
 
@@ -1671,7 +1676,9 @@
           this.state = 'idle';    // idle | jumping | falling | spring
           this.animTimer = 0;
           this.squash = 1;        // 1 = neutral; >1 = stretch up; <1 = squash down
-          this.springAnim = 0;
+          this.springAnim  = 0;
+          this.dragonTimer  = 0;    // ms remaining in dragon form (0 = normal)
+          this._wasDragon   = false; // flag to detect form expiry for revert FX
         }
 
         update(dt, gameSpeed = 1) {
@@ -1704,9 +1711,14 @@
           this.x += this.vx * dtFactor;
           this.y += this.vy * dtFactor;
 
-          // Gravity
-          this.vy += CONFIG.GRAVITY * dtFactor;
-          if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+          // Gravity — dragon form overrides gravity with sustained upward float
+          if (this.dragonTimer > 0) {
+            // Lerp vy toward DRAGON_FLOAT_VY: initial surge settles into gentle upward drift
+            this.vy += (CONFIG.DRAGON_FLOAT_VY - this.vy) * 0.12;
+          } else {
+            this.vy += CONFIG.GRAVITY * dtFactor;
+            if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
+          }
 
           // === Screen wrap at SAFE ZONE edges (body-edge-based, instant teleport) ===
           // Teleport as soon as the player body fully exits one side → appears on the other.
@@ -1722,7 +1734,8 @@
           const targetSquash = this.state === 'jumping' ? 1.1 : (this.state === 'falling' ? 0.95 : 1);
           this.squash += (targetSquash - this.squash) * 0.15;
 
-          if (this.springAnim > 0) this.springAnim -= dt;
+          if (this.springAnim  > 0) this.springAnim  -= dt;
+          if (this.dragonTimer > 0) this.dragonTimer -= dt;
 
           this.animTimer += dt;
         }
@@ -1774,9 +1787,12 @@
           ctx.scale(1 / sq, sq);
 
           // === DRAW CHARACTER SPRITE ===
-          // Use gon-shocked sprite during death animation, normal otherwise
-          const isDying = Game.state === 'dying';
-          const sprite = Game.assets && (isDying ? Game.assets.gonShocked : Game.assets.gon);
+          // Priority: dying → dragon form → normal
+          const isDying  = Game.state === 'dying';
+          const isDragon = this.dragonTimer > 0;
+          const sprite = isDying  ? Game.assets.gonShocked
+                       : isDragon ? IMG_DRAGON
+                       :            Game.assets.gon;
           if (sprite && sprite.complete && sprite.naturalWidth > 0) {
             const drawSize = Math.max(w, h) * 1.30;
             ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
@@ -2154,6 +2170,30 @@
         }
       }
 
+      class DragonEgg {
+        // Rare collectible — spawn lvl 3+. Triggers dragon transformation on collect.
+        constructor(platform, ox, oy) {
+          this.platform  = platform;
+          this.ox = ox; this.oy = oy;
+          this.w = 40; this.h = 40;
+          this.collected = false;
+          this.t = 0;
+        }
+        get x() { return this.platform.x + this.ox; }
+        get y() { return this.platform.y + this.oy; }
+        rect() { return { x: this.x + 6, y: this.y + 6, w: this.w - 12, h: this.h - 12 }; }
+        update(dt) { this.t += dt; }
+        draw(ctx, camY) {
+          if (this.collected) return;
+          const bob = Math.sin(this.t * 0.003) * 4;
+          ctx.save();
+          // Warm orange-red glow to make it visually distinct
+          ctx.shadowColor = '#FF6A00';
+          ctx.shadowBlur  = 14 + Math.sin(this.t * 0.005) * 4;
+          ctx.drawImage(IMG_DRAGON_EGG, this.x, this.y - camY + bob, this.w, this.h);
+          ctx.restore();
+        }
+      }
 
       // =========================================================
       // 7. OBSTACLES — Spike (floating above platform, damages all directions)
@@ -2162,6 +2202,8 @@
       // Preload sprites
       const IMG_COIN        = new Image(); IMG_COIN.src        = '/sprite-coin.png';
       const IMG_DIAMOND     = new Image(); IMG_DIAMOND.src     = '/sprite-diamond.png';
+      const IMG_DRAGON_EGG  = new Image(); IMG_DRAGON_EGG.src  = '/dragon-egg.png';
+      const IMG_DRAGON      = new Image(); IMG_DRAGON.src      = '/sprite-dragon.png';
       // Cloud sprites (5 variants from user artwork)
       const CLOUD_IMGS = { a: new Image(), b: new Image(), c: new Image(), d: new Image(), e: new Image() };
       CLOUD_IMGS.a.src = '/cloud-a.png';
@@ -2495,40 +2537,43 @@
             }
           }
 
-          // === BACKGROUND PLATFORMS (offscreen composite — no see-through overlap) ===
-          const pc = this._platCtx;
-          pc.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-          for (const p of this.bgPlatforms) {
-            const py = wrapY(p.y - camY * p.depth);
-            if (py > -60 && py < CONFIG.HEIGHT + 60) {
-              const img = PLAT_IMGS[p.variant];
-              if (img.complete && img.naturalWidth > 0) {
-                const h = p.w * (img.naturalHeight / img.naturalWidth);
-                pc.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
+          // === BACKGROUND PLATFORMS (floating islands) — hidden in Space ===
+          if (Game.currentLevelIdx < 4) {
+            const pc = this._platCtx;
+            pc.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+            for (const p of this.bgPlatforms) {
+              const py = wrapY(p.y - camY * p.depth);
+              if (py > -60 && py < CONFIG.HEIGHT + 60) {
+                const img = PLAT_IMGS[p.variant];
+                if (img.complete && img.naturalWidth > 0) {
+                  const h = p.w * (img.naturalHeight / img.naturalWidth);
+                  pc.drawImage(img, p.x - p.w / 2, py - h / 2, p.w, h);
+                }
               }
             }
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(this._platCanvas, 0, 0);
+            ctx.restore();
           }
-          // Composite the whole offscreen canvas at single alpha
-          ctx.save();
-          ctx.globalAlpha = 0.22;
-          ctx.drawImage(this._platCanvas, 0, 0);
-          ctx.restore();
 
-          // === BACKGROUND HOT-AIR BALLOONS ===
-          const now = performance.now();
-          for (const b of this.bgBalloons) {
-            b.x += b.drift;
-            if (b.x > CONFIG.WIDTH + 100) b.x = -100;
-            const bob = Math.sin(now * 0.0008 + b.bobPhase) * 6;
-            const py = wrapY(b.y - camY * b.depth) + bob;
-            if (py > -120 && py < CONFIG.HEIGHT + 120) {
-              const img = BALLOON_IMGS[b.variant];
-              if (img.complete && img.naturalWidth > 0) {
-                const h = b.w * (img.naturalHeight / img.naturalWidth);
-                ctx.save();
-                ctx.globalAlpha = 0.70;
-                ctx.drawImage(img, b.x - b.w / 2, py - h / 2, b.w, h);
-                ctx.restore();
+          // === BACKGROUND HOT-AIR BALLOONS — hidden in Space ===
+          if (Game.currentLevelIdx < 4) {
+            const now = performance.now();
+            for (const b of this.bgBalloons) {
+              b.x += b.drift;
+              if (b.x > CONFIG.WIDTH + 100) b.x = -100;
+              const bob = Math.sin(now * 0.0008 + b.bobPhase) * 6;
+              const py = wrapY(b.y - camY * b.depth) + bob;
+              if (py > -120 && py < CONFIG.HEIGHT + 120) {
+                const img = BALLOON_IMGS[b.variant];
+                if (img.complete && img.naturalWidth > 0) {
+                  const h = b.w * (img.naturalHeight / img.naturalWidth);
+                  ctx.save();
+                  ctx.globalAlpha = 0.70;
+                  ctx.drawImage(img, b.x - b.w / 2, py - h / 2, b.w, h);
+                  ctx.restore();
+                }
               }
             }
           }
@@ -3335,7 +3380,7 @@
         state: 'menu',     // menu | playing | paused | dying | gameover
         player: null,
         platforms: [],
-        coins: [], diamonds: [], springs: [], particles: [],
+        coins: [], diamonds: [], dragonEggs: [], springs: [], particles: [],
         bg: null,
         camY: 0,            // top of camera in world space
         highestY: 0,        // tracking max climbed
@@ -3390,7 +3435,7 @@
           Input.requestTiltPermission();
           this.player = new Player(CONFIG.WIDTH / 2 - CONFIG.PLAYER_WIDTH / 2, CONFIG.HEIGHT - 200);
           this.platforms = [];
-          this.coins = []; this.diamonds = []; this.springs = []; this.particles = [];
+          this.coins = []; this.diamonds = []; this.dragonEggs = []; this.springs = []; this.particles = [];
           this.camY = 0;
           this.highestY = this.player.y;
           this.score = 0;
@@ -3519,18 +3564,27 @@
           p.w = lvl.platWidth;   // override width per level
           this.platforms.push(p);
 
-          // Spawn collectibles only (no obstacles)
+          // Spawn collectibles — exclusive: only one item per platform
           const r = Math.random();
           const lvlIdx = this.getLevelDef().idx ?? 0;
+          let hasCollectible = false;
           if (type !== 'breakable') {
             if (r < 0.10) {
               this.springs.push(new Spring(p));
+              hasCollectible = true;
             } else if (r < 0.16 && lvlIdx >= 1) {
               this.diamonds.push(new Diamond(p, p.w / 2 - 16, -40));
+              hasCollectible = true;
             } else if (r < 0.52) {
               this.coins.push(new Coin(p, p.w / 2 - 16, -34));
+              hasCollectible = true;
             }
           }
+          // Dragon Egg — rare (4%), level 2+ (Night, 4000pts), exclusive with all other items
+          if (!hasCollectible && lvlIdx >= 2 && type !== 'breakable' && Math.random() < 0.04) {
+            this.dragonEggs.push(new DragonEgg(p, p.w / 2 - 20, -58));
+          }
+
         },
 
         spawnParticles(x, y, color, n = 8) {
@@ -3623,9 +3677,11 @@
           for (const s of this.springs) s.update(dt);
           for (const c of this.coins)    c.update(dt);
           for (const d of this.diamonds)  d.update(dt);
+          for (const e of this.dragonEggs) e.update(dt);
           this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.coins         = this.coins.filter(c => !c.collected && c.platform.y < this.camY + CONFIG.HEIGHT + 200);
           this.diamonds      = this.diamonds.filter(d => !d.collected && d.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.dragonEggs    = this.dragonEggs.filter(e => !e.collected && e.platform.y < this.camY + CONFIG.HEIGHT + 200);
 
           // Particles
           for (const pt of this.particles) pt.update(dt);
@@ -3686,6 +3742,80 @@
               Game.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 14);
             }
           }
+          // Dragon Eggs
+          for (const egg of this.dragonEggs) {
+            if (egg.collected) continue;
+            if (Utils.rectsOverlap(pr, egg.rect())) {
+              egg.collected = true;
+              this.activateDragonForm();
+            }
+          }
+
+          // Dragon form: magnet + fire trail + revert detection
+          if (this.player) {
+            if (this.player.dragonTimer > 0) {
+              this.player._wasDragon = true;
+
+              // === MAGNET: pull nearby coins & diamonds toward player ===
+              const px = this.player.x + this.player.w / 2;
+              const py = this.player.y + this.player.h / 2;
+              const R  = CONFIG.DRAGON_MAGNET_RADIUS;
+              const PULL_SPEED = 6;   // px per frame toward player
+
+              for (const c of this.coins) {
+                if (c.collected) continue;
+                const dx = px - (c.x + c.w / 2);
+                const dy = py - (c.y + c.h / 2);
+                const dist = Math.hypot(dx, dy);
+                if (dist < R) {
+                  // Pull item offset toward player
+                  c.ox += (dx / dist) * PULL_SPEED;
+                  c.oy += (dy / dist) * PULL_SPEED;
+                  if (dist < 22) {
+                    c.collected = true;
+                    this.score += CONFIG.COIN_VALUE * this.multiplier;
+                    Sound.play('coin');
+                    this.spawnParticles(c.x + c.w / 2, c.y + c.h / 2, '#FF8C2A', 6);
+                  }
+                }
+              }
+              for (const d of this.diamonds) {
+                if (d.collected) continue;
+                const dx = px - (d.x + d.w / 2);
+                const dy = py - (d.y + d.h / 2);
+                const dist = Math.hypot(dx, dy);
+                if (dist < R) {
+                  d.ox += (dx / dist) * PULL_SPEED;
+                  d.oy += (dy / dist) * PULL_SPEED;
+                  if (dist < 22) {
+                    d.collected = true;
+                    this.score += CONFIG.DIAMOND_VALUE * this.multiplier;
+                    Sound.play('diamond');
+                    this.spawnParticles(d.x + d.w / 2, d.y + d.h / 2, '#00E5FF', 10);
+                  }
+                }
+              }
+
+              // Continuous fire particle trail (40% per frame)
+              if (Math.random() < 0.40) {
+                const cx = this.player.x + this.player.w / 2;
+                const cy = this.player.y + this.player.h * 0.8;
+                const fireColors = ['#FF4500','#FF8C00','#FFD700'];
+                this.particles.push(new Particle(cx, cy, fireColors[Math.floor(Math.random() * 3)]));
+              }
+            } else if (this.player._wasDragon) {
+              // Dragon form just expired — burst icy/white revert particles
+              this.player._wasDragon = false;
+              const cx = this.player.x + this.player.w / 2;
+              const cy = this.player.y + this.player.h / 2;
+              const revertColors = ['#87CEEB','#FFFFFF','#B0E0E6'];
+              for (let i = 0; i < 14; i++) {
+                this.particles.push(new Particle(cx, cy, revertColors[i % 3]));
+              }
+            }
+          }
+
+
           // Multiplier expiry
           if (this.multiplier > 1 && performance.now() > this.multiplierEnd) {
             this.multiplier = 1;
@@ -3725,6 +3855,24 @@
             }
           }
         },
+
+        activateDragonForm() {
+          if (!this.player) return;
+          // Surge upward (moderate) + start dragon timer
+          this.player.dragonTimer = CONFIG.DRAGON_FORM_DURATION;
+          this.player.vy = CONFIG.DRAGON_SURGE_VY;   // moderate upward kick
+          this.player.squash = 1.2;
+          Sound.play('spring'); // reuse spring SFX
+          // Fire burst particles on transform
+          const cx = this.player.x + this.player.w / 2;
+          const cy = this.player.y + this.player.h / 2;
+          const burstColors = ['#FF4500','#FF8C00','#FFD700','#FF6347'];
+          for (let i = 0; i < 22; i++) {
+            this.particles.push(new Particle(cx, cy, burstColors[i % 4]));
+          }
+        },
+
+
 
         gameOver() {
           if (this.state === 'dying' || this.state === 'gameover') return; // guard
@@ -3941,6 +4089,7 @@
           for (const s of this.springs)        s.draw(ctx, camY);
           for (const c of this.coins)          c.draw(ctx, camY);
           for (const d of this.diamonds)       d.draw(ctx, camY);
+          for (const e of this.dragonEggs)     e.draw(ctx, camY);
           if (this.player) this.player.draw(ctx, camY);
           for (const p of this.particles) p.draw(ctx, camY);
           this._drawScrollWarning(ctx);
