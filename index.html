@@ -68,7 +68,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: #000;
+      background: #1E88E5; /* match sky colour — no black bars visible */
     }
 
     /*
@@ -1032,46 +1032,7 @@
     }
 
     /* Touch controls (mobile virtual D-pad) — hidden until first screen touch */
-    .touch-controls {
-      position: absolute;
-      bottom: max(24px, env(safe-area-inset-bottom, 0px) + 8px);
-      left: 12.5%;
-      right: 12.5%;
-      display: flex;                     /* always in layout... */
-      justify-content: space-between;
-      padding: 0;
-      pointer-events: none;
-      opacity: 0;                        /* ...but invisible until first touch */
-      transition: opacity 0.3s ease;
-    }
 
-    .touch-controls.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .touch-btn {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .15);
-      border: 3px solid rgba(255, 255, 255, .4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 32px;
-      font-weight: 900;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, .5);
-      user-select: none;
-    }
-
-    .touch-btn:active {
-      background: rgba(255, 255, 255, .3);
-    }
 
     /* Toast */
     .toast {
@@ -1358,10 +1319,7 @@
       <div id="level-badge" class="level-badge">🌿 Lv.1</div>
       <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
-      <div id="touch-controls" class="touch-controls">
-        <div id="touch-left" class="touch-btn">◀</div>
-        <div id="touch-right" class="touch-btn">▶</div>
-      </div>
+
 
       <!-- Countdown overlay (shown after resume) -->
       <div id="countdown-overlay" class="countdown-overlay">
@@ -1571,16 +1529,7 @@
           cv.addEventListener('click',      e => e.stopPropagation());
           cv.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 
-          // Virtual D-pad (touch buttons) — still available as fallback
-          const tl = document.getElementById('touch-left');
-          const tr = document.getElementById('touch-right');
-          const setTouch = (el, key) => {
-            el.addEventListener('touchstart', e => { e.preventDefault(); this[key] = true;  }, { passive: false });
-            el.addEventListener('touchend',   e => { e.preventDefault(); this[key] = false; }, { passive: false });
-            el.addEventListener('touchcancel',e => { e.preventDefault(); this[key] = false; }, { passive: false });
-          };
-          setTouch(tl, 'left');
-          setTouch(tr, 'right');
+          // Virtual D-pad removed — tilt control is the primary mobile input
 
           // === GYROSCOPE / TILT CONTROL ===
           this._setupTiltHandler();
@@ -2891,7 +2840,6 @@
           this.el.seasonSelect = document.getElementById('season-select');
           this.showingTop50    = false;
           this._currentSeasonId = null;
-          this.el.touch = document.getElementById('touch-controls');
           this.el.toast = document.getElementById('toast');
           this.el.menuVideo = document.getElementById('menu-video');
 
@@ -2952,14 +2900,6 @@
             this.renderLeaderboard();
           });
 
-          // === AUTO-REVEAL TOUCH D-PAD ON FIRST SCREEN TOUCH ===
-          // Tilt is always active by default. D-pad appears when user first touches screen.
-          const canvasWrap = document.getElementById('canvas-wrap');
-          canvasWrap.addEventListener('touchstart', () => {
-            if (!this.el.touch.classList.contains('visible')) {
-              this.el.touch.classList.add('visible');
-            }
-          }, { passive: true, once: true });
         },
 
         showMenu() {
