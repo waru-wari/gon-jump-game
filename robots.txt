@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Explicitly allow social media crawlers for OG preview
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+Sitemap: https://gon-jump-game.vercel.app/sitemap.xml
