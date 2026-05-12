@@ -73,7 +73,11 @@
     .rank-badge { font-weight: 700; color: var(--muted); }
     .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
 
-    /* Confirm modal */
+    /* Event link rows */
+    .event-link-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; background: var(--surface2); flex-wrap: wrap; }
+    .event-link-slug { font-family: monospace; font-weight: 700; color: var(--accent); font-size: 13px; }
+    .event-link-meta { font-size: 12px; color: var(--muted); flex: 1; }
+    .event-link-actions { display: flex; gap: 6px; margin-left: auto; }
     #confirm-modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 200; }
     #confirm-modal.open { display: flex; }
     .confirm-card { background: var(--surface); border: 1px solid var(--danger); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; }
@@ -90,6 +94,24 @@
     .stat-value { font-size: 26px; font-weight: 700; color: var(--gold); font-family: 'Fredoka', sans-serif; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .mt { margin-top: 12px; }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+      .shell { padding: 16px 10px; }
+      .header { flex-wrap: wrap; gap: 8px; }
+      .season-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .season-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+      .season-actions .btn { flex: 1; min-width: 80px; text-align: center; }
+      thead th:nth-child(3), tbody td:nth-child(3),
+      thead th:nth-child(6), tbody td:nth-child(6),
+      thead th:nth-child(7), tbody td:nth-child(7) { display: none; }
+      .card { padding: 14px 12px; }
+      .stat-value { font-size: 20px; }
+      .row { flex-direction: column; align-items: stretch; }
+      .row input, .row .btn { width: 100%; }
+      .event-link-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .event-link-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+    }
   </style>
 </head>
 <body>
@@ -183,7 +205,23 @@
       <button class="btn btn-ghost" id="btn-export">Export Active Season JSON</button>
     </div>
   </div>
+
+  <!-- Event Links -->
+  <div class="card">
+    <div class="card-title">🔗 Event Links — แชร์ Leaderboard แยกตาม Event</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">สร้าง URL สั้นให้ผู้เล่น เช่น <code style="color:var(--accent)">/api/event?slug=event-may</code> → Leaderboard ของ Season นั้น</p>
+    <div class="row" style="margin-bottom:16px;flex-wrap:wrap">
+      <input type="text" id="new-event-slug" placeholder="slug (e.g. event-may-2025)" style="flex:1;min-width:140px">
+      <input type="text" id="new-event-name" placeholder="ชื่อ Event (e.g. May 2025)" style="flex:1;min-width:140px">
+      <select id="new-event-season" style="flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 13px">
+        <option value="">— เลือก Season —</option>
+      </select>
+      <button class="btn btn-success" id="btn-create-event">+ Create Link</button>
+    </div>
+    <div id="event-link-list"><div class="empty-state">Loading…</div></div>
+  </div>
 </div>
+
 
 <script>
   let _token = null;
@@ -245,20 +283,25 @@
       container.innerHTML = '<div class="empty-state">No seasons yet — create one above.</div>';
       return;
     }
-    container.innerHTML = seasons.map(s => `
+    container.innerHTML = seasons.map(s => {
+      const mainUrl = getGameBaseUrl() + '/';
+      return `
       <div class="season-row ${s.isActive ? 'active-season' : ''}" id="season-row-${s.id}">
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="season-name">${esc(s.name)} ${s.isActive ? '<span class="active-badge">ACTIVE</span>' : ''}</div>
-          <div class="season-meta">${s.playerCount} players · Created ${new Date(s.createdAt).toLocaleDateString('th-TH')}</div>
+          <div class="season-meta">${s.playerCount} players · Created ${new Date(s.createdAt).toLocaleDateString('th-TH')}
+            ${s.isActive ? `<span style="color:var(--success);margin-left:6px">· ลิ้งก์หลัก: ${esc(mainUrl)}</span>` : ''}
+          </div>
         </div>
-        <div class="season-actions" style="margin-left:auto">
+        <div class="season-actions">
+          ${s.isActive ? `<button class="btn btn-primary btn-sm" onclick="copyEventLink('${esc(mainUrl)}')">📋 Copy Main Link</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="viewPlayers('${s.id}','${esc(s.name)}')">👥 Players</button>
           <button class="btn btn-ghost btn-sm" onclick="renameSeason('${s.id}','${esc(s.name)}')">✏️ Rename</button>
           ${!s.isActive ? `<button class="btn btn-success btn-sm" onclick="setActive('${s.id}')">▶ Set Active</button>` : ''}
           <button class="btn btn-danger btn-sm" onclick="resetSeason('${s.id}','${esc(s.name)}')">⚠ Reset</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   async function setActive(seasonId) {
@@ -424,6 +467,99 @@
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+
+  // ── Event Links ──
+  const EVENT_API = '/api/event';
+
+  async function eventCall(action, extra = {}) {
+    const res = await fetch(EVENT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': _token },
+      body: JSON.stringify({ action, ...extra }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+    return json;
+  }
+
+  function getGameBaseUrl() {
+    // Derive game URL from current admin URL (remove /admin.html)
+    const base = window.location.href.replace(/\/admin\.html.*$/, '');
+    return base || window.location.origin;
+  }
+
+  async function loadEventLinks() {
+    try {
+      const { links } = await eventCall('listLinks');
+      const container = $('event-link-list');
+      if (!links || links.length === 0) {
+        container.innerHTML = '<div class="empty-state">ยังไม่มี Event Link — สร้างด้านบนได้เลย</div>';
+        return;
+      }
+      container.innerHTML = links.map(l => {
+        const gameUrl = `${getGameBaseUrl()}/?event=${encodeURIComponent(l.slug)}`;
+        return `<div class="event-link-row">
+          <div>
+            <div class="event-link-slug">?event=${esc(l.slug)}</div>
+            <div class="event-link-meta">${esc(l.name)} → Season: ${esc(l.seasonName ?? l.seasonId)}</div>
+          </div>
+          <div class="event-link-actions">
+            <button class="btn btn-primary btn-sm" onclick="copyEventLink('${esc(gameUrl)}')">📋 Copy Link</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteEventLink('${esc(l.slug)}')">🗑 Delete</button>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { showStatus('Error loading event links: ' + e.message, 'error'); }
+  }
+
+  function copyEventLink(url) {
+    navigator.clipboard?.writeText(url)
+      .then(() => showStatus('✅ Link copied! ' + url, 'ok'))
+      .catch(() => { prompt('Copy this link:', url); });
+  }
+
+  async function deleteEventLink(slug) {
+    if (!confirm(`ลบ Event Link "?event=${slug}" ใช่ไหม?`)) return;
+    try {
+      await eventCall('deleteLink', { slug });
+      showStatus('Deleted event link.', 'warn');
+      await loadEventLinks();
+    } catch(e) { showStatus('Error: ' + e.message, 'error'); }
+  }
+
+  // Populate season dropdown in Event Links form
+  async function populateEventSeasonSelect(seasons) {
+    const sel = $('new-event-season');
+    sel.innerHTML = '<option value="">— เลือก Season —</option>' +
+      seasons.map(s => `<option value="${esc(s.id)}">${esc(s.name)}${s.isActive ? ' ★' : ''}</option>`).join('');
+  }
+
+  $('btn-create-event').addEventListener('click', async () => {
+    const slug     = $('new-event-slug').value.trim();
+    const name     = $('new-event-name').value.trim();
+    const seasonId = $('new-event-season').value;
+    if (!slug || !seasonId) { showStatus('กรอก slug และเลือก Season ก่อน', 'error'); return; }
+    try {
+      await eventCall('createLink', { slug, name: name || slug, seasonId });
+      showStatus(`Event link "?event=${slug}" created!`, 'ok');
+      $('new-event-slug').value = '';
+      $('new-event-name').value = '';
+      await loadEventLinks();
+    } catch(e) { showStatus('Error: ' + e.message, 'error'); }
+  });
+
+  // Hook into loadSeasons to also refresh event section
+  const _origLoadSeasons = loadSeasons;
+  loadSeasons = async function() {
+    await _origLoadSeasons();
+    // Refresh season dropdown in event links form
+    try {
+      const { seasons } = await adminCall('seasons');
+      await populateEventSeasonSelect(seasons);
+      await loadEventLinks();
+    } catch(_) {}
+  };
 </script>
+
 </body>
 </html>
