@@ -200,9 +200,12 @@
 
   <!-- Export -->
   <div class="card">
-    <div class="card-title">Export</div>
-    <div class="row">
-      <button class="btn btn-ghost" id="btn-export">Export Active Season JSON</button>
+    <div class="card-title">📤 Export</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Export ข้อมูล Leaderboard ของ Season ที่กำลังดูอยู่ หรือ Active Season</p>
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-ghost" id="btn-export-json">📄 JSON</button>
+      <button class="btn btn-success" id="btn-export-csv">📊 Excel / CSV</button>
+      <button class="btn btn-primary" id="btn-export-sheets">🟢 Google Sheets</button>
     </div>
   </div>
 
@@ -426,15 +429,76 @@
     } catch (err) { showStatus('Search error: ' + err.message, 'error'); }
   });
 
-  // ── Export ──
-  $('btn-export').addEventListener('click', async () => {
+  // ── Export helpers ──
+  function getExportSeasonId() {
+    // Use the season currently being viewed, or null for active season
+    return _viewingSeasonId ?? null;
+  }
+
+  function entriesToCsv(entries) {
+    const BOM = '\uFEFF'; // UTF-8 BOM — makes Excel open Thai text correctly
+    const headers = ['Rank', 'Name', 'Email', 'Score', 'Level', 'Times Played', 'Last Seen (BKK)'];
+    const rows = entries.map(e => {
+      const lastSeen = e.lastPlayedAt
+        ? new Date(Number(e.lastPlayedAt)).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
+        : '';
+      return [
+        e.rank,
+        `"${String(e.name ?? '').replace(/"/g, '""')}"`,
+        `"${String(e.emailDisplay ?? '').replace(/"/g, '""')}"`,
+        e.score,
+        e.bestLevel ?? 1,
+        e.timesPlayed ?? 1,
+        `"${lastSeen}"`,
+      ].join(',');
+    });
+    return BOM + [headers.join(','), ...rows].join('\r\n');
+  }
+
+  function downloadBlob(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── JSON export ──
+  $('btn-export-json').addEventListener('click', async () => {
     try {
-      const data = await adminCall('export');
-      const blob = new Blob([JSON.stringify(data.entries, null, 2)], { type: 'application/json' });
-      const url  = URL.createObjectURL(blob);
-      const a    = Object.assign(document.createElement('a'), { href: url, download: `export-${new Date().toISOString().slice(0,10)}.json` });
-      a.click(); URL.revokeObjectURL(url);
-      showStatus(`Exported ${data.entries.length} entries.`);
+      const sid  = getExportSeasonId();
+      const data = await adminCall('export', sid ? { seasonId: sid } : {});
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBlob(JSON.stringify(data.entries, null, 2), `leaderboard-${date}.json`, 'application/json');
+      showStatus(`Exported ${data.entries.length} entries as JSON.`);
+    } catch (e) { showStatus('Export error: ' + e.message, 'error'); }
+  });
+
+  // ── CSV / Excel export ──
+  $('btn-export-csv').addEventListener('click', async () => {
+    try {
+      const sid  = getExportSeasonId();
+      const data = await adminCall('export', sid ? { seasonId: sid } : {});
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBlob(entriesToCsv(data.entries), `leaderboard-${date}.csv`, 'text/csv;charset=utf-8');
+      showStatus(`Exported ${data.entries.length} entries as CSV (Excel).`);
+    } catch (e) { showStatus('Export error: ' + e.message, 'error'); }
+  });
+
+  // ── Google Sheets ──
+  // Exports CSV first, then opens Google Sheets import page with instructions
+  $('btn-export-sheets').addEventListener('click', async () => {
+    try {
+      const sid  = getExportSeasonId();
+      const data = await adminCall('export', sid ? { seasonId: sid } : {});
+      const date = new Date().toISOString().slice(0, 10);
+      // 1) Download CSV
+      downloadBlob(entriesToCsv(data.entries), `leaderboard-${date}.csv`, 'text/csv;charset=utf-8');
+      // 2) Open Google Sheets new blank sheet for import
+      setTimeout(() => {
+        window.open('https://sheets.new', '_blank');
+        showStatus('✅ ไฟล์ CSV โหลดแล้ว — เปิด Google Sheets แล้ว ให้ File → Import → Upload ไฟล์ที่โหลดมา', 'ok');
+      }, 600);
     } catch (e) { showStatus('Export error: ' + e.message, 'error'); }
   });
 
