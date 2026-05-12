@@ -71,6 +71,7 @@ async function handlePost(req, res) {
     level: rawLevel,
     email,
     name: rawName,
+    seasonId: explicitSeasonId,  // optional: event-specific season override
   } = req.body ?? {};
 
   // Basic validation
@@ -95,8 +96,8 @@ async function handlePost(req, res) {
   const name         = (rawName ?? 'Anonymous').trim().slice(0, 20) || 'Anonymous';
   const now          = Date.now();
 
-  // Determine active season → write to its key
-  const activeSeason = await kv.get('season:active');
+  // Determine season → explicit event seasonId takes priority over active season
+  const activeSeason = explicitSeasonId ?? (await kv.get('season:active'));
   const lbKey = activeSeason ? `leaderboard:season:${activeSeason}` : 'leaderboard:global';
 
   // Write to sorted set (GT: only update if higher score)

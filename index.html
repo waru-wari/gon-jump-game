@@ -1472,6 +1472,32 @@
         // to point to a fixed canonical URL (e.g. landing page).
         GAME_URL: '',
       };
+
+      // ─── Event Slug Resolution ─────────────────────────────────────────────────
+      // Reads ?event=<slug> from the URL and resolves it to a seasonId via /api/event.
+      // Sets window._eventSeasonId and window._eventName for use throughout the game.
+      window._eventSeasonId = null;
+      window._eventName     = null;
+      (async () => {
+        const params = new URLSearchParams(window.location.search);
+        const slug   = params.get('event');
+        if (!slug) return;
+        try {
+          const res  = await fetch(`/api/event?slug=${encodeURIComponent(slug)}`);
+          if (!res.ok) { console.warn('[event] slug not found:', slug); return; }
+          const data = await res.json();
+          window._eventSeasonId = data.seasonId ?? null;
+          window._eventName     = data.name     ?? null;
+          // Update page title to reflect event
+          if (window._eventName) document.title = `${window._eventName} — empeo Land Adventure`;
+          // Show event banner in leaderboard if element exists
+          const labelEl = document.getElementById('season-label');
+          if (labelEl && window._eventName) {
+            labelEl.textContent = `🎯 ${window._eventName}`;
+            labelEl.style.display = 'block';
+          }
+        } catch (e) { console.warn('[event] resolve failed', e); }
+      })();
       // === Derived Safe Zone constants ===
       CONFIG.SAFE_X_MIN = CONFIG.WIDTH * CONFIG.SAFE_MARGIN_PCT;             // 50
       CONFIG.SAFE_X_MAX = CONFIG.WIDTH * (1 - CONFIG.SAFE_MARGIN_PCT);       // 350
@@ -2999,12 +3025,15 @@
           this.el.submitScoreBtn.textContent = '⏳ Submitting...';
 
           try {
+            // If URL has ?event=slug, submit to that event's season instead of default active season
+            const payload = { score, level, email, name };
+            if (window._eventSeasonId) payload.seasonId = window._eventSeasonId;
+
             const res = await fetch('/api/leaderboard', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ score, level, email, name }),
+              body: JSON.stringify(payload),
             });
-
 
             const data2 = await res.json();
             if (!res.ok) throw new Error(data2.error ?? `HTTP ${res.status}`);
@@ -3041,7 +3070,9 @@
 
         async _fetchAndRenderMiniLb(playerRank) {
           try {
-            const res  = await fetch('/api/leaderboard?limit=10');
+            const sid = window._eventSeasonId ?? '';
+            const url = `/api/leaderboard?limit=10${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
+            const res  = await fetch(url);
             const data = await res.json();
             const top  = (data.global ?? []).slice(0, 10);
             this.el.miniLbList.innerHTML = top.length === 0
@@ -3103,7 +3134,9 @@
 
         // Always show top 10 only
         async renderLeaderboard() {
-          const sid = this._currentSeasonId ?? '';
+          // If URL has ?event=slug, always show that event's leaderboard
+          const eventSid = window._eventSeasonId ?? null;
+          const sid = eventSid ?? (this._currentSeasonId ?? '');
           const url = `/api/leaderboard?limit=50${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
 
           // Client-side censorEmail mirrors server's censorEmail()
@@ -3125,15 +3158,21 @@
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
 
-            // Auto-use active season (no dropdown) — show season name as label
-            if (data.seasons && data.seasons.length > 0) {
-              const activeSeason = data.activeSeason;
-              if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
-              const activeSeasonObj = data.seasons.find(s => s.id === activeSeason);
-              const labelEl = document.getElementById('season-label');
-              if (labelEl && activeSeasonObj) {
-                labelEl.textContent = activeSeasonObj.name + ' ⭐';
+            // Season label: event name takes priority, then active season name
+            const labelEl = document.getElementById('season-label');
+            if (labelEl) {
+              if (window._eventName) {
+                // Event mode — show event name (already set by event resolver above)
+                labelEl.textContent = `🎯 ${window._eventName}`;
                 labelEl.style.display = 'block';
+              } else if (data.seasons && data.seasons.length > 0) {
+                const activeSeason = data.activeSeason;
+                if (!this._currentSeasonId) this._currentSeasonId = activeSeason;
+                const activeSeasonObj = data.seasons.find(s => s.id === activeSeason);
+                if (activeSeasonObj) {
+                  labelEl.textContent = activeSeasonObj.name + ' ⭐';
+                  labelEl.style.display = 'block';
+                }
               }
             }
 
@@ -3558,8 +3597,8 @@
               hasCollectible = true;
             }
           }
-          // Dragon Egg — rare (4%), level 2+ (Night, 4000pts), exclusive with all other items
-          if (!hasCollectible && lvlIdx >= 2 && type !== 'breakable' && Math.random() < 0.04) {
+          // Dragon Egg — rare (4%), score 3000+, exclusive with all other items
+          if (!hasCollectible && this.score >= 3000 && type !== 'breakable' && Math.random() < 0.04) {
             this.dragonEggs.push(new DragonEgg(p, p.w / 2 - 20, -58));
           }
 
