@@ -211,9 +211,8 @@
     <div class="card-title">🔗 Event Links — แชร์ Leaderboard แยกตาม Event</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:14px">สร้าง URL สั้นให้ผู้เล่น เช่น <code style="color:var(--accent)">/api/event?slug=event-may</code> → Leaderboard ของ Season นั้น</p>
     <div class="row" style="margin-bottom:16px;flex-wrap:wrap">
-      <input type="text" id="new-event-slug" placeholder="slug (e.g. event-may-2025)" style="flex:1;min-width:140px">
-      <input type="text" id="new-event-name" placeholder="ชื่อ Event (e.g. May 2025)" style="flex:1;min-width:140px">
-      <select id="new-event-season" style="flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 13px">
+      <input type="text" id="new-event-slug" placeholder="slug (e.g. event-may-2025)" style="flex:1;min-width:160px">
+      <select id="new-event-season" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 13px">
         <option value="">— เลือก Season —</option>
       </select>
       <button class="btn btn-success" id="btn-create-event">+ Create Link</button>
@@ -536,14 +535,12 @@
 
   $('btn-create-event').addEventListener('click', async () => {
     const slug     = $('new-event-slug').value.trim();
-    const name     = $('new-event-name').value.trim();
     const seasonId = $('new-event-season').value;
     if (!slug || !seasonId) { showStatus('กรอก slug และเลือก Season ก่อน', 'error'); return; }
     try {
-      await eventCall('createLink', { slug, name: name || slug, seasonId });
+      await eventCall('createLink', { slug, seasonId }); // name auto-uses season name
       showStatus(`Event link "?event=${slug}" created!`, 'ok');
       $('new-event-slug').value = '';
-      $('new-event-name').value = '';
       await loadEventLinks();
     } catch(e) { showStatus('Error: ' + e.message, 'error'); }
   });
