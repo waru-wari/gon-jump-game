@@ -2982,11 +2982,10 @@
           }
           this._goToStage(1);
 
-          // Pre-fill email/name from localStorage (convenience, not auto-consent)
+          // Pre-fill email from localStorage (convenience, not auto-consent)
           const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
-          const lastName  = localStorage.getItem(CONFIG.PLAYER_NAME_KEY)  || '';
           this.el.leadEmail.value = lastEmail;
-          this.el.leadName.value  = lastName;
+          this.el.leadName.value  = '';  // always start empty — no Anonymous fallback
           this._updateSubmitBtn();   // call AFTER email is set
 
           // Animate score tally
@@ -3017,7 +3016,7 @@
 
         async _submitScore() {
           const email = (this.el.leadEmail.value || '').trim();
-          const name  = (this.el.leadName.value  || 'Anonymous').slice(0, 20);
+          const name  = (this.el.leadName.value  || '').trim().slice(0, 20);
           const score = Game.score;
           const level = Game.currentLevelIdx + 1;
 
