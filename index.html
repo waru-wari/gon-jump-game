@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta id="viewport-meta" name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#5BC0EB">
   <meta name="description" content="Jump, collect, survive! Play Super empeo Land — a sky-high adventure platformer.">
@@ -15,10 +16,12 @@
 
   <!-- Open Graph / Social sharing -->
   <meta property="og:title" content="empeo Land Adventure">
-  <meta property="og:description" content="Jump, collect, survive! Play empeo Land Adventure — a sky-high adventure platformer.">
+  <meta property="og:description"
+    content="Jump, collect, survive! Play empeo Land Adventure — a sky-high adventure platformer.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://raw.githubusercontent.com/waru-wari/gon-jump-game/main/og-image.png">
-  <meta property="og:image:secure_url" content="https://raw.githubusercontent.com/waru-wari/gon-jump-game/main/og-image.png">
+  <meta property="og:image:secure_url"
+    content="https://raw.githubusercontent.com/waru-wari/gon-jump-game/main/og-image.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -29,7 +32,8 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Super empeo Land">
-  <meta name="twitter:description" content="Jump, collect, survive! Play Super empeo Land — a sky-high adventure platformer.">
+  <meta name="twitter:description"
+    content="Jump, collect, survive! Play Super empeo Land — a sky-high adventure platformer.">
   <meta name="twitter:image" content="https://gon-jump-game.vercel.app/og-image.png">
 
   <!-- Round & friendly fonts -->
@@ -72,7 +76,8 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: #1E88E5; /* match sky colour — no black bars visible */
+      background: #1E88E5;
+      /* match sky colour — no black bars visible */
     }
 
     /*
@@ -160,7 +165,8 @@
     #main-menu.hidden {
       opacity: 0;
       pointer-events: none;
-      visibility: hidden;  /* cascades to children — prevents ghost clicks */
+      visibility: hidden;
+      /* cascades to children — prevents ghost clicks */
     }
 
     #game-over {
@@ -213,9 +219,9 @@
       /* Single source of truth for size — all variants inherit this */
       font-size: clamp(14px, 4.2vw, 17px);
       padding: 14px 20px;
-      text-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.20);
+      text-shadow: 0 2px 0 rgba(0, 0, 0, .35), 0 3px 8px rgba(0, 0, 0, .20);
       border-radius: 999px;
-      box-shadow: 0 6px 0 rgba(0,0,0,.2), 0 10px 24px rgba(0,0,0,.2);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, .2), 0 10px 24px rgba(0, 0, 0, .2);
       transform: translateZ(0);
       transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
       white-space: nowrap;
@@ -235,57 +241,67 @@
       position: relative;
       background: linear-gradient(180deg, #FFB74D 0%, #FF8A1A 50%, #E65100 100%);
       border: 4px solid #B14000;
-      text-shadow: 0 2px 0 #8B3000, 0 3px 8px rgba(0,0,0,.30);
+      text-shadow: 0 2px 0 #8B3000, 0 3px 8px rgba(0, 0, 0, .30);
       box-shadow:
-        inset 0 -8px 0 rgba(0,0,0,.18),
-        inset 0 8px 0 rgba(255,255,255,.35),
+        inset 0 -8px 0 rgba(0, 0, 0, .18),
+        inset 0 8px 0 rgba(255, 255, 255, .35),
         0 6px 0 #802A00,
-        0 12px 22px rgba(0,30,80,.25);
+        0 12px 22px rgba(0, 30, 80, .25);
     }
 
     /* === SECONDARY (blue) === */
     .btn-secondary {
       background: linear-gradient(180deg, #64B5F6 0%, #1E88E5 100%);
       border: 4px solid #0D47A1;
-      text-shadow: 0 2px 0 #0A3A8A, 0 3px 8px rgba(0,0,0,.25);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 6px 0 #082C66, 0 10px 18px rgba(0,0,0,.22);
+      text-shadow: 0 2px 0 #0A3A8A, 0 3px 8px rgba(0, 0, 0, .25);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #082C66, 0 10px 18px rgba(0, 0, 0, .22);
     }
 
     /* === SUCCESS (green) === */
     .btn-success {
       background: linear-gradient(180deg, #AED581 0%, #8BC34A 50%, #558B2F 100%);
       border: 4px solid #2E5E14;
-      text-shadow: 0 2px 0 #1F4209, 0 3px 8px rgba(0,0,0,.25);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 6px 0 #1F4209, 0 10px 18px rgba(0,0,0,.22);
+      text-shadow: 0 2px 0 #1F4209, 0 3px 8px rgba(0, 0, 0, .25);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #1F4209, 0 10px 18px rgba(0, 0, 0, .22);
     }
 
     /* === FB/SHARE (navy-blue) === */
     .btn-fb {
       background: linear-gradient(180deg, #5C7CD8 0%, #4267B2 100%);
       border: 4px solid #1B3266;
-      text-shadow: 0 2px 0 #0F1F44, 0 3px 8px rgba(0,0,0,.25);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0,0,0,.22);
+      text-shadow: 0 2px 0 #0F1F44, 0 3px 8px rgba(0, 0, 0, .25);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0F1F44, 0 10px 18px rgba(0, 0, 0, .22);
     }
 
     /* Unified hover: lift 2px + brighten */
-    .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-    .btn:active { transform: translateY(3px); filter: brightness(0.95);
-      box-shadow: 0 2px 0 rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.18);
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
     }
+
+    .btn:active {
+      transform: translateY(3px);
+      filter: brightness(0.95);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, .2), 0 4px 10px rgba(0, 0, 0, .18);
+    }
+
     /* Primary hover keeps its own deep shadow */
     .btn-primary:hover {
       box-shadow:
-        inset 0 -8px 0 rgba(0,0,0,.18), inset 0 8px 0 rgba(255,255,255,.35),
-        0 8px 0 #802A00, 0 16px 26px rgba(0,30,80,.30);
+        inset 0 -8px 0 rgba(0, 0, 0, .18), inset 0 8px 0 rgba(255, 255, 255, .35),
+        0 8px 0 #802A00, 0 16px 26px rgba(0, 30, 80, .30);
     }
+
     .btn-primary:active {
       box-shadow:
-        inset 0 -4px 0 rgba(0,0,0,.18), inset 0 4px 0 rgba(255,255,255,.35),
-        0 2px 0 #802A00, 0 4px 10px rgba(0,30,80,.25);
+        inset 0 -4px 0 rgba(0, 0, 0, .18), inset 0 4px 0 rgba(255, 255, 255, .35),
+        0 2px 0 #802A00, 0 4px 10px rgba(0, 30, 80, .25);
     }
 
     /* All 3 menu buttons full-width */
-    #start-btn, #leaderboard-btn, #share-btn {
+    #start-btn,
+    #leaderboard-btn,
+    #share-btn {
       margin: 0;
       width: 100%;
       flex: none;
@@ -340,7 +356,9 @@
       gap: 2px;
     }
 
-    .leaderboard-list.expanded { max-height: 600px; }
+    .leaderboard-list.expanded {
+      max-height: 600px;
+    }
 
 
 
@@ -363,7 +381,8 @@
       justify-content: space-between;
       align-items: center;
       padding: 9px 12px;
-      border-radius: 16px;        /* rounder */
+      border-radius: 16px;
+      /* rounder */
       font-family: 'Nunito', system-ui, sans-serif;
       font-size: 14px;
       color: #1F5099;
@@ -413,7 +432,8 @@
     }
 
     .leaderboard-row .score {
-      font-family: 'Fredoka', system-ui, sans-serif;  /* bubbly number */
+      font-family: 'Fredoka', system-ui, sans-serif;
+      /* bubbly number */
       font-size: 16px;
       font-weight: 700;
       color: #FF6A1A;
@@ -429,18 +449,51 @@
       transform: translateY(-1px);
     }
 
-    .crown-gold   { filter: drop-shadow(0 0 4px rgba(255,193,7,.70)); }
-    .crown-silver { filter: grayscale(1) brightness(1.10) drop-shadow(0 0 3px rgba(180,180,180,.50)); }
-    .crown-bronze { filter: hue-rotate(-18deg) saturate(0.78) brightness(0.78) drop-shadow(0 0 3px rgba(184,108,48,.50)); }
+    .crown-gold {
+      filter: drop-shadow(0 0 4px rgba(255, 193, 7, .70));
+    }
 
-    .leaderboard-row.gold   { background: linear-gradient(90deg, rgba(255,193,7,.25), rgba(255,193,7,.06)) !important; }
-    .leaderboard-row.gold   .rank  { color: #B8860B; }
-    .leaderboard-row.gold   .score { color: #FF8F00; }
-    .leaderboard-row.silver { background: linear-gradient(90deg, rgba(160,160,160,.20), rgba(160,160,160,.05)) !important; }
-    .leaderboard-row.silver .rank  { color: #6B6B6B; }
-    .leaderboard-row.bronze { background: linear-gradient(90deg, rgba(184,108,48,.20), rgba(184,108,48,.05)) !important; }
-    .leaderboard-row.bronze .rank  { color: #A05A1F; }
-    .leaderboard-row.you    { background: rgba(255,201,60,.35) !important; outline: 2px solid #FFC93C; border-radius: 16px; }
+    .crown-silver {
+      filter: grayscale(1) brightness(1.10) drop-shadow(0 0 3px rgba(180, 180, 180, .50));
+    }
+
+    .crown-bronze {
+      filter: hue-rotate(-18deg) saturate(0.78) brightness(0.78) drop-shadow(0 0 3px rgba(184, 108, 48, .50));
+    }
+
+    .leaderboard-row.gold {
+      background: linear-gradient(90deg, rgba(255, 193, 7, .25), rgba(255, 193, 7, .06)) !important;
+    }
+
+    .leaderboard-row.gold .rank {
+      color: #B8860B;
+    }
+
+    .leaderboard-row.gold .score {
+      color: #FF8F00;
+    }
+
+    .leaderboard-row.silver {
+      background: linear-gradient(90deg, rgba(160, 160, 160, .20), rgba(160, 160, 160, .05)) !important;
+    }
+
+    .leaderboard-row.silver .rank {
+      color: #6B6B6B;
+    }
+
+    .leaderboard-row.bronze {
+      background: linear-gradient(90deg, rgba(184, 108, 48, .20), rgba(184, 108, 48, .05)) !important;
+    }
+
+    .leaderboard-row.bronze .rank {
+      color: #A05A1F;
+    }
+
+    .leaderboard-row.you {
+      background: rgba(255, 201, 60, .35) !important;
+      outline: 2px solid #FFC93C;
+      border-radius: 16px;
+    }
 
     /* Separator between top 10 and player's own entry */
     .lb-me-separator {
@@ -466,11 +519,19 @@
     .btn-green {
       background: linear-gradient(180deg, #81C784 0%, #43A047 100%);
       border: 4px solid #1B5E20;
-      text-shadow: -1px -1px 0 #1B5E20, 1px -1px 0 #1B5E20, -1px 1px 0 #1B5E20, 1px 1px 0 #1B5E20, 0 3px 0 #0D3A0E, 0 5px 8px rgba(0,0,0,.3);
-      box-shadow: inset 0 -6px 0 rgba(0,0,0,.2), inset 0 6px 0 rgba(255,255,255,.25), 0 6px 0 #0D3A0E, 0 10px 18px rgba(0,0,0,.25);
+      text-shadow: -1px -1px 0 #1B5E20, 1px -1px 0 #1B5E20, -1px 1px 0 #1B5E20, 1px 1px 0 #1B5E20, 0 3px 0 #0D3A0E, 0 5px 8px rgba(0, 0, 0, .3);
+      box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .25), 0 6px 0 #0D3A0E, 0 10px 18px rgba(0, 0, 0, .25);
     }
-    .btn-green:hover { transform: translateY(-2px); filter: brightness(1.08); }
-    .btn-green:active { transform: translateY(3px); filter: brightness(0.95); }
+
+    .btn-green:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .btn-green:active {
+      transform: translateY(3px);
+      filter: brightness(0.95);
+    }
 
     /* === LEADERBOARD SCREEN (separate overlay) === */
     #leaderboard-screen {
@@ -480,7 +541,11 @@
       display: none;
       /* Only accessible from main menu state — game hud sits below */
     }
-    #leaderboard-screen.active { display: flex; pointer-events: auto; }
+
+    #leaderboard-screen.active {
+      display: flex;
+      pointer-events: auto;
+    }
 
 
     /* === COUNTDOWN OVERLAY === */
@@ -493,33 +558,45 @@
       justify-content: center;
       pointer-events: none;
     }
-    #countdown-overlay.active { display: flex; }
+
+    #countdown-overlay.active {
+      display: flex;
+    }
+
     .countdown-number {
       font-family: 'Fredoka', system-ui, sans-serif;
       font-size: 120px;
       font-weight: 700;
       color: #fff;
       text-shadow:
-        -4px -4px 0 #1565C0,  4px -4px 0 #1565C0,
-        -4px  4px 0 #1565C0,  4px  4px 0 #1565C0,
+        -4px -4px 0 #1565C0, 4px -4px 0 #1565C0,
+        -4px 4px 0 #1565C0, 4px 4px 0 #1565C0,
         0 6px 0 #0D47A1,
-        0 12px 32px rgba(0,30,80,.6);
-      animation: countdown-pop 0.35s cubic-bezier(.36,1.56,.64,1) forwards;
+        0 12px 32px rgba(0, 30, 80, .6);
+      animation: countdown-pop 0.35s cubic-bezier(.36, 1.56, .64, 1) forwards;
       line-height: 1;
     }
+
     @keyframes countdown-pop {
-      from { transform: scale(1.8); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
+      from {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .lb-screen-card {
       width: 100%;
       max-width: 320px;
-      background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(245,250,255,.97) 100%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .97) 0%, rgba(245, 250, 255, .97) 100%);
       border: 3px solid #FFC93C;
       border-radius: 24px;
       padding: 16px 18px 20px;
-      box-shadow: 0 12px 32px rgba(0,40,80,.30);
+      box-shadow: 0 12px 32px rgba(0, 40, 80, .30);
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -531,18 +608,37 @@
       align-items: center;
       justify-content: space-between;
     }
+
     .lb-back-btn {
-      appearance: none; border: none;
-      background: rgba(0,0,0,.08); border-radius: 50%;
-      width: 34px; height: 34px; font-size: 20px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      color: #444; transition: background .15s; flex-shrink: 0;
+      appearance: none;
+      border: none;
+      background: rgba(0, 0, 0, .08);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      transition: background .15s;
+      flex-shrink: 0;
     }
-    .lb-back-btn:hover { background: rgba(0,0,0,.16); }
+
+    .lb-back-btn:hover {
+      background: rgba(0, 0, 0, .16);
+    }
+
     .lb-screen-list {
-      list-style: none; padding: 0; margin: 0;
-      overflow-y: auto; flex: 1;
-      display: flex; flex-direction: column; gap: 2px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
 
@@ -575,7 +671,8 @@
     .score-display {
       background: transparent;
       color: #FFD75A;
-      font-family: 'Fredoka', system-ui, sans-serif;  /* Fredoka for score numbers */
+      font-family: 'Fredoka', system-ui, sans-serif;
+      /* Fredoka for score numbers */
       font-weight: 800;
       font-size: clamp(32px, 8vw, 42px);
       padding: 0;
@@ -686,7 +783,8 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 100;
-      touch-action: manipulation;   /* no 300ms tap delay on mobile */
+      touch-action: manipulation;
+      /* no 300ms tap delay on mobile */
     }
 
     .pause-btn::before,
@@ -814,8 +912,10 @@
       color: #555;
       font-size: 22px;
       font-weight: 700;
-      line-height: 34px;    /* match height for single-line vertical center */
-      padding: 0 0 2px 0;   /* optical nudge for × glyph */
+      line-height: 34px;
+      /* match height for single-line vertical center */
+      padding: 0 0 2px 0;
+      /* optical nudge for × glyph */
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -835,11 +935,16 @@
       transform: scale(.88);
     }
 
-    #resume-btn:hover, #mute-btn:hover, #quit-btn:hover {
+    #resume-btn:hover,
+    #mute-btn:hover,
+    #quit-btn:hover {
       transform: translateY(-3px);
       filter: brightness(1.1);
     }
-    #resume-btn:active, #mute-btn:active, #quit-btn:active {
+
+    #resume-btn:active,
+    #mute-btn:active,
+    #quit-btn:active {
       transform: translateY(3px);
       filter: brightness(0.94);
     }
@@ -1057,11 +1162,13 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      z-index: 0;            /* behind canvas (z=1) and overlays (z=10) */
+      z-index: 0;
+      /* behind canvas (z=1) and overlays (z=10) */
       opacity: 0;
       transition: opacity 0.6s ease;
       pointer-events: none;
     }
+
     #menu-video.active {
       opacity: 1;
     }
@@ -1076,7 +1183,10 @@
       max-width: 240px;
       margin-top: 8px;
     }
-    #resume-btn, #mute-btn, #quit-btn {
+
+    #resume-btn,
+    #mute-btn,
+    #quit-btn {
       width: 100%;
       box-sizing: border-box;
       text-align: center;
@@ -1092,8 +1202,13 @@
        ══════════════════════════════════════════════════════ */
 
     /* Stage panels inside gameover-body */
-    .go-stage { display: none; }
-    .go-stage.active { display: block; }
+    .go-stage {
+      display: none;
+    }
+
+    .go-stage.active {
+      display: block;
+    }
 
     /* PDPA consent checkbox row */
     .consent-row {
@@ -1120,8 +1235,14 @@
       line-height: 1.5;
     }
 
-    .consent-label a { color: #1E88E5; text-decoration: none; }
-    .consent-label a:hover { text-decoration: underline; }
+    .consent-label a {
+      color: #1E88E5;
+      text-decoration: none;
+    }
+
+    .consent-label a:hover {
+      text-decoration: underline;
+    }
 
     /* Pending / on-board badges */
     .score-status {
@@ -1168,7 +1289,8 @@
     #migration-banner {
       position: fixed;
       bottom: 0;
-      left: 0; right: 0;
+      left: 0;
+      right: 0;
       background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
       color: #fff;
       padding: 14px 20px;
@@ -1176,16 +1298,28 @@
       align-items: center;
       gap: 12px;
       z-index: 9999;
-      box-shadow: 0 -4px 20px rgba(0,0,0,.35);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, .35);
       font-family: 'Nunito', system-ui, sans-serif;
       font-size: 15px;
     }
 
-    #migration-banner.show { display: flex; }
+    #migration-banner.show {
+      display: flex;
+    }
 
-    #migration-banner .mig-text { flex: 1; }
-    #migration-banner .mig-text strong { display: block; font-size: 16px; }
-    #migration-banner .mig-text span { font-size: 13px; opacity: .85; }
+    #migration-banner .mig-text {
+      flex: 1;
+    }
+
+    #migration-banner .mig-text strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    #migration-banner .mig-text span {
+      font-size: 13px;
+      opacity: .85;
+    }
 
     #migration-banner .mig-btn {
       border: none;
@@ -1198,8 +1332,16 @@
       white-space: nowrap;
     }
 
-    .mig-submit { background: #FFC93C; color: #5D3A00; }
-    .mig-dismiss { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3) !important; }
+    .mig-submit {
+      background: #FFC93C;
+      color: #5D3A00;
+    }
+
+    .mig-dismiss {
+      background: rgba(255, 255, 255, .15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .3) !important;
+    }
 
     /* === v0.8 BIOME BANNER === */
     .biome-banner {
@@ -1207,7 +1349,7 @@
       top: 64px;
       left: 50%;
       transform: translateX(-50%) translateY(-30px);
-      background: linear-gradient(135deg, rgba(0,0,0,.55), rgba(0,0,0,.30));
+      background: linear-gradient(135deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .30));
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       color: #fff;
@@ -1217,21 +1359,38 @@
       letter-spacing: 1px;
       padding: 8px 22px;
       border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.30);
+      border: 2px solid rgba(255, 255, 255, .30);
       opacity: 0;
       pointer-events: none;
       z-index: 50;
       white-space: nowrap;
-      text-shadow: 0 1px 4px rgba(0,0,0,.5);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
     }
+
     .biome-banner.show {
       animation: biome-slide 2.4s ease forwards;
     }
+
     @keyframes biome-slide {
-      0%   { opacity:0; transform:translateX(-50%) translateY(-30px); }
-      15%  { opacity:1; transform:translateX(-50%) translateY(0);     }
-      75%  { opacity:1; transform:translateX(-50%) translateY(0);     }
-      100% { opacity:0; transform:translateX(-50%) translateY(-15px); }
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+      }
+
+      15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      75% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-15px);
+      }
     }
 
     /* === v0.8 SCREEN FLASH === */
@@ -1242,12 +1401,19 @@
       opacity: 0;
       z-index: 49;
     }
+
     .screen-flash.flash {
       animation: flash-out .45s ease forwards;
     }
+
     @keyframes flash-out {
-      0%   { opacity: .6; }
-      100% { opacity: 0;  }
+      0% {
+        opacity: .6;
+      }
+
+      100% {
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -1275,119 +1441,120 @@
       <div id="biome-banner" class="biome-banner" aria-live="polite"></div>
       <div id="screen-flash" class="screen-flash"></div>
 
-    <!-- MAIN MENU -->
-    <div id="main-menu" class="overlay active">
-      <div class="logo-wrap">
-        <img src="logo.png" alt="Super empeo Land" class="logo-img">
-      </div>
-
-      <div class="menu-actions">
-        <button id="start-btn" class="btn btn-primary">▶ Play</button>
-        <button id="leaderboard-btn" class="btn btn-green">🏆 Leaderboard</button>
-        <button id="share-btn" class="btn btn-secondary">📣 Share</button>
-      </div>
-    </div>
-
-    <!-- LEADERBOARD SCREEN (separate overlay page) -->
-    <div id="leaderboard-screen" class="overlay">
-      <div class="lb-screen-card">
-        <div class="lb-screen-header">
-          <button class="lb-back-btn" id="lb-back-btn" aria-label="Back">←</button>
-          <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
-          <div style="width:34px"></div>
-        </div>
-        <div id="season-label" class="season-label"></div>
-        <ol id="leaderboard-list" class="lb-screen-list"></ol>
-      </div>
-    </div>
-
-    <!-- IN-GAME HUD -->
-    <div id="game-hud" class="overlay">
-      <div class="hud-top">
-        <div id="score-display" class="score-display">0</div>
-      </div>
-      <div id="multiplier-badge" class="multiplier-badge">x2 SCORE</div>
-      <div id="level-badge" class="level-badge">🌿 Lv.1</div>
-      <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
-
-
-
-      <!-- Countdown overlay (shown after resume) -->
-      <div id="countdown-overlay" class="countdown-overlay">
-        <div id="countdown-number" class="countdown-number">3</div>
-      </div>
-    </div>
-
-    <!-- PAUSE SCREEN -->
-    <div id="pause-screen" class="overlay">
-      <h2>Paused</h2>
-      <div class="pause-actions">
-        <button id="resume-btn" class="btn btn-success">▶ Resume</button>
-        <button id="mute-btn"   class="btn btn-secondary">🔊 Sound</button>
-        <button id="quit-btn"   class="btn btn-secondary">🏠 Home</button>
-      </div>
-    </div>
-
-    <!-- GAME OVER (v0.6 two-stage submit) -->
-    <div id="game-over" class="overlay">
-      <div class="gameover-card">
-        <!-- Close (×) returns to main menu -->
-        <button id="gameover-close" class="close-btn" aria-label="Close">×</button>
-
-        <!-- Static header — always visible at top -->
-        <div class="gameover-header">
-          <div class="gameover-title">GAME OVER</div>
-          <div class="gameover-subtitle">Nong Gon fell from the sky!</div>
-          <div id="score-tally" class="score-tally">0</div>
+      <!-- MAIN MENU -->
+      <div id="main-menu" class="overlay active">
+        <div class="logo-wrap">
+          <img src="logo.png" alt="Super empeo Land" class="logo-img">
         </div>
 
-        <!-- Scrollable body -->
-        <div class="gameover-body">
+        <div class="menu-actions">
+          <button id="start-btn" class="btn btn-primary">▶ Play</button>
+          <button id="leaderboard-btn" class="btn btn-green">🏆 Leaderboard</button>
+          <button id="share-btn" class="btn btn-secondary">📣 Share</button>
+        </div>
+      </div>
 
-          <!-- ══ STAGE 1: Score pending ══ -->
-          <div class="go-stage active" id="go-stage1">
-            <div class="score-status pending">⏳ SCORE PENDING</div>
-            <p style="font-size:13px;color:#666;margin-bottom:10px">Submit your score to the global leaderboard!</p>
+      <!-- LEADERBOARD SCREEN (separate overlay page) -->
+      <div id="leaderboard-screen" class="overlay">
+        <div class="lb-screen-card">
+          <div class="lb-screen-header">
+            <button class="lb-back-btn" id="lb-back-btn" aria-label="Back">←</button>
+            <div class="leaderboard-title" style="margin:0;flex:1;text-align:center">🏆 LEADERBOARD</div>
+            <div style="width:34px"></div>
+          </div>
+          <div id="season-label" class="season-label"></div>
+          <ol id="leaderboard-list" class="lb-screen-list"></ol>
+        </div>
+      </div>
 
-            <div class="lead-form">
-              <input id="lead-email" class="lead-input" type="email"
-                placeholder="Email (required)" autocomplete="off" required>
-              <input id="lead-name" class="lead-input" type="text"
-                placeholder="Display name (optional)" maxlength="20" autocomplete="off">
-            </div>
+      <!-- IN-GAME HUD -->
+      <div id="game-hud" class="overlay">
+        <div class="hud-top">
+          <div id="score-display" class="score-display">0</div>
+        </div>
+        <div id="multiplier-badge" class="multiplier-badge">x2 SCORE</div>
+        <div id="level-badge" class="level-badge">🌿 Lv.1</div>
+        <button id="pause-btn" class="pause-btn" aria-label="Pause"></button>
 
-            <!-- PDPA notice -->
-            <p class="consent-label" style="margin:10px 0 0;font-size:11px;color:#888;line-height:1.5">
-              🔒 Your email is stored securely and used only to track your score. It will never be displayed publicly or shared with third parties.
-            </p>
+
+
+        <!-- Countdown overlay (shown after resume) -->
+        <div id="countdown-overlay" class="countdown-overlay">
+          <div id="countdown-number" class="countdown-number">3</div>
+        </div>
+      </div>
+
+      <!-- PAUSE SCREEN -->
+      <div id="pause-screen" class="overlay">
+        <h2>Paused</h2>
+        <div class="pause-actions">
+          <button id="resume-btn" class="btn btn-success">▶ Resume</button>
+          <button id="mute-btn" class="btn btn-secondary">🔊 Sound</button>
+          <button id="quit-btn" class="btn btn-secondary">🏠 Home</button>
+        </div>
+      </div>
+
+      <!-- GAME OVER (v0.6 two-stage submit) -->
+      <div id="game-over" class="overlay">
+        <div class="gameover-card">
+          <!-- Close (×) returns to main menu -->
+          <button id="gameover-close" class="close-btn" aria-label="Close">×</button>
+
+          <!-- Static header — always visible at top -->
+          <div class="gameover-header">
+            <div class="gameover-title">GAME OVER</div>
+            <div class="gameover-subtitle">Nong Gon fell from the sky!</div>
+            <div id="score-tally" class="score-tally">0</div>
           </div>
 
-          <!-- ══ STAGE 2: On the board ══ -->
-          <div class="go-stage" id="go-stage2">
-            <div class="score-status submitted">✅ ON THE BOARD</div>
-            <div class="online-email-display" id="go-email-display"></div>
+          <!-- Scrollable body -->
+          <div class="gameover-body">
 
-            <!-- Mini online leaderboard -->
-            <div class="mini-leaderboard">
-              <div class="mini-lb-title">🏆 Hall of Fame — Top 10</div>
-              <ol id="mini-lb-list" class="mini-lb-list"></ol>
+            <!-- ══ STAGE 1: Score pending ══ -->
+            <div class="go-stage active" id="go-stage1">
+              <div class="score-status pending">⏳ SCORE PENDING</div>
+              <p style="font-size:13px;color:#666;margin-bottom:10px">Submit your score to the global leaderboard!</p>
+
+              <div class="lead-form">
+                <input id="lead-email" class="lead-input" type="email" placeholder="Email (required)" autocomplete="off"
+                  required>
+                <input id="lead-name" class="lead-input" type="text" placeholder="Display name (optional)"
+                  maxlength="20" autocomplete="off">
+              </div>
+
+              <!-- PDPA notice -->
+              <p class="consent-label" style="margin:10px 0 0;font-size:11px;color:#888;line-height:1.5">
+                🔒 Your email is stored securely and used only to track your score. It will never be displayed publicly
+                or shared with third parties.
+              </p>
             </div>
+
+            <!-- ══ STAGE 2: On the board ══ -->
+            <div class="go-stage" id="go-stage2">
+              <div class="score-status submitted">✅ ON THE BOARD</div>
+              <div class="online-email-display" id="go-email-display"></div>
+
+              <!-- Mini online leaderboard -->
+              <div class="mini-leaderboard">
+                <div class="mini-lb-title">🏆 Hall of Fame — Top 10</div>
+                <ol id="mini-lb-list" class="mini-lb-list"></ol>
+              </div>
+            </div>
+
+          </div><!-- /gameover-body -->
+
+          <!-- Action buttons — change per stage -->
+          <div class="gameover-buttons" id="go-buttons-stage1">
+            <button id="submit-score-btn" class="btn btn-primary" disabled>📤 Submit Score</button>
+            <button id="skip-btn" class="btn btn-secondary">Skip</button>
+          </div>
+          <div class="gameover-buttons" id="go-buttons-stage2" style="display:none">
+            <button id="play-again-btn" class="btn btn-primary">▶ Play Again</button>
+            <button id="gameover-share-btn" class="btn btn-fb">📣 Share</button>
           </div>
 
-        </div><!-- /gameover-body -->
-
-        <!-- Action buttons — change per stage -->
-        <div class="gameover-buttons" id="go-buttons-stage1">
-          <button id="submit-score-btn" class="btn btn-primary" disabled>📤 Submit Score</button>
-          <button id="skip-btn" class="btn btn-secondary">Skip</button>
         </div>
-        <div class="gameover-buttons" id="go-buttons-stage2" style="display:none">
-          <button id="play-again-btn" class="btn btn-primary">▶ Play Again</button>
-          <button id="gameover-share-btn" class="btn btn-fb">📣 Share</button>
-        </div>
-
       </div>
-    </div>
 
       <div id="toast" class="toast"></div>
     </div><!-- /#canvas-wrap -->
@@ -1446,21 +1613,24 @@
         COIN_VALUE: 25,
         DIAMOND_VALUE: 100,
         DRAGON_STOMP: 50,
-        DRAGON_EGG_SCORE:     0,     // no instant score (passive buff only)
+        DRAGON_EGG_SCORE: 0,     // no instant score (passive buff only)
         DRAGON_FORM_DURATION: 5000,  // ms in dragon form
-        DRAGON_SURGE_VY:     -10,    // initial upward kick on collect
-        DRAGON_FLOAT_VY:      -8.0,  // sustained upward float speed during dragon form
+        DRAGON_SURGE_VY: -10,    // initial upward kick on collect
+        DRAGON_FLOAT_VY: -8.0,  // sustained upward float speed during dragon form
+        DRAGON_REVERT_VY: 2.0,  // gentle downward speed when dragon form expires
+        DRAGON_REVERT_GRACE: 800,  // ms of reduced gravity after dragon form ends
+        DRAGON_WARN_MS: 2000,      // ms before expiry to start countdown warning
         DRAGON_MAGNET_RADIUS: 130,   // px radius for item magnet effect
         BIRD_STOMP: 30,
         HEIGHT_SCORE_RATIO: 0.25,
 
         // === LEVEL SYSTEM — every 2000 pts (Lv.1 = 0–2000, Lv.2 = 2001–4000 ...) ===
         LEVELS: [
-          { minScore:     0, gapMin:  90, gapMax: 118, platWidth: 82, movingChance: 0.03, breakableChance: 0.03, label: '🌤 Sky Day',  color: '#1565C0', theme: { sky: ['#1565C0','#42A5F5','#81D4FA','#B3E5FC'], hasMoon: false, stars: false, aurora: false, overlay: null,                    cloudColor: '#E8F4FF', flashColor: 'rgba(180,220,255,0.5)', sunColor: 'rgba(255,250,200,0.70)', sunCore: 'rgba(255,255,230,0.95)' } },
-          { minScore:  2000, gapMin: 100, gapMax: 135, platWidth: 74, movingChance: 0.10, breakableChance: 0.07, label: '🌅 Sunset',   color: '#E65100', theme: { sky: ['#7B1900','#D84315','#FF6D00','#FFAB40'], hasMoon: false, stars: false, aurora: false, overlay: 'rgba(255,80,0,0.06)',     cloudColor: '#FFD0A0', flashColor: 'rgba(255,140,60,0.5)',  sunColor: 'rgba(255,200,100,0.70)', sunCore: 'rgba(255,230,160,0.95)' } },
-          { minScore:  4000, gapMin: 110, gapMax: 150, platWidth: 66, movingChance: 0.18, breakableChance: 0.13, label: '🌙 Night',    color: '#4527A0', theme: { sky: ['#0D0221','#1A0550','#2D1B69','#512888'], hasMoon: true,  stars: true,  aurora: false, overlay: 'rgba(80,0,180,0.07)',     cloudColor: '#C3A8FF', flashColor: 'rgba(140,80,255,0.5)',  sunColor: 'rgba(200,150,255,0.50)', sunCore: 'rgba(220,180,255,0.85)' } },
-          { minScore:  6000, gapMin: 122, gapMax: 165, platWidth: 58, movingChance: 0.28, breakableChance: 0.21, label: '🌌 Aurora',   color: '#00695C', theme: { sky: ['#00251A','#00695C','#1DE9B6','#A7FFEB'], hasMoon: false, stars: true,  aurora: true,  overlay: 'rgba(0,200,150,0.06)',    cloudColor: '#80FFDB', flashColor: 'rgba(0,255,180,0.4)',   sunColor: 'rgba(150,255,220,0.50)', sunCore: 'rgba(200,255,240,0.85)' } },
-          { minScore:  8000, gapMin: 135, gapMax: 185, platWidth: 50, movingChance: 0.37, breakableChance: 0.29, label: '🚀 Space',    color: '#01579B', theme: { sky: ['#000000','#0A0A20','#0D0D2B','#0A1540'], hasMoon: true,  stars: true,  aurora: false, overlay: 'rgba(0,50,150,0.06)',     cloudColor: '#8CB8FF', flashColor: 'rgba(100,150,255,0.4)', sunColor: 'rgba(150,200,255,0.40)', sunCore: 'rgba(200,230,255,0.80)' } },
+          { minScore: 0, gapMin: 90, gapMax: 118, platWidth: 82, movingChance: 0.03, breakableChance: 0.03, label: '🌤 Sky Day', color: '#1565C0', theme: { sky: ['#1565C0', '#42A5F5', '#81D4FA', '#B3E5FC'], hasMoon: false, stars: false, aurora: false, overlay: null, cloudColor: '#E8F4FF', flashColor: 'rgba(180,220,255,0.5)', sunColor: 'rgba(255,250,200,0.70)', sunCore: 'rgba(255,255,230,0.95)' } },
+          { minScore: 2000, gapMin: 100, gapMax: 135, platWidth: 74, movingChance: 0.10, breakableChance: 0.07, label: '🌅 Sunset', color: '#E65100', theme: { sky: ['#7B1900', '#D84315', '#FF6D00', '#FFAB40'], hasMoon: false, stars: false, aurora: false, overlay: 'rgba(255,80,0,0.06)', cloudColor: '#FFD0A0', flashColor: 'rgba(255,140,60,0.5)', sunColor: 'rgba(255,200,100,0.70)', sunCore: 'rgba(255,230,160,0.95)' } },
+          { minScore: 4000, gapMin: 110, gapMax: 150, platWidth: 66, movingChance: 0.18, breakableChance: 0.13, label: '🌙 Night', color: '#4527A0', theme: { sky: ['#0D0221', '#1A0550', '#2D1B69', '#512888'], hasMoon: true, stars: true, aurora: false, overlay: 'rgba(80,0,180,0.07)', cloudColor: '#C3A8FF', flashColor: 'rgba(140,80,255,0.5)', sunColor: 'rgba(200,150,255,0.50)', sunCore: 'rgba(220,180,255,0.85)' } },
+          { minScore: 6000, gapMin: 122, gapMax: 165, platWidth: 58, movingChance: 0.28, breakableChance: 0.21, label: '🌌 Aurora', color: '#00695C', theme: { sky: ['#00251A', '#00695C', '#1DE9B6', '#A7FFEB'], hasMoon: false, stars: true, aurora: true, overlay: 'rgba(0,200,150,0.06)', cloudColor: '#80FFDB', flashColor: 'rgba(0,255,180,0.4)', sunColor: 'rgba(150,255,220,0.50)', sunCore: 'rgba(200,255,240,0.85)' } },
+          { minScore: 8000, gapMin: 135, gapMax: 185, platWidth: 50, movingChance: 0.37, breakableChance: 0.29, label: '🚀 Space', color: '#01579B', theme: { sky: ['#000000', '#0A0A20', '#0D0D2B', '#0A1540'], hasMoon: true, stars: true, aurora: false, overlay: 'rgba(0,50,150,0.06)', cloudColor: '#8CB8FF', flashColor: 'rgba(100,150,255,0.4)', sunColor: 'rgba(150,200,255,0.40)', sunCore: 'rgba(200,230,255,0.80)' } },
         ],
 
         LEADERBOARD_KEY: 'empeoLand_leaderboard_v1',
@@ -1477,17 +1647,17 @@
       // Reads ?event=<slug> from the URL and resolves it to a seasonId via /api/event.
       // Sets window._eventSeasonId and window._eventName for use throughout the game.
       window._eventSeasonId = null;
-      window._eventName     = null;
+      window._eventName = null;
       (async () => {
         const params = new URLSearchParams(window.location.search);
-        const slug   = params.get('event');
+        const slug = params.get('event');
         if (!slug) return;
         try {
-          const res  = await fetch(`/api/event?slug=${encodeURIComponent(slug)}`);
+          const res = await fetch(`/api/event?slug=${encodeURIComponent(slug)}`);
           if (!res.ok) { console.warn('[event] slug not found:', slug); return; }
           const data = await res.json();
           window._eventSeasonId = data.seasonId ?? null;
-          window._eventName     = data.name     ?? null;
+          window._eventName = data.name ?? null;
           // Update page title to reflect event
           if (window._eventName) document.title = `${window._eventName} — empeo Land Adventure`;
           // Show event banner in leaderboard if element exists
@@ -1531,19 +1701,19 @@
         init() {
           // Keyboard
           addEventListener('keydown', e => {
-            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') this.left  = true;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = true;
             if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = true;
-            if (e.code === 'Space'  && Game.state === 'menu')    Game.start();
+            if (e.code === 'Space' && Game.state === 'menu') Game.start();
             if (e.code === 'Escape' && Game.state === 'playing') Game.pause();
           });
           addEventListener('keyup', e => {
-            if (e.code === 'ArrowLeft'  || e.code === 'KeyA') this.left  = false;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.left = false;
             if (e.code === 'ArrowRight' || e.code === 'KeyD') this.right = false;
           });
 
           // Block all click/touch on the canvas so events never bubble to overlay buttons.
           const cv = document.getElementById('game-canvas');
-          cv.addEventListener('click',      e => e.stopPropagation());
+          cv.addEventListener('click', e => e.stopPropagation());
           cv.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 
           // Virtual D-pad removed — tilt control is the primary mobile input
@@ -1569,7 +1739,7 @@
 
             // ── Analog tilt strength (−1 … +1) ──────────────────────────────
             const dead = this.TILT_DEAD;
-            const max  = this.TILT_MAX;
+            const max = this.TILT_MAX;
             if (Math.abs(g) < dead) {
               this._tiltVx = 0;
             } else {
@@ -1579,8 +1749,8 @@
             }
 
             // Set binary left/right flags so D-pad logic still works as fallback
-            this.left  = this._tiltVx < -0.05;
-            this.right = this._tiltVx >  0.05;
+            this.left = this._tiltVx < -0.05;
+            this.right = this._tiltVx > 0.05;
 
           };
         },
@@ -1640,14 +1810,15 @@
           this.state = 'idle';    // idle | jumping | falling | spring
           this.animTimer = 0;
           this.squash = 1;        // 1 = neutral; >1 = stretch up; <1 = squash down
-          this.springAnim  = 0;
-          this.dragonTimer  = 0;    // ms remaining in dragon form (0 = normal)
-          this._wasDragon   = false; // flag to detect form expiry for revert FX
+          this.springAnim = 0;
+          this.dragonTimer = 0;    // ms remaining in dragon form (0 = normal)
+          this._wasDragon = false; // flag to detect form expiry for revert FX
+          this._dragonGrace = 0;     // ms of reduced gravity after dragon form ends
         }
 
         update(dt, gameSpeed = 1) {
           // ── Horizontal movement ──────────────────────────────────────────
-          const ACCEL   = 0.55;
+          const ACCEL = 0.55;
           const FRICTION = 0.80;
 
           if (Input.tiltMode) {
@@ -1658,7 +1829,7 @@
             if (Math.abs(tiltVx) > 0.05) this.facing = Math.sign(tiltVx);
           } else {
             let tx = 0;
-            if (Input.left)  tx -= 1;
+            if (Input.left) tx -= 1;
             if (Input.right) tx += 1;
             if (tx !== 0) {
               this.vx += tx * ACCEL;
@@ -1679,6 +1850,11 @@
           if (this.dragonTimer > 0) {
             // Lerp vy toward DRAGON_FLOAT_VY: initial surge settles into gentle upward drift
             this.vy += (CONFIG.DRAGON_FLOAT_VY - this.vy) * 0.12;
+          } else if (this._dragonGrace > 0) {
+            // Grace period after dragon form — half gravity for soft landing
+            this._dragonGrace -= dt;
+            this.vy += CONFIG.GRAVITY * 0.5 * dtFactor;
+            if (this.vy > CONFIG.MAX_FALL_SPEED * 0.5) this.vy = CONFIG.MAX_FALL_SPEED * 0.5;
           } else {
             this.vy += CONFIG.GRAVITY * dtFactor;
             if (this.vy > CONFIG.MAX_FALL_SPEED) this.vy = CONFIG.MAX_FALL_SPEED;
@@ -1705,7 +1881,7 @@
           const targetSquash = this.state === 'jumping' ? 1.1 : (this.state === 'falling' ? 0.95 : 1);
           this.squash += (targetSquash - this.squash) * 0.15;
 
-          if (this.springAnim  > 0) this.springAnim  -= dt;
+          if (this.springAnim > 0) this.springAnim -= dt;
           if (this.dragonTimer > 0) this.dragonTimer -= dt;
 
           this.animTimer += dt;
@@ -1767,27 +1943,54 @@
           ctx.save();
           ctx.translate(cx, cy);
           ctx.scale(this.facing * 1, 1);
-          ctx.scale(1 / sq, sq);
 
           // === DRAW CHARACTER SPRITE ===
           // Priority: dying → dragon form → normal
-          const isDying  = Game.state === 'dying';
+          const isDying = Game.state === 'dying';
           const isDragon = this.dragonTimer > 0;
-          const sprite = isDying  ? Game.assets.gonShocked
-                       : isDragon ? IMG_DRAGON
-                       :            Game.assets.gon;
-          if (sprite && sprite.complete && sprite.naturalWidth > 0) {
-            const drawSize = Math.max(w, h) * 1.30;
-            ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+
+          // Skip squash/stretch for dragon form — keeps sprite proportions clean
+          if (!isDragon) ctx.scale(1 / sq, sq);
+
+          // === DRAGON EXPIRY WARNING — smooth crossfade dragon ↔ normal sprite ===
+          // During the last 3s, both sprites are drawn with blended alpha
+          // so the dragon slowly "fades out" while gon "fades in"
+          const _warnActive = isDragon && this.dragonTimer < CONFIG.DRAGON_WARN_MS;
+          // dragonAlpha: 1.0 during full power, oscillates 0↔1 during warning
+          let dragonAlpha = 1;
+          if (_warnActive) {
+            // Smooth sine wave: 0→1→0→1... at ~1.5 Hz (gentle pulse)
+            dragonAlpha = 0.5 + 0.5 * Math.sin(performance.now() * 0.0095);
+          }
+
+          const drawSize = Math.max(w, h) * 1.30;
+          const gonSprite = isDying ? Game.assets.gonShocked : Game.assets.gon;
+
+          if (_warnActive && gonSprite && gonSprite.complete && gonSprite.naturalWidth > 0) {
+            // Draw BOTH sprites with crossfade
+            // 1) Normal gon (fading in)
+            ctx.globalAlpha = 1 - dragonAlpha;
+            ctx.drawImage(gonSprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            // 2) Dragon (fading out)
+            ctx.globalAlpha = dragonAlpha;
+            ctx.drawImage(IMG_DRAGON, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            ctx.globalAlpha = 1;
           } else {
-            // Loading fallback — simple white circle so gameplay isn't blocked
-            ctx.fillStyle = '#FFFFFF';
-            ctx.strokeStyle = '#9DAEC2';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.ellipse(0, h * 0.05, w * 0.42, h * 0.40, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            // Normal single-sprite draw
+            const sprite = isDying ? Game.assets.gonShocked
+              : isDragon ? IMG_DRAGON
+                : Game.assets.gon;
+            if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+              ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            } else {
+              ctx.fillStyle = '#FFFFFF';
+              ctx.strokeStyle = '#9DAEC2';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.ellipse(0, h * 0.05, w * 0.42, h * 0.40, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
           }
 
           // === SPRING BURST EFFECT ===
@@ -2046,7 +2249,7 @@
             const seedG = this.seed;   // fixed — never changes for moving platforms
             for (let i = 0; i < 14; i++) {
               const bx = sx + 4 + i * (w - 8) / 13;
-              const r  = ((seedG + i * 13) % 4) * 0.4 + 1.6;   // 1.6–3.2 px radius
+              const r = ((seedG + i * 13) % 4) * 0.4 + 1.6;   // 1.6–3.2 px radius
               const oy = (((seedG + i * 9) % 5) - 2) * 0.7;    // slight y variation
               ctx.fillStyle = grassTop;
               ctx.beginPath();
@@ -2156,7 +2359,7 @@
       class DragonEgg {
         // Rare collectible — spawn lvl 3+. Triggers dragon transformation on collect.
         constructor(platform, ox, oy) {
-          this.platform  = platform;
+          this.platform = platform;
           this.ox = ox; this.oy = oy;
           this.w = 40; this.h = 40;
           this.collected = false;
@@ -2172,7 +2375,7 @@
           ctx.save();
           // Warm orange-red glow to make it visually distinct
           ctx.shadowColor = '#FF6A00';
-          ctx.shadowBlur  = 14 + Math.sin(this.t * 0.005) * 4;
+          ctx.shadowBlur = 14 + Math.sin(this.t * 0.005) * 4;
           ctx.drawImage(IMG_DRAGON_EGG, this.x, this.y - camY + bob, this.w, this.h);
           ctx.restore();
         }
@@ -2183,10 +2386,10 @@
       // =========================================================
 
       // Preload sprites
-      const IMG_COIN        = new Image(); IMG_COIN.src        = '/sprite-coin.png';
-      const IMG_DIAMOND     = new Image(); IMG_DIAMOND.src     = '/sprite-diamond.png';
-      const IMG_DRAGON_EGG  = new Image(); IMG_DRAGON_EGG.src  = '/dragon-egg.png';
-      const IMG_DRAGON      = new Image(); IMG_DRAGON.src      = '/sprite-dragon.png';
+      const IMG_COIN = new Image(); IMG_COIN.src = '/sprite-coin.png';
+      const IMG_DIAMOND = new Image(); IMG_DIAMOND.src = '/sprite-diamond.png';
+      const IMG_DRAGON_EGG = new Image(); IMG_DRAGON_EGG.src = '/dragon-egg.png';
+      const IMG_DRAGON = new Image(); IMG_DRAGON.src = '/sprite-dragon.png';
       // Cloud sprites (5 variants from user artwork)
       const CLOUD_IMGS = { a: new Image(), b: new Image(), c: new Image(), d: new Image(), e: new Image() };
       CLOUD_IMGS.a.src = '/cloud-a.png';
@@ -2311,18 +2514,18 @@
       // =========================================================
       class Background {
         constructor() {
-          this.clouds     = [];
-          this.farClouds  = [];
-          this.farIslands    = [];
+          this.clouds = [];
+          this.farClouds = [];
+          this.farIslands = [];
           this.castleIslands = [];
-          this.balloons   = [];
-          this.birds      = [];
+          this.balloons = [];
+          this.birds = [];
           this.bgPlatforms = [];
-          this.bgBalloons  = [];  // decorative hot-air balloons
+          this.bgBalloons = [];  // decorative hot-air balloons
 
           // Offscreen canvas for bg platforms — avoids see-through when they overlap
           this._platCanvas = document.createElement('canvas');
-          this._platCanvas.width  = CONFIG.WIDTH;
+          this._platCanvas.width = CONFIG.WIDTH;
           this._platCanvas.height = CONFIG.HEIGHT;
           this._platCtx = this._platCanvas.getContext('2d');
 
@@ -2387,15 +2590,15 @@
         draw(ctx, camY) {
           // Use interpolated sky from BiomeTransition
           const skyColors = BiomeTransition.getSky();
-          const T  = BiomeTransition.isDone() ? BiomeTransition.toTheme : BiomeTransition.theme;
+          const T = BiomeTransition.isDone() ? BiomeTransition.toTheme : BiomeTransition.theme;
           const T2 = BiomeTransition.toTheme;
 
           // === SKY GRADIENT (crossfade) ===
           const sky = ctx.createLinearGradient(0, 0, 0, CONFIG.HEIGHT);
-          sky.addColorStop(0,    skyColors[0]);
+          sky.addColorStop(0, skyColors[0]);
           sky.addColorStop(0.35, skyColors[1]);
           sky.addColorStop(0.70, skyColors[2]);
-          sky.addColorStop(1,    skyColors[3]);
+          sky.addColorStop(1, skyColors[3]);
           ctx.fillStyle = sky;
           ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
 
@@ -2418,7 +2621,7 @@
           // === MOON (Peaks & Space) or SUN (all others) ===
           // === AURORA BANDS (Aurora biome) ===
           const auroraAlpha = (T2.aurora ? BiomeTransition.toAlpha() : 0) +
-                              (T.aurora && !BiomeTransition.isDone() ? BiomeTransition.fromAlpha() : 0);
+            (T.aurora && !BiomeTransition.isDone() ? BiomeTransition.fromAlpha() : 0);
           if (auroraAlpha > 0) {
             ctx.save();
             const now2 = performance.now();
@@ -2465,9 +2668,9 @@
             const sunX = CONFIG.WIDTH * 0.83;
             const sunY = CONFIG.HEIGHT * 0.10;
             const coronaGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 320);
-            coronaGrad.addColorStop(0,    T.sunColor);
+            coronaGrad.addColorStop(0, T.sunColor);
             coronaGrad.addColorStop(0.35, T.sunColor.replace(/[\d.]+\)$/, '0.20)'));
-            coronaGrad.addColorStop(1,    'rgba(0,0,0,0)');
+            coronaGrad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = coronaGrad;
             ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
             const sunCore = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
@@ -2619,28 +2822,28 @@
       // v0.8 — BIOME TRANSITION (sky crossfade + element fade)
       // =========================================================
       function _hexToRgb(hex) {
-        const h = hex.replace('#','');
-        return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+        const h = hex.replace('#', '');
+        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
       }
       function lerpColor(a, b, t) {
-        const [ar,ag,ab] = _hexToRgb(a), [br,bg,bb] = _hexToRgb(b);
-        const h = n => Math.round(n).toString(16).padStart(2,'0');
-        return '#'+h(ar+(br-ar)*t)+h(ag+(bg-ag)*t)+h(ab+(bb-ab)*t);
+        const [ar, ag, ab] = _hexToRgb(a), [br, bg, bb] = _hexToRgb(b);
+        const h = n => Math.round(n).toString(16).padStart(2, '0');
+        return '#' + h(ar + (br - ar) * t) + h(ag + (bg - ag) * t) + h(ab + (bb - ab) * t);
       }
-      function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
+      function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 
       const BiomeTransition = {
-        _from:     CONFIG.LEVELS[0].theme,
-        _to:       CONFIG.LEVELS[0].theme,
+        _from: CONFIG.LEVELS[0].theme,
+        _to: CONFIG.LEVELS[0].theme,
         _progress: 1,
-        _elapsed:  0,
-        SKY_MS:    1500,
-        ELEM_MS:   2000,
+        _elapsed: 0,
+        SKY_MS: 1500,
+        ELEM_MS: 2000,
         reset() {
           this._from = CONFIG.LEVELS[0].theme;
-          this._to   = CONFIG.LEVELS[0].theme;
+          this._to = CONFIG.LEVELS[0].theme;
           this._progress = 1;
-          this._elapsed  = 0;
+          this._elapsed = 0;
         },
         start(fromTheme, toTheme) {
           this._from = fromTheme; this._to = toTheme;
@@ -2658,13 +2861,13 @@
         },
         getCloudColor() {
           if (this._progress >= 1) return this._to.cloudColor || '#E8F4FF';
-          return lerpColor(this._from.cloudColor||'#E8F4FF', this._to.cloudColor||'#E8F4FF', easeInOut(this._progress));
+          return lerpColor(this._from.cloudColor || '#E8F4FF', this._to.cloudColor || '#E8F4FF', easeInOut(this._progress));
         },
         fromAlpha() { return Math.max(0, 1 - this._elapsed / this.ELEM_MS); },
-        toAlpha()   { return Math.min(1, this._elapsed / this.ELEM_MS); },
-        get theme()  { return this._to; },
-        get toTheme(){ return this._to; },
-        isDone()    { return this._progress >= 1; },
+        toAlpha() { return Math.min(1, this._elapsed / this.ELEM_MS); },
+        get theme() { return this._to; },
+        get toTheme() { return this._to; },
+        isDone() { return this._progress >= 1; },
       };
 
       const Leaderboard = {
@@ -2884,12 +3087,12 @@
 
           // v0.6 — new button refs
           this.el.submitScoreBtn = document.getElementById('submit-score-btn');
-          this.el.skipBtn        = document.getElementById('skip-btn');
+          this.el.skipBtn = document.getElementById('skip-btn');
           this.el.goEmailDisplay = document.getElementById('go-email-display');
-          this.el.goStage1       = document.getElementById('go-stage1');
-          this.el.goStage2       = document.getElementById('go-stage2');
-          this.el.goBtns1        = document.getElementById('go-buttons-stage1');
-          this.el.goBtns2        = document.getElementById('go-buttons-stage2');
+          this.el.goStage1 = document.getElementById('go-stage1');
+          this.el.goStage2 = document.getElementById('go-stage2');
+          this.el.goBtns1 = document.getElementById('go-buttons-stage1');
+          this.el.goBtns2 = document.getElementById('go-buttons-stage2');
 
           document.getElementById('start-btn').addEventListener('click', () => Game.start());
           document.getElementById('pause-btn').addEventListener('click', () => Game.pause());
@@ -2933,10 +3136,10 @@
           this.el.pause.classList.remove('active');
           if (this.el.menuVideo) {
             this.el.menuVideo.classList.add('active');
-            this.el.menuVideo.play().catch(() => {});
+            this.el.menuVideo.play().catch(() => { });
           }
         },
-          showHUD() {
+        showHUD() {
           this.el.menu.classList.add('hidden');
           this.el.hud.classList.add('active');
           this.el.gameOver.classList.remove('active');
@@ -2953,7 +3156,7 @@
         hidePause() { this.el.pause.classList.remove('active'); },
         showCountdown(n) {
           const overlay = document.getElementById('countdown-overlay');
-          const num     = document.getElementById('countdown-number');
+          const num = document.getElementById('countdown-number');
           if (!overlay || !num) return;
           overlay.style.display = 'flex';
           // Re-trigger animation by replacing the element
@@ -2985,12 +3188,12 @@
           // Pre-fill email from localStorage (convenience, not auto-consent)
           const lastEmail = localStorage.getItem(CONFIG.PLAYER_EMAIL_KEY) || '';
           this.el.leadEmail.value = lastEmail;
-          this.el.leadName.value  = '';  // always start empty — no Anonymous fallback
+          this.el.leadName.value = '';  // always start empty — no Anonymous fallback
           this._updateSubmitBtn();   // call AFTER email is set
 
           // Animate score tally
           const start = performance.now();
-          const dur   = Math.min(1500, 400 + score);
+          const dur = Math.min(1500, 400 + score);
           const animate = (t) => {
             const p = Utils.clamp((t - start) / dur, 0, 1);
             const eased = 1 - Math.pow(1 - p, 3);
@@ -3016,7 +3219,7 @@
 
         async _submitScore() {
           const email = (this.el.leadEmail.value || '').trim();
-          const name  = (this.el.leadName.value  || '').trim().slice(0, 20);
+          const name = (this.el.leadName.value || '').trim().slice(0, 20);
           const score = Game.score;
           const level = Game.currentLevelIdx + 1;
 
@@ -3038,8 +3241,8 @@
             if (!res.ok) throw new Error(data2.error ?? `HTTP ${res.status}`);
 
             // Save name/email for prefill next time (email saved as convenience only)
-            try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) {}
-            try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name);   } catch (_) {}
+            try { localStorage.setItem(CONFIG.PLAYER_EMAIL_KEY, email); } catch (_) { }
+            try { localStorage.setItem(CONFIG.PLAYER_NAME_KEY, name); } catch (_) { }
 
             // Move to Stage 2
             this.el.goEmailDisplay.textContent = `${data2.emailDisplay}  —  ${data2.name}`;
@@ -3062,7 +3265,7 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sessionToken: session.sessionToken }),
-            }).catch(() => {});
+            }).catch(() => { });
           }
           Game.quitToMenu();
         },
@@ -3071,15 +3274,15 @@
           try {
             const sid = window._eventSeasonId ?? '';
             const url = `/api/leaderboard?limit=10${sid ? `&season=${encodeURIComponent(sid)}` : ''}`;
-            const res  = await fetch(url);
+            const res = await fetch(url);
             const data = await res.json();
-            const top  = (data.global ?? []).slice(0, 10);
+            const top = (data.global ?? []).slice(0, 10);
             this.el.miniLbList.innerHTML = top.length === 0
               ? '<li class="leaderboard-empty">No scores yet — you\'re first! 🚀</li>'
               : top.map((e, i) => {
-                  const isMe = playerRank != null && (i + 1) === playerRank;
-                  return lbRowHtml(e, i, isMe);
-                }).join('');
+                const isMe = playerRank != null && (i + 1) === playerRank;
+                return lbRowHtml(e, i, isMe);
+              }).join('');
           } catch (_) { /* offline — silently skip */ }
         },
 
@@ -3119,7 +3322,7 @@
               this._goToStage(1);
               this.el.tally.textContent = best.score.toLocaleString();
               this.el.leadEmail.value = best.email || '';
-              this.el.leadName.value  = best.name  || '';
+              this.el.leadName.value = best.name || '';
 
               this._updateSubmitBtn();
               // Temporarily set Game.score so submit uses correct value
@@ -3153,7 +3356,7 @@
           const myEmailDisplay = myEmail ? censorEmailClient(myEmail) : null;
 
           try {
-            const res  = await fetch(url);
+            const res = await fetch(url);
             if (!res.ok) throw new Error('offline');
             const data = await res.json();
 
@@ -3176,7 +3379,7 @@
             }
 
             const fullList = data.global ?? [];
-            const top10    = fullList.slice(0, 10);
+            const top10 = fullList.slice(0, 10);
 
             if (top10.length === 0) {
               this.el.lbList.innerHTML = '<li class="leaderboard-empty">No online scores yet — be first! 🚀</li>';
@@ -3212,8 +3415,8 @@
               return;
             }
             this.el.lbList.innerHTML = list.map((e, i) => {
-              const tier = ['gold','silver','bronze'][i] || '';
-              const rankIcon = i < 3 ? `<span class="crown crown-${tier}">👑</span>${i+1}` : `#${i+1}`;
+              const tier = ['gold', 'silver', 'bronze'][i] || '';
+              const rankIcon = i < 3 ? `<span class="crown crown-${tier}">👑</span>${i + 1}` : `#${i + 1}`;
               const hasName = e.name && e.name !== 'Anonymous';
               return `<li class="leaderboard-row ${tier}">
                 <span class="rank">${rankIcon}</span>
@@ -3224,27 +3427,27 @@
           }
         },
 
-          showBiomeBanner(label) {
-            const el = document.getElementById('biome-banner');
-            if (!el) return;
-            el.textContent = label;
-            el.classList.remove('show');
-            void el.offsetWidth;
-            el.classList.add('show');
-            clearTimeout(this._bannerTimer);
-            this._bannerTimer = setTimeout(() => el.classList.remove('show'), 2500);
-          },
+        showBiomeBanner(label) {
+          const el = document.getElementById('biome-banner');
+          if (!el) return;
+          el.textContent = label;
+          el.classList.remove('show');
+          void el.offsetWidth;
+          el.classList.add('show');
+          clearTimeout(this._bannerTimer);
+          this._bannerTimer = setTimeout(() => el.classList.remove('show'), 2500);
+        },
 
-          flashScreen(color) {
-            const el = document.getElementById('screen-flash');
-            if (!el) return;
-            el.style.background = color;
-            el.classList.remove('flash');
-            void el.offsetWidth;
-            el.classList.add('flash');
-          },
+        flashScreen(color) {
+          const el = document.getElementById('screen-flash');
+          if (!el) return;
+          el.style.background = color;
+          el.classList.remove('flash');
+          void el.offsetWidth;
+          el.classList.add('flash');
+        },
 
-          updateScore(score, multiplier) {
+        updateScore(score, multiplier) {
           this.el.score.textContent = score.toLocaleString();
           if (multiplier > 1) this.el.mult.classList.add('active');
           else this.el.mult.classList.remove('active');
@@ -3334,8 +3537,8 @@
       // Shared leaderboard row template (online data)
       // name = primary, emailDisplay = secondary (if name exists and differs from email)
       function lbRowHtml(e, i, isMe = false) {
-        const TIERS  = ['gold', 'silver', 'bronze'];
-        const tier   = TIERS[i] || '';
+        const TIERS = ['gold', 'silver', 'bronze'];
+        const tier = TIERS[i] || '';
         const rankIcon = i < 3
           ? `<span class="crown crown-${tier}">👑</span>${e.rank ?? i + 1}`
           : `#${e.rank ?? i + 1}`;
@@ -3438,7 +3641,7 @@
           // CSS scaling is handled entirely by #canvas-wrap (aspect-ratio CSS) +
           // canvas { width:100%; height:100% }, so JS no longer sets style sizes.
           // We only need to set the drawing buffer once (or if it somehow changed).
-          if (this.canvas.width  !== CONFIG.WIDTH)  this.canvas.width  = CONFIG.WIDTH;
+          if (this.canvas.width !== CONFIG.WIDTH) this.canvas.width = CONFIG.WIDTH;
           if (this.canvas.height !== CONFIG.HEIGHT) this.canvas.height = CONFIG.HEIGHT;
         },
 
@@ -3558,7 +3761,7 @@
               const def = { ...lvls[i], idx: i };
               // Ensure theme.sky always has 4 valid stops — prevents black gradient on high scores
               if (!def.theme || !Array.isArray(def.theme.sky) || def.theme.sky.length < 4) {
-                def.theme = { ...def.theme, sky: ['#1565C0','#42A5F5','#81D4FA','#B3E5FC'] };
+                def.theme = { ...def.theme, sky: ['#1565C0', '#42A5F5', '#81D4FA', '#B3E5FC'] };
               }
               return def;
             }
@@ -3596,8 +3799,8 @@
               hasCollectible = true;
             }
           }
-          // Dragon Egg — rare (4%), score 3000+, exclusive with all other items
-          if (!hasCollectible && this.score >= 3000 && type !== 'breakable' && Math.random() < 0.04) {
+          // Dragon Egg — rare (4%), score 2000+, exclusive with all other items
+          if (!hasCollectible && this.score >= 2000 && type !== 'breakable' && Math.random() < 0.04) {
             this.dragonEggs.push(new DragonEgg(p, p.w / 2 - 20, -58));
           }
 
@@ -3643,16 +3846,14 @@
           if (this.state !== 'playing') return;
           BiomeTransition.update(dt);
 
-          // === GAME SPEED: เพิ่มทุก 2000 แต้ม ===
-          const speedStage = Math.floor(this.score / CONFIG.SPEED_STAGE_INTERVAL);
-          if (speedStage > this.lastSpeedStage) {
-            this.lastSpeedStage = speedStage;
-            this.gameSpeed = Math.min(
-              CONFIG.SPEED_MAX,
-              CONFIG.SPEED_BASE + speedStage * CONFIG.SPEED_INCREMENT
-            );
-            if (speedStage > 0) { /* speed increased — no toast */ }
-          }
+          // === GAME SPEED: disabled — platform gap + width scaling is enough difficulty ===
+          // Higher levels already have narrower, more spaced platforms + more moving/breakable.
+          // Speed scaling on top made it uncontrollable. Kept at 1.0.
+          // const speedStage = Math.floor(this.score / CONFIG.SPEED_STAGE_INTERVAL);
+          // if (speedStage > this.lastSpeedStage) {
+          //   this.lastSpeedStage = speedStage;
+          //   this.gameSpeed = Math.min(CONFIG.SPEED_MAX, CONFIG.SPEED_BASE + speedStage * CONFIG.SPEED_INCREMENT);
+          // }
 
           // Player update (pass gameSpeed so physics scale)
           this.player.update(dt, this.gameSpeed);
@@ -3691,13 +3892,13 @@
 
           // Collectibles + obstacles update & cull
           for (const s of this.springs) s.update(dt);
-          for (const c of this.coins)    c.update(dt);
-          for (const d of this.diamonds)  d.update(dt);
+          for (const c of this.coins) c.update(dt);
+          for (const d of this.diamonds) d.update(dt);
           for (const e of this.dragonEggs) e.update(dt);
-          this.springs       = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
-          this.coins         = this.coins.filter(c => !c.collected && c.platform.y < this.camY + CONFIG.HEIGHT + 200);
-          this.diamonds      = this.diamonds.filter(d => !d.collected && d.platform.y < this.camY + CONFIG.HEIGHT + 200);
-          this.dragonEggs    = this.dragonEggs.filter(e => !e.collected && e.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.springs = this.springs.filter(s => s.platform && !s.platform.broken && s.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.coins = this.coins.filter(c => !c.collected && c.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.diamonds = this.diamonds.filter(d => !d.collected && d.platform.y < this.camY + CONFIG.HEIGHT + 200);
+          this.dragonEggs = this.dragonEggs.filter(e => !e.collected && e.platform.y < this.camY + CONFIG.HEIGHT + 200);
 
           // Particles
           for (const pt of this.particles) pt.update(dt);
@@ -3775,7 +3976,7 @@
               // === MAGNET: pull nearby coins & diamonds toward player ===
               const px = this.player.x + this.player.w / 2;
               const py = this.player.y + this.player.h / 2;
-              const R  = CONFIG.DRAGON_MAGNET_RADIUS;
+              const R = CONFIG.DRAGON_MAGNET_RADIUS;
               const PULL_SPEED = 6;   // px per frame toward player
 
               for (const c of this.coins) {
@@ -3816,15 +4017,19 @@
               if (Math.random() < 0.40) {
                 const cx = this.player.x + this.player.w / 2;
                 const cy = this.player.y + this.player.h * 0.8;
-                const fireColors = ['#FF4500','#FF8C00','#FFD700'];
+                const fireColors = ['#FF4500', '#FF8C00', '#FFD700'];
                 this.particles.push(new Particle(cx, cy, fireColors[Math.floor(Math.random() * 3)]));
               }
             } else if (this.player._wasDragon) {
-              // Dragon form just expired — burst icy/white revert particles
+              // Dragon form just expired — soft landing + burst icy/white revert particles
               this.player._wasDragon = false;
+              // Clamp vy to gentle downward speed so player doesn't plummet
+              this.player.vy = Math.min(this.player.vy, CONFIG.DRAGON_REVERT_VY);
+              // Start grace period with reduced gravity
+              this.player._dragonGrace = CONFIG.DRAGON_REVERT_GRACE;
               const cx = this.player.x + this.player.w / 2;
               const cy = this.player.y + this.player.h / 2;
-              const revertColors = ['#87CEEB','#FFFFFF','#B0E0E6'];
+              const revertColors = ['#87CEEB', '#FFFFFF', '#B0E0E6'];
               for (let i = 0; i < 14; i++) {
                 this.particles.push(new Particle(cx, cy, revertColors[i % 3]));
               }
@@ -3864,7 +4069,7 @@
           }
           // LAVA KILL: player touches the rising lava (world-coordinate check)
           if (this.autoScrollSpeed > 0.05) {
-            const lavaH     = Math.max(32, 22 + this.autoScrollSpeed * 30);
+            const lavaH = Math.max(32, 22 + this.autoScrollSpeed * 30);
             const lavaTopWorld = this.camY + CONFIG.HEIGHT - lavaH;  // top of lava in world coords
             if (this.player.y + this.player.h >= lavaTopWorld) {
               this.gameOver();
@@ -3882,7 +4087,7 @@
           // Fire burst particles on transform
           const cx = this.player.x + this.player.w / 2;
           const cy = this.player.y + this.player.h / 2;
-          const burstColors = ['#FF4500','#FF8C00','#FFD700','#FF6347'];
+          const burstColors = ['#FF4500', '#FF8C00', '#FFD700', '#FF6347'];
           for (let i = 0; i < 22; i++) {
             this.particles.push(new Particle(cx, cy, burstColors[i % 4]));
           }
@@ -3900,8 +4105,8 @@
           // Player gets a big upward bounce then falls off-screen.
           this.state = 'dying';
           if (this.player) {
-            this.player.vy  = -13;   // strong upward kick (world units/frame @60fps)
-            this.player.vx  = 0;     // stop horizontal
+            this.player.vy = -13;   // strong upward kick (world units/frame @60fps)
+            this.player.vx = 0;     // stop horizontal
           }
           // HUD stays hidden; game over screen shows once player exits viewport
         },
@@ -3915,7 +4120,7 @@
           const gravity = CONFIG.GRAVITY ?? 0.55;
           const dtScale = dt / 16.667;
           p.vy += gravity * dtScale;
-          p.y  += p.vy   * dtScale;
+          p.y += p.vy * dtScale;
 
           this.render();
 
@@ -3936,21 +4141,21 @@
         // offset math needed. The lava will be visible on every device.
         _drawScrollWarning(ctx) {
           if (this.autoScrollSpeed <= 0.01) return;
-          const t            = Date.now() * 0.001;
-          const lavaH        = Math.max(32, 22 + this.autoScrollSpeed * 30);
+          const t = Date.now() * 0.001;
+          const lavaH = Math.max(32, 22 + this.autoScrollSpeed * 30);
           // alpha 0→1 during lava fade-in; drives slide-up entrance animation
-          const alpha        = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED);
-          const pulse        = 0.5 + 0.5 * Math.sin(t * 3);
-          const W            = CONFIG.WIDTH;
+          const alpha = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED);
+          const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+          const W = CONFIG.WIDTH;
           const screenBottom = CONFIG.HEIGHT;
           // Reduced amplitude → flatter surface (viscous lava feel)
-          const waveAmp      = 5;
-          const y0           = screenBottom - lavaH;
+          const waveAmp = 5;
+          const y0 = screenBottom - lavaH;
 
           // === SLIDE-UP ENTRANCE: lava rises from below the screen ===
           // When alpha=0: slideOff=lavaH (fully hidden below screen)
           // When alpha=1: slideOff=0     (at final resting position)
-          const ease     = alpha < 1 ? 1 - Math.pow(1 - alpha, 3) : 1; // cubic ease-out
+          const ease = alpha < 1 ? 1 - Math.pow(1 - alpha, 3) : 1; // cubic ease-out
           const slideOff = Math.round((1 - ease) * (lavaH + waveAmp * 2));
 
           ctx.save();
@@ -3958,7 +4163,7 @@
 
           // === BUILD WAVE POINTS — fewer pts + slower freq = thick viscous lava ===
           const numPts = 20;
-          const waveY  = [];
+          const waveY = [];
           for (let i = 0; i <= numPts; i++) {
             const wy = y0 + slideOff
               - waveAmp * 0.4
@@ -3974,8 +4179,8 @@
             ctx.moveTo(0, screenBottom);
             ctx.lineTo(waveY[0].x, waveY[0].y + offsetY);
             for (let i = 0; i < waveY.length - 1; i++) {
-              const mx = (waveY[i].x   + waveY[i+1].x)   / 2;
-              const my = (waveY[i].y   + waveY[i+1].y)   / 2 + offsetY;
+              const mx = (waveY[i].x + waveY[i + 1].x) / 2;
+              const my = (waveY[i].y + waveY[i + 1].y) / 2 + offsetY;
               ctx.quadraticCurveTo(waveY[i].x, waveY[i].y + offsetY, mx, my);
             }
             ctx.lineTo(waveY[numPts].x, waveY[numPts].y + offsetY);
@@ -3986,13 +4191,13 @@
 
           // Gradient: dark charcoal-red at crest → glowing orange at canvas base
           // gradTop sits above the highest wave point so colours align with base rect
-          const gradTop  = y0 + slideOff - waveAmp - 2;
+          const gradTop = y0 + slideOff - waveAmp - 2;
           const lavaGrad = ctx.createLinearGradient(0, gradTop, 0, screenBottom);
-          lavaGrad.addColorStop(0,    '#7A0000');  // charcoal-red at crest
+          lavaGrad.addColorStop(0, '#7A0000');  // charcoal-red at crest
           lavaGrad.addColorStop(0.25, '#BB1400');  // dark blood red
           lavaGrad.addColorStop(0.55, '#EE3200');  // vivid red
           lavaGrad.addColorStop(0.78, '#FF5500');  // orange-red
-          lavaGrad.addColorStop(1.0,  '#FF8800');  // glowing hot orange at base
+          lavaGrad.addColorStop(1.0, '#FF8800');  // glowing hot orange at base
 
           // Main body: full gradient following wave path
           drawWaveLayer(0, lavaGrad);
@@ -4041,29 +4246,29 @@
           ));
           if (heatT > 0) {
             // 1) Vertical heat column — orange-red haze rising from lava surface upward
-            const heatH    = CONFIG.HEIGHT * 0.72;        // haze reaches 72% up the screen
-            const heatBot  = screenBottom;
-            const heatTop  = screenBottom - heatH;
+            const heatH = CONFIG.HEIGHT * 0.72;        // haze reaches 72% up the screen
+            const heatBot = screenBottom;
+            const heatTop = screenBottom - heatH;
             const maxAlpha = 0.30 * heatT;               // max 30 % at full speed
 
             const heatGrad = ctx.createLinearGradient(0, heatBot, 0, heatTop);
-            heatGrad.addColorStop(0,    `rgba(255, 80,  0, ${maxAlpha})`);   // hot orange at base
+            heatGrad.addColorStop(0, `rgba(255, 80,  0, ${maxAlpha})`);   // hot orange at base
             heatGrad.addColorStop(0.25, `rgba(220, 45,  0, ${maxAlpha * 0.65})`);
             heatGrad.addColorStop(0.55, `rgba(180, 20,  0, ${maxAlpha * 0.28})`);
-            heatGrad.addColorStop(1.0,  'rgba(0, 0, 0, 0)');                 // transparent at top
+            heatGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');                 // transparent at top
             ctx.fillStyle = heatGrad;
             ctx.fillRect(0, 0, W, screenBottom);
 
             // 2) Radial glow from bottom-centre — simulates heat radiating upward
             const radAlpha = 0.22 * heatT;
-            const radGrad  = ctx.createRadialGradient(
+            const radGrad = ctx.createRadialGradient(
               W / 2, screenBottom, 0,
               W / 2, screenBottom, W * 1.05
             );
-            radGrad.addColorStop(0,    `rgba(255, 120, 0, ${radAlpha})`);
+            radGrad.addColorStop(0, `rgba(255, 120, 0, ${radAlpha})`);
             radGrad.addColorStop(0.35, `rgba(220,  60, 0, ${radAlpha * 0.45})`);
             radGrad.addColorStop(0.70, `rgba(160,  20, 0, ${radAlpha * 0.12})`);
-            radGrad.addColorStop(1.0,  'rgba(0, 0, 0, 0)');
+            radGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = radGrad;
             ctx.fillRect(0, 0, W, screenBottom);
           }
@@ -4080,20 +4285,20 @@
           // Prevents sky background from bleeding through during lava fade-in.
           // Gradient coords must match _drawScrollWarning (same gradTop) — no seam.
           if (this.autoScrollSpeed > 0.01) {
-            const lH       = Math.max(32, 22 + this.autoScrollSpeed * 30);
-            const wAmp     = 5;   // must match _drawScrollWarning
-            const alpha    = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED);
-            const ease     = alpha < 1 ? 1 - Math.pow(1 - alpha, 3) : 1;
+            const lH = Math.max(32, 22 + this.autoScrollSpeed * 30);
+            const wAmp = 5;   // must match _drawScrollWarning
+            const alpha = Math.min(1, this.autoScrollSpeed / CONFIG.SCROLL_MIN_SPEED);
+            const ease = alpha < 1 ? 1 - Math.pow(1 - alpha, 3) : 1;
             const slideOff = Math.round((1 - ease) * (lH + wAmp * 2));
-            const baseY    = CONFIG.HEIGHT - lH + slideOff;
+            const baseY = CONFIG.HEIGHT - lH + slideOff;
             // gradTop mirrors _drawScrollWarning so both gradients share identical colour ramp
-            const gradTop  = baseY - wAmp - 2;
+            const gradTop = baseY - wAmp - 2;
             const grad = ctx.createLinearGradient(0, gradTop, 0, CONFIG.HEIGHT);
-            grad.addColorStop(0,    '#7A0000');  // charcoal-red at surface
+            grad.addColorStop(0, '#7A0000');  // charcoal-red at surface
             grad.addColorStop(0.25, '#BB1400');  // dark blood red
             grad.addColorStop(0.55, '#EE3200');  // vivid red
             grad.addColorStop(0.78, '#FF5500');  // orange-red
-            grad.addColorStop(1.0,  '#FF8800');  // glowing hot orange at base
+            grad.addColorStop(1.0, '#FF8800');  // glowing hot orange at base
             ctx.fillStyle = grad;
             ctx.fillRect(0, baseY, CONFIG.WIDTH, CONFIG.HEIGHT - baseY);
           }
@@ -4101,11 +4306,11 @@
           // World offset for elements
           const camY = this.camY;
 
-          for (const p of this.platforms)     p.draw(ctx, camY);
-          for (const s of this.springs)        s.draw(ctx, camY);
-          for (const c of this.coins)          c.draw(ctx, camY);
-          for (const d of this.diamonds)       d.draw(ctx, camY);
-          for (const e of this.dragonEggs)     e.draw(ctx, camY);
+          for (const p of this.platforms) p.draw(ctx, camY);
+          for (const s of this.springs) s.draw(ctx, camY);
+          for (const c of this.coins) c.draw(ctx, camY);
+          for (const d of this.diamonds) d.draw(ctx, camY);
+          for (const e of this.dragonEggs) e.draw(ctx, camY);
           if (this.player) this.player.draw(ctx, camY);
           for (const p of this.particles) p.draw(ctx, camY);
           this._drawScrollWarning(ctx);
@@ -4174,9 +4379,9 @@
         }
         // === PREVENT PINCH-TO-ZOOM ===
         // iOS Safari (10+) ignores viewport user-scalable=no — must block via JS
-        document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, { passive: false });
-        document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, { passive: false });
-        document.addEventListener('touchmove', function(e){
+        document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function (e) {
           if (e.touches && e.touches.length > 1) e.preventDefault();
         }, { passive: false });
 
@@ -4184,9 +4389,9 @@
         // Cap at 480px wide for desktop; fill viewport on mobile
         (function resizeConfig() {
           const MAX_W = 480;
-          const W = Math.round(Math.min(window.innerWidth,  MAX_W));
+          const W = Math.round(Math.min(window.innerWidth, MAX_W));
           const H = Math.round(Math.min(window.innerHeight, W * 700 / 400));
-          CONFIG.WIDTH  = W;
+          CONFIG.WIDTH = W;
           CONFIG.HEIGHT = H;
           CONFIG.SAFE_X_MIN = W * CONFIG.SAFE_MARGIN_PCT;
           CONFIG.SAFE_X_MAX = W * (1 - CONFIG.SAFE_MARGIN_PCT);
